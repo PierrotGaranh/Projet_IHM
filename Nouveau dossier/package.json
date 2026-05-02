@@ -1,0 +1,22 @@
+{
+  "name": "nouveau-dossier",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "function.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node projet.js",
+    "calculator": "python -m http.server 8000",
+    "web": "python app_web.py"
+  },
+  "dependencies": {
+    "math-intrinsics": "^1.1.0"
+  },
+  "devDependencies": {
+    "flask": "^3.0.0",
+    "flask-cors": "^4.0.0"
+  }
+}
