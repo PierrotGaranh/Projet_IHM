@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Parking Réservé | Gestion simplifiée</title>
+    <!-- Font Awesome 6 (gratuit, icônes claires) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f4f7fc;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 1rem;
+            color: #1e2a3a;
+            min-height: 100vh;
+        }
+
+        /* Conteneur principal – centré, aéré */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        /* Bandeau supérieur – cohérence, identité */
+        .header {
+            background: #ffffff;
+            padding: 1.2rem 1.5rem;
+            border-bottom: 2px solid #e9edf2;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .title-section h1 {
+            font-size: clamp(1.2rem, 5vw, 1.7rem);
+            font-weight: 600;
+            color: #0b3b5f;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .title-section p {
+            color: #5a6e7c;
+            font-size: clamp(0.7rem, 3vw, 0.9rem);
+            margin-top: 0.2rem;
+        }
+
+        .status-badge {
+            background: #eef2f5;
+            padding: 0.4rem 0.8rem;
+            border-radius: 60px;
+            font-size: clamp(0.7rem, 3vw, 0.85rem);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .status-badge i {
+            font-size: 0.9rem;
+            color: #2c7da0;
+        }
+
+        /* Légende – groupement visuel clair */
+        .legend {
+            background: #f8fafc;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: clamp(0.7rem, 3vw, 0.85rem);
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+        }
+
+        /* Grille des places de parking – responsive améliorée */
+        .parking-grid {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 1rem;
+            background: #ffffff;
+        }
+
+        /* Carte place – effet d'affordance */
+        .parking-slot {
+            background: white;
+            border-radius: 1rem;
+            padding: 0.8rem 0.2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2edf2;
+        }
+
+        .parking-slot:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        /* États des places */
+        .slot-free {
+            background: #e9f7e1;
+            border-left: 5px solid #2e7d32;
+        }
+        .slot-free .slot-icon { color: #2e7d32; }
+
+        .slot-reserved-by-me {
+            background: #fff3e0;
+            border-left: 5px solid #ed6c02;
+        }
+        .slot-reserved-by-me .slot-icon { color: #ed6c02; }
+
+        .slot-reserved-other {
+            background: #f1f3f5;
+            border-left: 5px solid #94a3b8;
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .slot-reserved-other:hover {
+            transform: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .slot-number {
+            font-weight: 700;
+            font-size: clamp(0.9rem, 4vw, 1.2rem);
+            margin: 0.3rem 0 0.2rem;
+            color: #1e2a3a;
+        }
+
+        .slot-icon {
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+        }
+
+        .slot-status-text {
+            font-size: 0.65rem;
+            font-weight: 500;
+            margin-top: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* zone de feedback et actions */
+        .action-panel {
+            background: #f9fbfd;
+            padding: 1.2rem 1.5rem;
+            border-top: 1px solid #e2edf2;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .info-message {
+            background: #eef2ff;
+            border-radius: 60px;
+            padding: 0.5rem 1rem;
+            font-size: clamp(0.75rem, 3vw, 0.9rem);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .btn {
+            border: none;
+            background: #eef2f5;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: clamp(0.75rem, 3vw, 0.85rem);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #0b3b5f;
+            color: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-primary:hover {
+            background: #0a314d;
+            transform: scale(0.97);
+        }
+
+        .btn-outline {
+            border: 1px solid #cbd5e1;
+            background: white;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        /* Modal personnalisé - responsive */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 1.5rem;
+            max-width: 500px;
+            width: 100%;
+            padding: 1.5rem;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .modal-header i {
+            font-size: 1.5rem;
+            color: #0b3b5f;
+        }
+
+        .modal-header h3 {
+            font-size: clamp(1.1rem, 4vw, 1.3rem);
+            font-weight: 600;
+            color: #1e2a3a;
+        }
+
+        .modal-body {
+            color: #475569;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            font-size: clamp(0.9rem, 3.5vw, 1rem);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .modal-buttons .btn {
+            padding: 0.5rem 1rem;
+        }
+
+        /* Toast adaptatif */
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1e293b;
+            color: white;
+            padding: 0.7rem 1.2rem;
+            border-radius: 40px;
+            font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+            z-index: 1000;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+            max-width: 90%;
+            text-align: center;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .toast-message.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            visibility: visible;
+        }
+
+        footer {
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 0.8rem;
+            color: #6c7a89;
+            background: white;
+            border-top: 1px solid #eef2f8;
+        }
+
+        /* ===== RESPONSIVE DESIGN AMÉLIORÉ ===== */
+        
+        /* Tablettes (768px à 1024px) */
+        @media (max-width: 1024px) {
+            body {
+                padding: 0.8rem;
+            }
+            .parking-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 0.9rem;
+                padding: 1.2rem;
+            }
+            .header {
+                padding: 1rem 1.2rem;
+            }
+            .legend {
+                padding: 0.6rem 1rem;
+                gap: 0.8rem;
+            }
+        }
+
+        /* Mobiles larges (600px à 768px) */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .status-badge {
+                align-self: flex-start;
+                white-space: normal;
+            }
+            .action-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .info-message {
+                justify-content: center;
+            }
+            .btn {
+                justify-content: center;
+                white-space: normal;
+                text-align: center;
+            }
+            .legend {
+                justify-content: flex-start;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                gap: 1.2rem;
+                padding-bottom: 0.6rem;
+            }
+            .legend-item {
+                flex-shrink: 0;
+            }
+            .parking-grid {
+                grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+                gap: 0.8rem;
+                padding: 1rem;
+            }
+        }
+
+        /* Petits mobiles (480px et moins) */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+            .container {
+                border-radius: 1rem;
+            }
+            .header {
+                padding: 0.8rem;
+            }
+            .title-section h1 {
+                font-size: 1.2rem;
+            }
+            .title-section p {
+                font-size: 0.7rem;
+            }
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+            .parking-grid {
+                grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+                gap: 0.6rem;
+                padding: 0.8rem;
+            }
+            .parking-slot {
+                padding: 0.5rem 0.1rem;
+                border-radius: 0.8rem;
+            }
+            .slot-number {
+                font-size: 0.9rem;
+            }
+            .slot-icon {
+                font-size: 1.2rem;
+            }
+            .slot-status-text {
+                font-size: 0.55rem;
+            }
+            .action-panel {
+                padding: 0.8rem;
+                gap: 0.6rem;
+            }
+            .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
+            }
+            .info-message {
+                font-size: 0.7rem;
+                padding: 0.4rem 0.8rem;
+            }
+            .modal {
+                padding: 1.2rem;
+            }
+            .modal-header i {
+                font-size: 1.2rem;
+            }
+            .modal-header h3 {
+                font-size: 1.1rem;
+            }
+            .modal-body {
+                font-size: 0.85rem;
+            }
+            .modal-buttons .btn {
+                padding: 0.4rem 0.8rem;
+            }
+            .toast-message {
+                bottom: 15px;
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+            }
+            footer {
+                font-size: 0.6rem;
+                padding: 0.6rem;
+            }
+        }
+
+        /* Orientation paysage sur mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .parking-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 0.5rem;
+            }
+            .header {
+                padding: 0.5rem 1rem;
+            }
+            .legend {
+                padding: 0.4rem 1rem;
+            }
+            .action-panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .btn {
+                white-space: nowrap;
+            }
+        }
+
+        /* Grands écrans (au-dessus de 1400px) */
+        @media (min-width: 1400px) {
+            .parking-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 140px));
+                justify-content: center;
+            }
+            .container {
+                max-width: 1400px;
+            }
+        }
+
+        /* focus visible pour accessibilité clavier */
+        .parking-slot:focus-visible, .btn:focus-visible {
+            outline: 3px solid #0b3b5f;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- En-tête : architecture claire, logo/titre, statut -->
+    <div class="header">
+        <div class="title-section">
+            <h1><i class="fas fa-parking" style="color:#2c7da0;"></i> Parking Réservé</h1>
+            <p>Gérez vos réservations • places réservées et libres</p>
+        </div>
+        <div class="status-badge">
+            <i class="fas fa-user-check"></i>
+            <span>Utilisateur : <strong>Jean Dupont</strong> (ID: JD2025)</span>
+        </div>
+    </div>
+
+    <!-- Légende : distinction visuelle + groupement -->
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background:#e9f7e1; border-left: 4px solid #2e7d32;"></div><span>Libre (disponible)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background:#fff3e0; border-left: 4px solid #ed6c02;"></div><span>Réservée par vous</span></div>
+        <div class="legend-item"><div class="legend-color" style="background:#f1f3f5; border-left: 4px solid #94a3b8;"></div><span>Réservée par un autre</span></div>
+        <div class="legend-item"><i class="fas fa-hand-pointer"></i><span>Cliquez sur une place libre pour la réserver</span></div>
+    </div>
+
+    <!-- Grille dynamique des places -->
+    <div class="parking-grid" id="parkingGrid">
+        <!-- généré par JS -->
+    </div>
+
+    <!-- Panneau d'action & feedback (guidage, contrôle utilisateur) -->
+    <div class="action-panel">
+        <div class="info-message" id="infoMessage">
+            <i class="fas fa-info-circle"></i>
+            <span id="infoText">Sélectionnez une place libre pour la réserver.</span>
+        </div>
+        <button class="btn btn-outline" id="refreshBtn"><i class="fas fa-sync-alt"></i> Actualiser</button>
+        <button class="btn btn-primary" id="clearMyReservationsBtn"><i class="fas fa-trash-alt"></i> Libérer mes réservations</button>
+    </div>
+    <footer>
+        <i class="fas fa-copyright"></i> All rights reserved © 2026
+    </footer>
+</div>
+
+<!-- Modal personnalisé (remplace confirm) -->
+<div id="modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <i class="fas fa-question-circle"></i>
+            <h3 id="modalTitle">Confirmation</h3>
+        </div>
+        <div class="modal-body" id="modalMessage">
+            Êtes-vous sûr de vouloir effectuer cette action ?
+        </div>
+        <div class="modal-buttons">
+            <button class="btn btn-outline" id="modalCancelBtn">Annuler</button>
+            <button class="btn btn-primary" id="modalConfirmBtn">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- MODÈLE DE DONNÉES ----------
+    const CURRENT_USER = "JD2025";
+    let parkingSpots = [];
+
+    // Génération initiale
+    function initParking() {
+        const spots = [];
+        for (let i = 1; i <= 24; i++) {
+            let status = 'free';
+            if (i % 7 === 0 || i === 5 || i === 18) {
+                status = 'reserved_other';
+            }
+            spots.push({
+                id: i,
+                number: i,
+                status: status,
+                reservedBy: status === 'reserved_other' ? 'other_user_' + i : null
+            });
+        }
+        const myDemoSpot = spots.find(s => s.number === 3);
+        if (myDemoSpot && myDemoSpot.status === 'free') {
+            myDemoSpot.status = 'reserved_by_me';
+            myDemoSpot.reservedBy = CURRENT_USER;
+        }
+        return spots;
+    }
+
+    // Sauvegarde localStorage
+    function saveToLocalStorage() {
+        localStorage.setItem('parkingReservations', JSON.stringify(parkingSpots));
+    }
+
+    function loadFromLocalStorage() {
+        const stored = localStorage.getItem('parkingReservations');
+        if (stored) {
+            parkingSpots = JSON.parse(stored);
+        } else {
+            parkingSpots = initParking();
+            saveToLocalStorage();
+        }
+    }
+
+    // Modal personnalisé - retourne une promesse
+    function showModal(title, message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+            
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            
+            const closeModal = (result) => {
+                modal.classList.remove('active');
+                confirmBtn.removeEventListener('click', onConfirm);
+                cancelBtn.removeEventListener('click', onCancel);
+                resolve(result);
+            };
+            
+            const onConfirm = () => closeModal(true);
+            const onCancel = () => closeModal(false);
+            
+            confirmBtn.addEventListener('click', onConfirm);
+            cancelBtn.addEventListener('click', onCancel);
+            
+            modal.classList.add('active');
+        });
+    }
+
+    // Mise à jour UI
+    function renderParking() {
+        const grid = document.getElementById('parkingGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        parkingSpots.forEach(spot => {
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'parking-slot';
+            if (spot.status === 'free') {
+                slotDiv.classList.add('slot-free');
+            } else if (spot.status === 'reserved_by_me') {
+                slotDiv.classList.add('slot-reserved-by-me');
+            } else {
+                slotDiv.classList.add('slot-reserved-other');
+            }
+            
+            let iconClass = 'fa-square-parking';
+            let statusText = '';
+            if (spot.status === 'free') {
+                iconClass = 'fa-square-parking';
+                statusText = 'Libre';
+            } else if (spot.status === 'reserved_by_me') {
+                iconClass = 'fa-check-circle';
+                statusText = 'Votre place';
+            } else {
+                iconClass = 'fa-lock';
+                statusText = 'Réservée';
+            }
+            
+            slotDiv.innerHTML = `
+                <div class="slot-icon"><i class="fas ${iconClass}"></i></div>
+                <div class="slot-number">${spot.number}</div>
+                <div class="slot-status-text">${statusText}</div>
+            `;
+            
+            slotDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (spot.status === 'free') {
+                    handleReservation(spot);
+                } else if (spot.status === 'reserved_by_me') {
+                    handleCancelReservation(spot);
+                } else {
+                    showToast("Cette place est déjà réservée par un autre utilisateur. Choisissez une place libre.", "warning");
+                }
+            });
+            
+            slotDiv.setAttribute('tabindex', '0');
+            slotDiv.setAttribute('role', 'button');
+            slotDiv.setAttribute('aria-label', `Place ${spot.number}, ${statusText}`);
+            slotDiv.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    slotDiv.click();
+                }
+            });
+            
+            grid.appendChild(slotDiv);
+        });
+        updateInfoMessage();
+        saveToLocalStorage();
+    }
+    
+    // Gestion réservation avec modal
+    async function handleReservation(spot) {
+        if (spot.status !== 'free') {
+            showToast("État modifié : cette place n'est plus libre.", "error");
+            renderParking();
+            return;
+        }
+        
+        const confirmed = await showModal(
+            "Confirmation de réservation",
+            `Souhaitez-vous réserver la place n°${spot.number} ?\nVous pourrez libérer à tout moment.`
+        );
+        
+        if (!confirmed) {
+            showToast("Réservation annulée.", "info");
+            return;
+        }
+        
+        spot.status = 'reserved_by_me';
+        spot.reservedBy = CURRENT_USER;
+        renderParking();
+        showToast(`Place n°${spot.number} réservée avec succès !`, "success");
+        updateInfoMessage();
+    }
+    
+    // Annulation avec modal
+    async function handleCancelReservation(spot) {
+        if (spot.status !== 'reserved_by_me') {
+            showToast("Vous ne pouvez libérer que vos propres réservations.", "error");
+            return;
+        }
+        
+        const confirmed = await showModal(
+            "Libération de place",
+            `Libérer la place n°${spot.number} ?\nElle redeviendra libre pour tout le monde.`
+        );
+        
+        if (!confirmed) {
+            showToast("Libération annulée.", "info");
+            return;
+        }
+        
+        spot.status = 'free';
+        spot.reservedBy = null;
+        renderParking();
+        showToast(`Place n°${spot.number} libérée.`, "success");
+    }
+    
+    // Libérer toutes ses réservations avec modal
+    async function releaseAllMyReservations() {
+        const myReservations = parkingSpots.filter(s => s.status === 'reserved_by_me');
+        if (myReservations.length === 0) {
+            showToast("Vous n'avez aucune réservation active à libérer.", "info");
+            return;
+        }
+        
+        const confirmed = await showModal(
+            "Libérer toutes vos réservations",
+            `Vous avez ${myReservations.length} réservation(s). Êtes-vous sûr de vouloir toutes les libérer ?`
+        );
+        
+        if (confirmed) {
+            myReservations.forEach(spot => {
+                spot.status = 'free';
+                spot.reservedBy = null;
+            });
+            renderParking();
+            showToast(`${myReservations.length} place(s) libérée(s) avec succès.`, "success");
+        } else {
+            showToast("Opération annulée.", "info");
+        }
+    }
+    
+    // Rafraîchissement
+    function refreshFromStorage() {
+        loadFromLocalStorage();
+        renderParking();
+        showToast("Données actualisées.", "neutral");
+    }
+    
+    // Mise à jour message info
+    function updateInfoMessage() {
+        const freeCount = parkingSpots.filter(s => s.status === 'free').length;
+        const myCount = parkingSpots.filter(s => s.status === 'reserved_by_me').length;
+        const infoTextSpan = document.getElementById('infoText');
+        if (infoTextSpan) {
+            infoTextSpan.innerHTML = `<i class="fas fa-chart-simple" style="margin-right: 0.3rem;"></i> ${freeCount} place(s) libre(s) • ${myCount} réservation(s) active(s) • Cliquez sur une place pour réserver ou libérer.`;
+        }
+    }
+    
+    // Toast avec animation fluide
+    let toastTimeout = null;
+    function showToast(message, type = "info") {
+        const existingToast = document.querySelector('.toast-message');
+        if (existingToast) {
+            existingToast.classList.remove('show');
+            setTimeout(() => {
+                if (existingToast && existingToast.remove) existingToast.remove();
+                createNewToast(message, type);
+            }, 300);
+        } else {
+            createNewToast(message, type);
+        }
+    }
+    
+    function createNewToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        
+        let icon = '<i class="fas fa-info-circle"></i>';
+        if (type === 'success') icon = '<i class="fas fa-check-circle"></i>';
+        else if (type === 'error') icon = '<i class="fas fa-exclamation-triangle"></i>';
+        else if (type === 'warning') icon = '<i class="fas fa-exclamation-circle"></i>';
+        else if (type === 'neutral') icon = '<i class="fas fa-bell"></i>';
+        
+        toast.innerHTML = `${icon}<span>${message}</span>`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+        
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            if (toast) {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast && toast.remove) toast.remove();
+                }, 300);
+            }
+        }, 3000);
+    }
+    
+    // ---- Initialisation et événements ----
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFromLocalStorage();
+        renderParking();
+        
+        const modalOverlay = document.getElementById('modal');
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                const cancelBtn = document.getElementById('modalCancelBtn');
+                if (cancelBtn) cancelBtn.click();
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+                const cancelBtn = document.getElementById('modalCancelBtn');
+                if (cancelBtn) cancelBtn.click();
+            }
+        });
+        
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                refreshFromStorage();
+            });
+        }
+        
+        const clearMyBtn = document.getElementById('clearMyReservationsBtn');
+        if (clearMyBtn) {
+            clearMyBtn.addEventListener('click', () => {
+                releaseAllMyReservations();
+            });
+        }
+        
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'parkingReservations') {
+                loadFromLocalStorage();
+                renderParking();
+                showToast("Mise à jour depuis un autre onglet", "info");
+            }
+        });
+        
+        setTimeout(() => {
+            showToast("Bienvenue ! Sélectionnez une place libre pour réserver.", "neutral");
+        }, 500);
+    });
+</script>
+</body>
+</html>
