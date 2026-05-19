@@ -59,7 +59,7 @@ export default function UsersManagementPage() {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as any)}
-              className="input-base w-full sm:w-40"
+              className="input-base w-full sm:w-48"
             >
               <option value="all">Tous les utilisateurs</option>
               <option value="users">Utilisateurs réguliers</option>

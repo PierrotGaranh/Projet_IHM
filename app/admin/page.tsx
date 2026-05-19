@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
+import { Skeleton } from '@/components/ui/skeleton';
+import { BarChart3, CheckCircle2, Users, Settings } from 'lucide-react';
 
 interface Stats {
   totalReservations: number;
@@ -21,25 +23,19 @@ export default function AdminDashboard() {
     setStats(dashboardStats);
   }, []);
 
-  const StatCard = ({ title, value, unit = '', color = 'primary' }: {
-    title: string;
-    value: string | number;
-    unit?: string;
-    color?: 'primary' | 'secondary' | 'accent' | 'destructive';
-  }) => {
+  const StatCard = ({ title, value, unit = '', icon: Icon, color = 'primary' }: any) => {
     const bgColors: Record<string, string> = {
       primary: 'bg-primary/10 text-primary',
       secondary: 'bg-secondary/10 text-secondary',
       accent: 'bg-accent/10 text-accent',
       destructive: 'bg-destructive/10 text-destructive',
     };
-
     return (
-      <div className="card-base p-6 space-y-4">
+      <div className="card-base p-6 space-y-4 hover:shadow-md transition-shadow">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-          <div className={`w-10 h-10 rounded-lg ${bgColors[color]} flex items-center justify-center text-lg`}>
-            {color === 'primary' ? '📊' : color === 'secondary' ? '✓' : color === 'accent' ? '📅' : '⚠️'}
+          <div className={`w-10 h-10 rounded-lg ${bgColors[color]} flex items-center justify-center`}>
+            <Icon className="w-5 h-5" />
           </div>
         </div>
         <p className="text-3xl font-bold text-foreground">
@@ -51,51 +47,34 @@ export default function AdminDashboard() {
 
   if (!stats) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">Chargement...</p>
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          {Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-80 w-full" />
+          <Skeleton className="h-80 w-full" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">Dashboard Admin</h1>
-        <p className="text-muted-foreground">
-          Vue d&apos;ensemble et statistiques de votre parking
-        </p>
+        <p className="text-muted-foreground">Vue d'ensemble et statistiques de votre parking</p>
       </div>
-
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <StatCard
-          title="Réservations totales"
-          value={stats.totalReservations}
-          color="primary"
-        />
-        <StatCard
-          title="Réservations actives"
-          value={stats.activeReservations}
-          color="secondary"
-        />
-        <StatCard
-          title="Places disponibles"
-          value={stats.availableSpaces}
-          color="accent"
-        />
-        <StatCard
-          title="Taux d&apos;occupation"
-          value={Math.round(stats.occupancyRate)}
-          unit="%"
-          color="primary"
-        />
-        <StatCard
-          title="Revenu total"
-          value={stats.totalRevenue.toFixed(0)}
-          unit="€"
-          color="secondary"
-        />
+        <StatCard title="Réservations totales" value={stats.totalReservations} icon={BarChart3} color="primary" />
+        <StatCard title="Réservations actives" value={stats.activeReservations} icon={CheckCircle2} color="secondary" />
+        <StatCard title="Places disponibles" value={stats.availableSpaces} icon={BarChart3} color="accent" />
+        <StatCard title="Taux d'occupation" value={Math.round(stats.occupancyRate)} unit="%" icon={BarChart3} color="primary" />
+        <StatCard title="Revenu total" value={stats.totalRevenue.toFixed(0)} unit="€" icon={CheckCircle2} color="secondary" />
       </div>
 
       {/* Charts Section */}
@@ -155,7 +134,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <a href="/admin/parking" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
           <div className="space-y-3">
-            <div className="text-2xl">🅿️</div>
+            <div className="text-2xl">P</div>
             <h3 className="font-semibold text-foreground">Gestion du parking</h3>
             <p className="text-sm text-muted-foreground">Gérer les places et statuts</p>
           </div>
@@ -163,7 +142,7 @@ export default function AdminDashboard() {
 
         <a href="/admin/users" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
           <div className="space-y-3">
-            <div className="text-2xl">👥</div>
+            <div className="text-2xl"><Users className="w-6 h-6" /></div>
             <h3 className="font-semibold text-foreground">Utilisateurs</h3>
             <p className="text-sm text-muted-foreground">{stats.totalUsers} utilisateurs actifs</p>
           </div>
@@ -171,7 +150,7 @@ export default function AdminDashboard() {
 
         <a href="/admin/settings" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
           <div className="space-y-3">
-            <div className="text-2xl">⚙️</div>
+            <div className="text-2xl"><Settings className="w-6 h-6" /></div>
             <h3 className="font-semibold text-foreground">Paramètres</h3>
             <p className="text-sm text-muted-foreground">Configuration du système</p>
           </div>

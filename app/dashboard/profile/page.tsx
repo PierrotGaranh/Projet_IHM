@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/context';
+import { Lock } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth();
@@ -242,7 +243,7 @@ export default function ProfilePage() {
       {/* Info Box */}
       <div className="card-base p-6 border-l-4 border-l-accent bg-accent/5 space-y-3">
         <div className="flex items-start gap-3">
-          <span className="text-2xl mt-1">🔒</span>
+          <span className="text-2xl mt-1"><Lock className="w-5 h-5"/></span>
           <div className="space-y-1">
             <h3 className="font-semibold text-foreground">Sécurité</h3>
             <p className="text-sm text-muted-foreground">

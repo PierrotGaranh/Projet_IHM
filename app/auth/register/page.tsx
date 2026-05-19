@@ -26,7 +26,7 @@ export default function RegisterPage() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError('');
 
@@ -205,7 +205,7 @@ export default function RegisterPage() {
             disabled={isLoading}
             className="btn-primary w-full"
           >
-            {isLoading ? 'Inscription en cours...' : 'S&apos;inscrire'}
+            {isLoading ? 'Inscription en cours...' : 'S\'inscrire'}
           </button>
         </form>
 

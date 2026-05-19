@@ -108,7 +108,7 @@ export default function SettingsPage() {
 
         {/* Operating Hours */}
         <div className="pt-6 border-t border-border space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Horaires d&apos;ouverture</h2>
+          <h2 className="text-lg font-semibold text-foreground">Horaires d'ouverture</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Opening Hour */}
@@ -191,7 +191,7 @@ export default function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="btn-primary w-full"
+            className="btn-primary w-full cursor-pointer disabled:cursor-not-allowed disabled:bg-secondary/50 disabled:text-secondary/70"
           >
             {isSaving ? 'Sauvegarde en cours...' : 'Enregistrer les paramètres'}
           </button>
@@ -204,7 +204,7 @@ export default function SettingsPage() {
 
         <div className="space-y-3 text-sm">
           <div className="flex items-center justify-between py-2">
-            <span className="text-muted-foreground">Version de l&apos;application</span>
+            <span className="text-muted-foreground">Version de l'application</span>
             <span className="font-semibold text-foreground">v1.0.0</span>
           </div>
           <div className="flex items-center justify-between py-2 border-t border-border">
