@@ -6,13 +6,13 @@ import { useAuth } from '@/lib/context';
 
 export default function Page() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      router.push(isAuthenticated ? '/dashboard' : '/auth/login');
+      router.push(isAuthenticated ? (user?.role === 'admin' ? '/admin' : '/dashboard') : '/auth/login');
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, user, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

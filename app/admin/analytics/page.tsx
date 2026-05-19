@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<any>(null);
@@ -14,37 +15,47 @@ export default function AnalyticsPage() {
   }, []);
 
   if (!stats) {
-    return <div className="text-muted-foreground">Chargement...</div>;
+    return (
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-80 w-full" />
+          <Skeleton className="h-80 w-full" />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
-        <p className="text-muted-foreground">
-          Statistiques et tendances détaillées de votre parking
-        </p>
+        <p className="text-muted-foreground">Statistiques et tendances détaillées de votre parking</p>
       </div>
 
-      {/* Main KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="card-base p-6 space-y-2">
+        <div className="card-base p-6 space-y-2 hover:shadow-md transition-shadow">
           <p className="text-sm text-muted-foreground">Revenu total</p>
           <p className="text-3xl font-bold text-primary">{stats.totalRevenue.toFixed(0)}€</p>
           <p className="text-xs text-secondary">+12% ce mois</p>
         </div>
-        <div className="card-base p-6 space-y-2">
-          <p className="text-sm text-muted-foreground">Taux d&apos;occupation</p>
+        <div className="card-base p-6 space-y-2 hover:shadow-md transition-shadow">
+          <p className="text-sm text-muted-foreground">Taux d'occupation</p>
           <p className="text-3xl font-bold text-accent">{Math.round(stats.occupancyRate)}%</p>
           <p className="text-xs text-secondary">Optimal entre 80-90%</p>
         </div>
-        <div className="card-base p-6 space-y-2">
+        <div className="card-base p-6 space-y-2 hover:shadow-md transition-shadow">
           <p className="text-sm text-muted-foreground">Réservations actives</p>
           <p className="text-3xl font-bold text-secondary">{stats.activeReservations}</p>
           <p className="text-xs text-muted-foreground">Sur {stats.totalReservations}</p>
         </div>
-        <div className="card-base p-6 space-y-2">
+        <div className="card-base p-6 space-y-2 hover:shadow-md transition-shadow">
           <p className="text-sm text-muted-foreground">Utilisateurs</p>
           <p className="text-3xl font-bold text-primary">{stats.totalUsers}</p>
           <p className="text-xs text-secondary">+5 ce mois</p>
@@ -55,7 +66,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Occupation Trend */}
         <div className="card-base p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Tendance d&apos;occupation</h2>
+          <h2 className="text-lg font-semibold text-foreground">Tendance d'occupation</h2>
           <div className="space-y-4">
             {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => {
               const percentage = Math.round(Math.random() * 70) + 30;

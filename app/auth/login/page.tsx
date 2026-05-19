@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -21,7 +21,8 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        router.push('/dashboard');
+        const redirectTo = result.user?.role === 'admin' ? '/admin' : '/dashboard';
+        router.push(redirectTo);
       } else {
         setError(result.error || 'Login failed');
       }
@@ -120,7 +121,7 @@ export default function LoginPage() {
             href="/auth/register"
             className="text-primary hover:text-primary/80 font-semibold transition-colors"
           >
-            S&apos;inscrire
+            S'inscrire
           </Link>
         </p>
       </div>

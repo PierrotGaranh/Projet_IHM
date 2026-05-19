@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   register: (email: string, password: string, firstName: string, lastName: string, phone: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => boolean;
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         document.cookie = 'parkingAuth=true; path=/';
       }
-      return { success: true };
+      return { success: true, user: result.user };
     }
     
     return { success: false, error: result.error };

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
 import { Reservation } from '@/lib/types';
+import { Calendar, Car, Check, CheckLine, Lightbulb } from 'lucide-react';
 
 export default function DashboardHome() {
   const { user } = useAuth();
@@ -46,7 +47,7 @@ export default function DashboardHome() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">Réservations actives</h3>
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="text-lg font-bold text-primary">🚗</span>
+              <span className="text-lg font-bold text-primary"><Car className="w-5 h-5"/></span>
             </div>
           </div>
           <p className="text-3xl font-bold text-foreground">{stats.activeReservations}</p>
@@ -58,7 +59,7 @@ export default function DashboardHome() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">Places disponibles</h3>
             <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
-              <span className="text-lg font-bold text-secondary">✓</span>
+              <span className="text-lg font-bold text-secondary"><Check className="w-5 h-5"/></span>
             </div>
           </div>
           <p className="text-3xl font-bold text-foreground">{stats.availableSpaces}</p>
@@ -70,7 +71,7 @@ export default function DashboardHome() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">Prochaine réservation</h3>
             <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-              <span className="text-lg font-bold text-accent">📅</span>
+              <span className="text-lg font-bold text-accent"><Calendar className="w-5 h-5"/></span>
             </div>
           </div>
           <p className="text-3xl font-bold text-foreground">
@@ -95,7 +96,7 @@ export default function DashboardHome() {
         >
           <div className="space-y-4">
             <div className="w-12 h-12 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors flex items-center justify-center">
-              <span className="text-2xl">🅿️</span>
+              <span className="text-2xl">P</span>
             </div>
             <div className="space-y-1">
               <h2 className="text-lg font-semibold text-foreground">Réserver une place</h2>
@@ -116,16 +117,16 @@ export default function DashboardHome() {
         >
           <div className="space-y-4">
             <div className="w-12 h-12 rounded-lg bg-secondary/10 group-hover:bg-secondary/20 transition-colors flex items-center justify-center">
-              <span className="text-2xl">📋</span>
+              <span className="text-2xl"><CheckLine className="w-5 h-5"/></span>
             </div>
             <div className="space-y-1">
               <h2 className="text-lg font-semibold text-foreground">Mes réservations</h2>
               <p className="text-sm text-muted-foreground">
-                Consultez l&apos;historique de vos réservations
+                Consultez l'historique de vos réservations
               </p>
             </div>
             <div className="text-sm font-semibold text-secondary group-hover:translate-x-1 transition-transform inline-flex">
-              Voir l&apos;historique →
+              Voir l'historique →
             </div>
           </div>
         </Link>
@@ -134,7 +135,7 @@ export default function DashboardHome() {
       {/* Info Box */}
       <div className="card-base p-6 border-l-4 border-l-accent bg-accent/5 space-y-3">
         <div className="flex items-start gap-3">
-          <span className="text-2xl mt-1">💡</span>
+          <span className="text-2xl mt-1"><Lightbulb className="w-5 h-5"/></span>
           <div className="space-y-1">
             <h3 className="font-semibold text-foreground">Conseil</h3>
             <p className="text-sm text-muted-foreground">

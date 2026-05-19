@@ -210,7 +210,7 @@ export default function ParkingManagementPage() {
             </div>
           ) : (
             <div className="card-base p-6 text-center text-muted-foreground space-y-2">
-              <p className="text-lg">🅿️</p>
+              <p className="text-lg">P</p>
               <p>Sélectionnez une place</p>
               <p className="text-xs">pour voir les détails</p>
             </div>
