@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel } from '@/lib/types';
+import { LoadingDots } from '@/components/loading-dots';
 
 export default function ParkingManagementPage() {
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
@@ -10,12 +11,12 @@ export default function ParkingManagementPage() {
   const [filterLevel, setFilterLevel] = useState<number | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'occupied' | 'reserved' | 'maintenance'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [changingSpaceId, setChangingSpaceId] = useState<string | null>(null);
 
   useEffect(() => {
     const store = getStore();
     const spaces = store.getSpaces();
     
-    // Group by level
     const groupedByLevel: Record<number, ParkingSpace[]> = {};
     spaces.forEach(space => {
       if (!groupedByLevel[space.level]) {
@@ -36,11 +37,13 @@ export default function ParkingManagementPage() {
     setLevels(levelArray);
   }, [refreshKey]);
 
-  const handleStatusChange = (spaceId: string, newStatus: string) => {
+  const handleStatusChange = async (spaceId: string, newStatus: string) => {
+    setChangingSpaceId(spaceId);
     const store = getStore();
     store.updateSpace(spaceId, { status: newStatus as any });
     setRefreshKey(prev => prev + 1);
     setSelectedSpace(null);
+    setChangingSpaceId(null);
   };
 
   const getSpaceStatusColor = (status: string) => {
@@ -194,15 +197,14 @@ export default function ParkingManagementPage() {
                     <button
                       key={status}
                       onClick={() => handleStatusChange(selectedSpace.id, status)}
+                      disabled={changingSpaceId === selectedSpace.id}
                       className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         selectedSpace.status === status
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted text-foreground hover:bg-muted/80'
-                      }`}
+                      } ${changingSpaceId === selectedSpace.id ? 'opacity-50' : ''}`}
                     >
-                      {status === 'available' ? 'Disponible' :
-                       status === 'occupied' ? 'Occupée' :
-                       status === 'reserved' ? 'Réservée' : 'Maintenance'}
+                      {changingSpaceId === selectedSpace.id ? <LoadingDots /> : (status === 'available' ? 'Disponible' : status === 'occupied' ? 'Occupée' : status === 'reserved' ? 'Réservée' : 'Maintenance')}
                     </button>
                   ))}
                 </div>

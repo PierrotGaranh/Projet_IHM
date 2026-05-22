@@ -3,31 +3,21 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
 import { ActiveLink } from '@/components/active-link';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Home, Calendar, Car, User, LogOut } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-3">
-          <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-2xl mx-auto">P</div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="w-12 h-12 rounded-lg bg-primary animate-pulse" /></div>;
 
-  if (!user || user.role !== 'user') {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <p className="text-destructive font-semibold">Accès refusé</p>
-          <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-primary">
-            Retour à la connexion
-          </button>
+          <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-primary cursor-pointer">Retour à la connexion</button>
         </div>
       </div>
     );
@@ -64,11 +54,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               ))}
             </div>
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-foreground">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
-              <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-secondary text-sm flex items-center gap-2">
+              <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-secondary text-sm flex items-center gap-2 cursor-pointer">
                 <LogOut className="w-4 h-4" /> Déconnexion
               </button>
             </div>

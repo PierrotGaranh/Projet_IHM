@@ -3,27 +3,24 @@
 import { useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart3, CheckCircle2, Users, Settings } from 'lucide-react';
-
-interface Stats {
-  totalReservations: number;
-  activeReservations: number;
-  occupancyRate: number;
-  totalRevenue: number;
-  totalUsers: number;
-  availableSpaces: number;
-}
+import { BarChart3, Car, CheckCircle2, Users, Settings, Activity } from 'lucide-react';
+import { ActivityLog } from '@/lib/types';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
 
   useEffect(() => {
     const store = getStore();
-    const dashboardStats = store.getDashboardStats();
-    setStats(dashboardStats);
+    setStats(store.getDashboardStats());
+    setActivities(store.getActivities());
   }, []);
 
-  const StatCard = ({ title, value, unit = '', icon: Icon, color = 'primary' }: any) => {
+  if (!stats) {
+    return <div className="space-y-8"><Skeleton className="h-10 w-48" /><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">{Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}</div></div>;
+  }
+
+  const StatCard = ({ title, value, unit = '', icon: Icon, color = 'primary', description }: any) => {
     const bgColors: Record<string, string> = {
       primary: 'bg-primary/10 text-primary',
       secondary: 'bg-secondary/10 text-secondary',
@@ -38,30 +35,11 @@ export default function AdminDashboard() {
             <Icon className="w-5 h-5" />
           </div>
         </div>
-        <p className="text-3xl font-bold text-foreground">
-          {value}{unit && <span className="text-lg ml-1">{unit}</span>}
-        </p>
+        <p className="text-3xl font-bold text-foreground">{value}{unit && <span className="text-lg ml-1">{unit}</span>}</p>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
       </div>
     );
   };
-
-  if (!stats) {
-    return (
-      <div className="space-y-8">
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          {Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-80 w-full" />
-          <Skeleton className="h-80 w-full" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
@@ -69,64 +47,30 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-bold text-foreground">Dashboard Admin</h1>
         <p className="text-muted-foreground">Vue d'ensemble et statistiques de votre parking</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <StatCard title="Réservations totales" value={stats.totalReservations} icon={BarChart3} color="primary" />
-        <StatCard title="Réservations actives" value={stats.activeReservations} icon={CheckCircle2} color="secondary" />
-        <StatCard title="Places disponibles" value={stats.availableSpaces} icon={BarChart3} color="accent" />
-        <StatCard title="Taux d'occupation" value={Math.round(stats.occupancyRate)} unit="%" icon={BarChart3} color="primary" />
-        <StatCard title="Revenu total" value={stats.totalRevenue.toFixed(0)} unit="€" icon={CheckCircle2} color="secondary" />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Réservations actives" value={stats.activeReservations} icon={CheckCircle2} color="secondary" description="En cours de validité" />
+        <StatCard title="Places disponibles" value={getStore().getParkingStats().availableSpaces} icon={BarChart3} color="accent" description="Libres et non réservées" />
+        <StatCard title="Taux d'occupation" value={Math.round(stats.occupancyRate)} unit="%" icon={BarChart3} color="primary" description="Places occupées + réservées" />
+        <StatCard title="Revenu total" value={stats.totalRevenue.toFixed(0)} unit="€" icon={CheckCircle2} color="secondary" description="Réservations actives + complétées" />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Occupancy Chart */}
-        <div className="card-base p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Occupation par niveau</h2>
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((level) => {
-              const percentage = Math.round(Math.random() * 90) + 10;
-              return (
-                <div key={level} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Niveau {level}</span>
-                    <span className="font-semibold text-foreground">{percentage}%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-all"
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* Section des logs d'activité */}
+      <div className="card-base p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Activity className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold text-foreground">Activité récente</h2>
         </div>
-
-        {/* Revenue Chart */}
-        <div className="card-base p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Revenu des 7 derniers jours</h2>
-          <div className="space-y-3">
-            {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, i) => {
-              const revenue = Math.round(Math.random() * 500) + 100;
-              const maxRevenue = 600;
-              const percentage = (revenue / maxRevenue) * 100;
-              return (
-                <div key={day} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{day}</span>
-                    <span className="font-semibold text-foreground">{revenue}€</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full bg-secondary transition-all"
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="space-y-3">
+          {activities.slice(0, 6).map((log) => (
+            <div key={log.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+              <div className="w-2 h-2 rounded-full bg-primary mt-2" />
+              <div className="flex-1">
+                <p className="text-sm text-foreground">{log.message}</p>
+                <p className="text-xs text-muted-foreground">{log.timestamp.toLocaleString('fr-FR')}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -134,55 +78,25 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <a href="/admin/parking" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
           <div className="space-y-3">
-            <div className="text-2xl">P</div>
+            <Car className="w-6 h-6 text-primary" />
             <h3 className="font-semibold text-foreground">Gestion du parking</h3>
             <p className="text-sm text-muted-foreground">Gérer les places et statuts</p>
           </div>
         </a>
-
         <a href="/admin/users" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
           <div className="space-y-3">
-            <div className="text-2xl"><Users className="w-6 h-6" /></div>
+            <Users className="w-6 h-6 text-secondary" />
             <h3 className="font-semibold text-foreground">Utilisateurs</h3>
             <p className="text-sm text-muted-foreground">{stats.totalUsers} utilisateurs actifs</p>
           </div>
         </a>
-
         <a href="/admin/settings" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
           <div className="space-y-3">
-            <div className="text-2xl"><Settings className="w-6 h-6" /></div>
+            <Settings className="w-6 h-6 text-accent" />
             <h3 className="font-semibold text-foreground">Paramètres</h3>
             <p className="text-sm text-muted-foreground">Configuration du système</p>
           </div>
         </a>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="card-base p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Activité récente</h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between py-3 border-b border-border">
-            <div className="space-y-1">
-              <p className="font-medium text-foreground">Nouvelle réservation</p>
-              <p className="text-xs text-muted-foreground">Il y a 5 minutes</p>
-            </div>
-            <span className="text-sm text-primary font-semibold">+45€</span>
-          </div>
-          <div className="flex items-center justify-between py-3 border-b border-border">
-            <div className="space-y-1">
-              <p className="font-medium text-foreground">Réservation annulée</p>
-              <p className="text-xs text-muted-foreground">Il y a 12 minutes</p>
-            </div>
-            <span className="text-sm text-destructive font-semibold">-30€</span>
-          </div>
-          <div className="flex items-center justify-between py-3">
-            <div className="space-y-1">
-              <p className="font-medium text-foreground">Nouvel utilisateur</p>
-              <p className="text-xs text-muted-foreground">Il y a 1 heure</p>
-            </div>
-            <span className="text-sm text-secondary font-semibold">+1 user</span>
-          </div>
-        </div>
       </div>
     </div>
   );

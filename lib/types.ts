@@ -55,11 +55,12 @@ export interface Reservation {
 
 // Analytics Types
 export interface DashboardStats {
-  totalReservations: number;
   activeReservations: number;
   occupancyRate: number;
   totalRevenue: number;
   totalUsers: number;
+  newUsersThisMonth: number;
+  revenueChange: number;
 }
 
 export interface ParkingStats {
@@ -68,4 +69,13 @@ export interface ParkingStats {
   reservedSpaces: number;
   maintenanceSpaces: number;
   totalSpaces: number;
+}
+
+// Activity Log
+export interface ActivityLog {
+  id: string;
+  type: 'user' | 'reservation' | 'parking' | 'system';
+  message: string;
+  timestamp: Date;
+  userId?: string;
 }
