@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuth } from '@/lib/context';
 import { Lock } from 'lucide-react';
 import { LoadingDots } from '@/components/loading-dots';
+import Loading from './loading';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -135,3 +136,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+export default function ProfilePage() {return <Suspense fallback={<Loading />}><ProfilePageContent /></Suspense>};

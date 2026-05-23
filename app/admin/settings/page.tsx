@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { LoadingDots } from '@/components/loading-dots';
+import Loading from './loading';
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const [settings, setSettings] = useState({
     parkingName: 'ParkHub Central',
     totalLevels: 5,
@@ -94,3 +95,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+export default function SettingsPage() {return <Suspense fallback={<Loading />}><SettingsPageContent /></Suspense>};

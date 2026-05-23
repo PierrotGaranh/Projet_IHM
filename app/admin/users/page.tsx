@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { User } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
+import Loading from './loading';
 
-export default function UsersManagementPage() {
+function UsersManagementPageContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [filter, setFilter] = useState<'all' | 'users' | 'admins'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -145,3 +146,5 @@ export default function UsersManagementPage() {
     </div>
   );
 }
+
+export default function UsersManagementPage() {return <Suspense fallback={<Loading />}><UsersManagementPageContent /></Suspense>};

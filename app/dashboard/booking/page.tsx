@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
+import Loading from './loading';
 
-export default function BookingPage() {
+function BookingPageContent() {
   const router = useRouter();
   const { user } = useAuth();
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
@@ -126,7 +127,7 @@ export default function BookingPage() {
                     key={space.id}
                     onClick={() => space.status === 'available' && setSelectedSpace(space)}
                     disabled={space.status !== 'available'}
-                    className={`aspect-square rounded-lg transition-all font-semibold text-sm text-white ${getSpaceStatusColor(space.status)} ${
+                    className={`aspect-square rounded-lg transition-all font-semibold text-sm text-white cursor-pointer ${getSpaceStatusColor(space.status)} ${
                       selectedSpace?.id === space.id ? 'ring-2 ring-accent ring-offset-2' : ''
                     }`}
                     title={`Place ${space.number} - ${space.type}`}
@@ -205,3 +206,5 @@ export default function BookingPage() {
     </div>
   );
 }
+
+export default function BookingPage() {return <Suspense fallback={<Loading />}><BookingPageContent /></Suspense>};

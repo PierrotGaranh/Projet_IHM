@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context';
 import { LoadingDots } from '@/components/loading-dots';
+import Loading from './loading';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState('user@example.com');
@@ -57,13 +58,15 @@ export default function LoginPage() {
             <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-base w-full" required />
           </div>
           {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">{error}</div>}
-          <button type="submit" disabled={isLoading} className="btn-primary w-full">{isLoading ? <LoadingDots /> : 'Se connecter'}</button>
+          <button type="submit" disabled={isLoading} className="btn-primary w-full cursor-pointer">{isLoading ? <LoadingDots /> : 'Se connecter'}</button>
         </form>
 
         <div className="flex items-center gap-3"><div className="flex-1 h-px bg-border" /><span className="text-sm text-muted-foreground">ou</span><div className="flex-1 h-px bg-border" /></div>
-        <p className="text-center text-sm text-muted-foreground">Pas encore de compte ? <Link href="/auth/register" className="text-primary hover:text-primary/80 font-semibold">S'inscrire</Link></p>
+        <p className="text-center text-sm text-muted-foreground">Pas encore de compte ? <Link href="/auth/register" className="text-primary hover:text-primary/80 font-semibold cursor-pointer">S'inscrire</Link></p>
       </div>
       <p className="text-center text-xs text-muted-foreground">Application de gestion de parking réservé</p>
     </div>
   );
 }
+
+export default function LoginPage() {return <Suspense fallback={<Loading />}><LoginPageContent /></Suspense>};

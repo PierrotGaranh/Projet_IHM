@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Car, CheckCircle2, Users, Settings, Activity } from 'lucide-react';
 import { ActivityLog } from '@/lib/types';
+import Loading from './loading';
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const [stats, setStats] = useState<any>(null);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
 
@@ -101,3 +102,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+export default function AdminDashboard() {return <Suspense fallback={<Loading />}><AdminDashboardContent /></Suspense>};

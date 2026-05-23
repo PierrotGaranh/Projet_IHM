@@ -84,6 +84,12 @@ function generateRealisticReservations(users: User[], spaces: ParkingSpace[]): R
     for (let i = 0; i < numRes; i++) {
       const startDate = new Date();
       startDate.setDate(now.getDate() + Math.floor(Math.random() * 60) - 30);
+      startDate.setHours(
+        Math.floor(Math.random() * 24),
+        Math.floor(Math.random() * 60),
+        0, 0
+      );
+
       const durationHours = Math.floor(Math.random() * 48) + 2;
       const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
 
@@ -153,6 +159,8 @@ class StoreManager {
 
     syncSpacesWithReservations(this.spaces, this.reservations);
 
+    this.generateInitialActivities();
+
     for (const user of this.users) {
       if (user.email === 'admin@example.com') {
         this.userPasswords.set(user.email, hashPassword('admin123'));
@@ -160,10 +168,77 @@ class StoreManager {
         this.userPasswords.set(user.email, hashPassword('password123'));
       }
     }
+  }
 
-    this.addActivity('system', 'Application démarrée');
-    this.addActivity('system', `${this.users.length} utilisateurs chargés`);
-    this.addActivity('system', `${this.reservations.length} réservations historiques`);
+  private generateInitialActivities() {
+    const reservationsToLog = this.reservations.slice(0, 8);
+    for (const res of reservationsToLog) {
+      const space = this.getSpace(res.spaceId);
+      if (!space) continue;
+      const userName = this.getUser(res.userId)?.firstName || 'Utilisateur';
+      let message = '';
+      let type: ActivityLog['type'] = 'reservation';
+      let timestamp = res.createdAt;
+      
+      if (res.status === 'active') {
+        message = `Nouvelle réservation #${res.id} pour la place ${space.number} (Niveau ${space.level})`;
+      } else if (res.status === 'cancelled') {
+        message = `La réservation #${res.id} a été annulée`;
+      } else if (res.status === 'completed') {
+        message = `La réservation #${res.id} pour la place ${space.number} est terminée`;
+        type = 'system';
+      } else {
+        continue;
+      }
+      
+      this.activities.push({
+        id: `act-init-${Date.now()}-${Math.random()}`,
+        type,
+        message,
+        timestamp,
+        userId: res.userId,
+      });
+    }
+
+    const maintenanceSpaces = this.spaces.filter(s => s.status === 'maintenance');
+    for (const space of maintenanceSpaces) {
+      const randomDate = new Date();
+      randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 30));
+      this.activities.push({
+        id: `act-init-${Date.now()}-${Math.random()}`,
+        type: 'parking',
+        message: `La place ${space.number} (Niveau ${space.level}) a été mise à jour -> Statut: maintenance`,
+        timestamp: randomDate,
+        userId: undefined,
+      });
+    }
+
+    const usersToLog = this.users.filter(u => u.role === 'user').slice(0, 5);
+    for (const user of usersToLog) {
+      this.activities.push({
+        id: `act-init-${Date.now()}-${Math.random()}`,
+        type: 'user',
+        message: `Nouvel utilisateur enregistré: ${user.firstName} ${user.lastName}`,
+        timestamp: user.createdAt,
+        userId: user.id,
+      });
+    }
+
+    const someUsers = this.users.filter(u => u.role === 'user').slice(0, 3);
+    for (const user of someUsers) {
+      const randomDate = new Date(user.createdAt);
+      randomDate.setDate(randomDate.getDate() + Math.floor(Math.random() * 10));
+      this.activities.push({
+        id: `act-init-${Date.now()}-${Math.random()}`,
+        type: 'user',
+        message: `${user.firstName} ${user.lastName} a mis à jour son profil`,
+        timestamp: randomDate,
+        userId: user.id,
+      });
+    }
+
+    this.activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    if (this.activities.length > 50) this.activities = this.activities.slice(0, 50);
   }
 
   private addActivity(type: ActivityLog['type'], message: string, userId?: string) {
@@ -276,7 +351,7 @@ class StoreManager {
     };
     this.reservations.push(reservation);
     this.updateSpace(spaceId, { status: 'reserved', reservedBy: userId });
-    this.addActivity('reservation', `Nouvelle réservation #${reservation.id.slice(-6)} pour la place ${space.number} (Niveau ${space.level})`, userId);
+    this.addActivity('reservation', `Nouvelle réservation #${reservation.id} pour la place ${space.number} (Niveau ${space.level})`, userId);
     return { success: true, reservation };
   }
 
@@ -288,7 +363,7 @@ class StoreManager {
     if (space && space.reservedBy === reservation.userId) {
       this.updateSpace(space.id, { status: 'available', reservedBy: undefined });
     }
-    this.addActivity('reservation', `La réservation #${reservation.id.slice(-6)} a été annulée`, reservation.userId);
+    this.addActivity('reservation', `La réservation #${reservation.id} a été annulée`, reservation.userId);
     return true;
   }
 
@@ -350,8 +425,7 @@ class StoreManager {
       const hour = res.startDate.getHours();
       hours[hour]++;
     }
-    const max = Math.max(...hours);
-    return hours.map((count, idx) => ({ time: `${idx}:00`, occupancy: max === 0 ? 0 : Math.min(100, Math.round((count / max) * 100)) }));
+    return hours.map((count, idx) => ({ time: `${idx}:00`, count }));
   }
 }
 

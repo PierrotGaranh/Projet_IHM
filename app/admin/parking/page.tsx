@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
+import Loading from './loading';
 
-export default function ParkingManagementPage() {
+function ParkingManagementPageContent() {
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<ParkingSpace | null>(null);
   const [filterLevel, setFilterLevel] = useState<number | 'all'>('all');
@@ -131,7 +132,7 @@ export default function ParkingManagementPage() {
                   <button
                     key={space.id}
                     onClick={() => setSelectedSpace(space)}
-                    className={`aspect-square rounded-lg transition-all font-semibold text-sm text-white ${getSpaceStatusColor(space.status)} ${
+                    className={`aspect-square rounded-lg transition-all font-semibold text-sm text-white cursor-pointer ${getSpaceStatusColor(space.status)} ${
                       selectedSpace?.id === space.id ? 'ring-2 ring-accent ring-offset-2' : ''
                     }`}
                     title={`Place ${space.number} - ${space.type}`}
@@ -198,7 +199,7 @@ export default function ParkingManagementPage() {
                       key={status}
                       onClick={() => handleStatusChange(selectedSpace.id, status)}
                       disabled={changingSpaceId === selectedSpace.id}
-                      className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                         selectedSpace.status === status
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted text-foreground hover:bg-muted/80'
@@ -251,3 +252,5 @@ export default function ParkingManagementPage() {
     </div>
   );
 }
+
+export default function ParkingManagementPage() {return <Suspense fallback={<Loading />}><ParkingManagementPageContent /></Suspense>};

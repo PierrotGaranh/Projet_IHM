@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { Reservation } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
 import { Mailbox } from 'lucide-react';
+import Loading from './loading';
 
-export default function AdminReservationsPage() {
+function AdminReservationsPageContent() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -58,7 +59,7 @@ export default function AdminReservationsPage() {
           <button
             key={filterOption}
             onClick={() => setFilter(filterOption)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               filter === filterOption
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground hover:bg-muted/80'
@@ -104,7 +105,7 @@ export default function AdminReservationsPage() {
                     <button
                       onClick={() => handleCancel(reservation.id)}
                       disabled={cancellingId === reservation.id}
-                      className="btn-secondary text-sm w-full sm:w-auto disabled:opacity-50"
+                      className="btn-secondary text-sm w-full sm:w-auto disabled:opacity-50 cursor-pointer"
                     >
                       {cancellingId === reservation.id ? <LoadingDots /> : 'Annuler'}
                     </button>
@@ -186,3 +187,5 @@ export default function AdminReservationsPage() {
     </div>
   );
 }
+
+export default function AdminReservationsPage() {return <Suspense fallback={<Loading />}><AdminReservationsPageContent /></Suspense>};

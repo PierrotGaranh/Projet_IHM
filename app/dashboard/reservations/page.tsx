@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
 import { Reservation } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
 import { Mailbox } from 'lucide-react';
+import Loading from './loading';
 
-export default function ReservationsPage() {
+function ReservationsPageContent() {
   const { user } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
@@ -78,7 +79,7 @@ export default function ReservationsPage() {
                       <h3 className="text-lg font-semibold text-foreground">Place {space?.number || 'N/A'} - Niveau {space?.level || 'N/A'}</h3>
                       {getStatusBadge(res.status)}
                     </div>
-                    <p className="text-sm text-muted-foreground">ID: {res.id.slice(-8)}</p>
+                    <p className="text-sm text-muted-foreground">ID: {res.id}</p>
                   </div>
                   {res.status === 'active' && (
                     <button onClick={() => handleCancel(res.id)} disabled={cancellingId === res.id} className="btn-secondary text-sm disabled:opacity-50 cursor-pointer">
@@ -108,3 +109,5 @@ export default function ReservationsPage() {
     </div>
   );
 }
+
+export default function ReservationsPage() {return <Suspense fallback={<Loading />}><ReservationsPageContent /></Suspense>};

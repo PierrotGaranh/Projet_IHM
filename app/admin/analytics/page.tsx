@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
+import Loading from './loading';
 
-export default function AnalyticsPage() {
+function AnalyticsPageContent() {
   const [stats, setStats] = useState<any>(null);
   const [revenueByType, setRevenueByType] = useState<Record<string, number>>({});
   const [occupancyByDay, setOccupancyByDay] = useState<number[]>([]);
-  const [peakHours, setPeakHours] = useState<{ time: string; occupancy: number }[]>([]);
+  const [peakHours, setPeakHours] = useState<{ time: string; count: number }[]>([]);
 
   useEffect(() => {
     const store = getStore();
@@ -52,10 +53,53 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Heures de pointe - Histogramme modernisé */}
+      <div className="card-base p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Heures de pointe</h2>
+        
+        {peakHours.some(h => h.count > 0) ? (
+          <>
+            <div className="flex items-end gap-2 pt-4 overflow-x-auto pb-2">
+              {peakHours
+                .filter(item => item.count > 0)
+                .sort((a, b) => a.time.localeCompare(b.time)) // tri chronologique
+                .map((item) => {
+                  const maxCount = Math.max(...peakHours.map(h => h.count));
+                  const heightPercent = maxCount === 0 ? 0 : (item.count / maxCount) * 100;
+                  const barHeight = Math.max(24, (heightPercent / 100) * 200);
+                  return (
+                    <div key={item.time} className="flex flex-col items-center flex-shrink-0 w-14">
+                      <div className="relative w-full flex flex-col items-center">
+                        <div
+                          className="w-1 bg-accent rounded-full transition-all duration-300 hover:bg-accent/80"
+                          style={{ height: `${barHeight}px` }}
+                        />
+                        <span className="text-xs font-semibold text-foreground mt-2">
+                          {item.count}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {item.time}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Nombre de réservations débutant à chaque heure (hauteur proportionnelle au max)
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Aucune réservation enregistrée
+          </p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Occupation par jour */}
         <div className="card-base p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Tendance d'occupation (par jour)</h2>
+          <h2 className="text-lg font-semibold text-foreground">Tendance d'occupation</h2>
           <div className="space-y-4">
             {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, idx) => (
               <div key={day} className="space-y-1">
@@ -114,25 +158,8 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
-
-      {/* Heures de pointe */}
-      <div className="card-base p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Heures de pointe</h2>
-        <div className="space-y-3">
-          {peakHours.filter((_, i) => i % 3 === 0).map((item) => (
-            <div key={item.time} className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{item.time}</span>
-                <span className="font-semibold text-foreground">{item.occupancy}%</span>
-              </div>
-              <div className="w-full h-3 rounded-full bg-muted overflow-hidden">
-                <div className="h-full bg-accent transition-all" style={{ width: `${item.occupancy}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">Basé sur les heures de début des réservations</p>
-      </div>
     </div>
   );
 }
+
+export default function AnalyticsPage() {return <Suspense fallback={<Loading />}><AnalyticsPageContent /></Suspense>};

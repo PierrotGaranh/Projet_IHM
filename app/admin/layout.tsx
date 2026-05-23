@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
 import { ActiveLink } from '@/components/active-link';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Car, Users, Calendar, BarChart3, Settings, LogOut, Menu, X } from 'lucide-react';
@@ -12,6 +13,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -70,8 +77,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <ActiveLink
                 key={item.href}
                 href={item.href}
-                activeClassName="bg-muted text-foreground"
-                inactiveClassName="text-muted-foreground hover:text-foreground hover:bg-muted"
+                activeClassName="bg-primary/10 text-primary"
+                inactiveClassName="text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                 className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors"
                 onClick={() => isMobile && setSidebarOpen(false)}
               >
@@ -86,9 +93,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="text-sm font-semibold text-foreground">{user.firstName} {user.lastName}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
-            <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-secondary w-full text-sm flex items-center justify-center gap-2 cursor-pointer">
+            <button onClick={() => setShowLogoutModal(true)} className="btn-secondary w-full text-sm flex items-center justify-center gap-2 cursor-pointer">
               <LogOut className="w-4 h-4" /> Déconnexion
             </button>
+            <ConfirmationModal
+              isOpen={showLogoutModal}
+              onClose={() => setShowLogoutModal(false)}
+              onConfirm={() => { setShowLogoutModal(false); handleLogout(); }}
+            />
           </div>
         </div>
       </aside>
@@ -100,11 +112,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <p className="text-sm text-muted-foreground hidden sm:block">Admin Panel</p>
           </div>
         </header>
         <main className="p-6">{children}</main>
+        <div className="fixed bottom-4 left-4 z-50">
+          <ThemeToggle />
+        </div>
       </div>
     </div>
   );

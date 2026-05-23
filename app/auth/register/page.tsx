@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context';
 import { LoadingDots } from '@/components/loading-dots';
+import Loading from './loading';
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
@@ -68,3 +69,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+export default function RegisterPage() {return <Suspense fallback={<Loading />}><RegisterPageContent /></Suspense>};
