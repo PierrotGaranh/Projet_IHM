@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { Reservation } from '@/lib/types';
+import { LoadingDots } from '@/components/loading-dots';
+import { Mailbox } from 'lucide-react';
+import Loading from './loading';
 
-export default function AdminReservationsPage() {
+function AdminReservationsPageContent() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     const store = getStore();
@@ -16,10 +20,12 @@ export default function AdminReservationsPage() {
   }, [refreshKey]);
 
   const handleCancel = (reservationId: string) => {
-    if (window.confirm('Annuler cette réservation?')) {
+    if (window.confirm('Annuler cette réservation ?')) {
+      setCancellingId(reservationId);
       const store = getStore();
       store.cancelReservation(reservationId);
       setRefreshKey(prev => prev + 1);
+      setCancellingId(null);
     }
   };
 
@@ -43,21 +49,17 @@ export default function AdminReservationsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">Gestion des réservations</h1>
-        <p className="text-muted-foreground">
-          Visualisez et gérez toutes les réservations du système
-        </p>
+        <p className="text-muted-foreground">Visualisez et gérez toutes les réservations du système</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         {(['all', 'active', 'completed', 'cancelled'] as const).map((filterOption) => (
           <button
             key={filterOption}
             onClick={() => setFilter(filterOption)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               filter === filterOption
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground hover:bg-muted/80'
@@ -71,10 +73,9 @@ export default function AdminReservationsPage() {
         ))}
       </div>
 
-      {/* Reservations List */}
       {filteredReservations.length === 0 ? (
         <div className="card-base p-12 text-center space-y-4">
-          <p className="text-2xl">📭</p>
+          <Mailbox className="w-10 h-10 text-muted-foreground" />
           <p className="text-lg font-semibold text-foreground">Aucune réservation</p>
         </div>
       ) : (
@@ -92,7 +93,7 @@ export default function AdminReservationsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       <h3 className="text-lg font-semibold text-foreground">
-                        Réservation #{reservation.id.slice(-8)}
+                        Réservation #{reservation.id}
                       </h3>
                       {getStatusBadge(reservation.status)}
                     </div>
@@ -103,9 +104,10 @@ export default function AdminReservationsPage() {
                   {reservation.status === 'active' && (
                     <button
                       onClick={() => handleCancel(reservation.id)}
-                      className="btn-secondary text-sm w-full sm:w-auto"
+                      disabled={cancellingId === reservation.id}
+                      className="btn-secondary text-sm w-full sm:w-auto disabled:opacity-50 cursor-pointer"
                     >
-                      Annuler
+                      {cancellingId === reservation.id ? <LoadingDots /> : 'Annuler'}
                     </button>
                   )}
                 </div>
@@ -154,31 +156,36 @@ export default function AdminReservationsPage() {
         </div>
       )}
 
-      {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card-base p-6 space-y-2">
           <p className="text-sm text-muted-foreground">Total réservations</p>
           <p className="text-3xl font-bold text-primary">{reservations.length}</p>
+          <p className="text-xs text-muted-foreground">Toutes réservations confondues</p>
         </div>
         <div className="card-base p-6 space-y-2">
           <p className="text-sm text-muted-foreground">Actives</p>
           <p className="text-3xl font-bold text-secondary">
             {reservations.filter(r => r.status === 'active').length}
           </p>
+          <p className="text-xs text-muted-foreground">En cours de validité</p>
         </div>
         <div className="card-base p-6 space-y-2">
           <p className="text-sm text-muted-foreground">Revenu total</p>
           <p className="text-3xl font-bold text-accent">
             {reservations.reduce((sum, r) => sum + r.amount, 0).toFixed(0)}€
           </p>
+          <p className="text-xs text-muted-foreground">Actives + complétées</p>
         </div>
         <div className="card-base p-6 space-y-2">
           <p className="text-sm text-muted-foreground">Revenu actif</p>
           <p className="text-3xl font-bold text-primary">
             {reservations.filter(r => r.status === 'active').reduce((sum, r) => sum + r.amount, 0).toFixed(0)}€
           </p>
+          <p className="text-xs text-muted-foreground">Réservations actives uniquement</p>
         </div>
       </div>
     </div>
   );
 }
+
+export default function AdminReservationsPage() {return <Suspense fallback={<Loading />}><AdminReservationsPageContent /></Suspense>};

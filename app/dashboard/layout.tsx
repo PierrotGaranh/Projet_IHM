@@ -3,31 +3,29 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
 import { ActiveLink } from '@/components/active-link';
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { useState } from 'react';
 import { Home, Calendar, Car, User, LogOut } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-3">
-          <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-2xl mx-auto">P</div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
 
-  if (!user || user.role !== 'user') {
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="w-12 h-12 rounded-lg bg-primary animate-pulse" /></div>;
+
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <p className="text-destructive font-semibold">Accès refusé</p>
-          <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-primary">
-            Retour à la connexion
-          </button>
+          <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-primary cursor-pointer">Retour à la connexion</button>
         </div>
       </div>
     );
@@ -49,13 +47,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">P</div>
               <span className="font-bold text-foreground hidden sm:inline">ParkHub</span>
             </ActiveLink>
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-2">
               {navItems.map((item) => (
                 <ActiveLink
                   key={item.href}
                   href={item.href}
-                  activeClassName="bg-muted text-foreground"
-                  inactiveClassName="text-muted-foreground hover:text-foreground hover:bg-muted"
+                  activeClassName="bg-primary/10 text-primary"
+                  inactiveClassName="text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                   className="px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2"
                 >
                   <item.icon className="w-4 h-4" />
@@ -68,9 +66,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <p className="text-sm font-semibold text-foreground">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
-              <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-secondary text-sm flex items-center gap-2">
+              <button onClick={() => setShowLogoutModal(true)} className="btn-secondary w-full text-sm flex items-center justify-center gap-2 cursor-pointer">
                 <LogOut className="w-4 h-4" /> Déconnexion
               </button>
+              <ConfirmationModal
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onConfirm={() => { setShowLogoutModal(false); handleLogout(); }}
+              />
             </div>
           </div>
           <div className="md:hidden py-3 border-t border-border space-y-2">
@@ -92,9 +95,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
       <footer className="border-t border-border bg-card mt-16 py-8">
         <div className="max-w-7xl mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 ParkHub. Tous les droits réservés.</p>
+          <p>&copy; {new Date().getFullYear()} ParkHub. Tous les droits réservés.</p>
         </div>
       </footer>
+      <div className="fixed bottom-4 left-4 z-50">
+        <ThemeToggle />
+      </div>
     </div>
   );
 }

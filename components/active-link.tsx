@@ -22,7 +22,7 @@ export function ActiveLink({
 
   let isActive = false;
 
-  // Routes principales qui doivent matcher EXACTEMENT
+  // Routes principales
   if (hrefString === "/dashboard" || hrefString === "/admin") {
     isActive = pathname === hrefString;
   }

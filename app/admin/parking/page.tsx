@@ -1,21 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel } from '@/lib/types';
+import { LoadingDots } from '@/components/loading-dots';
+import Loading from './loading';
 
-export default function ParkingManagementPage() {
+function ParkingManagementPageContent() {
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<ParkingSpace | null>(null);
   const [filterLevel, setFilterLevel] = useState<number | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'occupied' | 'reserved' | 'maintenance'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [changingSpaceId, setChangingSpaceId] = useState<string | null>(null);
 
   useEffect(() => {
     const store = getStore();
     const spaces = store.getSpaces();
     
-    // Group by level
     const groupedByLevel: Record<number, ParkingSpace[]> = {};
     spaces.forEach(space => {
       if (!groupedByLevel[space.level]) {
@@ -36,11 +38,13 @@ export default function ParkingManagementPage() {
     setLevels(levelArray);
   }, [refreshKey]);
 
-  const handleStatusChange = (spaceId: string, newStatus: string) => {
+  const handleStatusChange = async (spaceId: string, newStatus: string) => {
+    setChangingSpaceId(spaceId);
     const store = getStore();
     store.updateSpace(spaceId, { status: newStatus as any });
     setRefreshKey(prev => prev + 1);
     setSelectedSpace(null);
+    setChangingSpaceId(null);
   };
 
   const getSpaceStatusColor = (status: string) => {
@@ -128,7 +132,7 @@ export default function ParkingManagementPage() {
                   <button
                     key={space.id}
                     onClick={() => setSelectedSpace(space)}
-                    className={`aspect-square rounded-lg transition-all font-semibold text-sm text-white ${getSpaceStatusColor(space.status)} ${
+                    className={`aspect-square rounded-lg transition-all font-semibold text-sm text-white cursor-pointer ${getSpaceStatusColor(space.status)} ${
                       selectedSpace?.id === space.id ? 'ring-2 ring-accent ring-offset-2' : ''
                     }`}
                     title={`Place ${space.number} - ${space.type}`}
@@ -194,15 +198,14 @@ export default function ParkingManagementPage() {
                     <button
                       key={status}
                       onClick={() => handleStatusChange(selectedSpace.id, status)}
-                      className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      disabled={changingSpaceId === selectedSpace.id}
+                      className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                         selectedSpace.status === status
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted text-foreground hover:bg-muted/80'
-                      }`}
+                      } ${changingSpaceId === selectedSpace.id ? 'opacity-50' : ''}`}
                     >
-                      {status === 'available' ? 'Disponible' :
-                       status === 'occupied' ? 'Occupée' :
-                       status === 'reserved' ? 'Réservée' : 'Maintenance'}
+                      {changingSpaceId === selectedSpace.id ? <LoadingDots /> : (status === 'available' ? 'Disponible' : status === 'occupied' ? 'Occupée' : status === 'reserved' ? 'Réservée' : 'Maintenance')}
                     </button>
                   ))}
                 </div>
@@ -249,3 +252,5 @@ export default function ParkingManagementPage() {
     </div>
   );
 }
+
+export default function ParkingManagementPage() {return <Suspense fallback={<Loading />}><ParkingManagementPageContent /></Suspense>};

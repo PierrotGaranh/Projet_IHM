@@ -21,7 +21,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize user from store
     const store = getStore();
     const currentUser = store.getCurrentUser();
     setUser(currentUser);
@@ -34,7 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     if (result.success && result.user) {
       setUser(result.user);
-      // Set auth cookie
       if (typeof window !== 'undefined') {
         document.cookie = 'parkingAuth=true; path=/';
       }
@@ -50,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     if (result.success && result.user) {
       setUser(result.user);
-      // Set auth cookie
       if (typeof window !== 'undefined') {
         document.cookie = 'parkingAuth=true; path=/';
       }
@@ -64,7 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const store = getStore();
     store.logout();
     setUser(null);
-    // Clear auth cookie
     if (typeof window !== 'undefined') {
       document.cookie = 'parkingAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
     }

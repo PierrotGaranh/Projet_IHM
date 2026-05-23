@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
 import { Reservation } from '@/lib/types';
 import { Calendar, Car, Check, CheckLine, Lightbulb } from 'lucide-react';
+import Loading from './loading';
 
-export default function DashboardHome() {
+function DashboardHomeContent() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     activeReservations: 0,
@@ -148,3 +149,5 @@ export default function DashboardHome() {
     </div>
   );
 }
+
+export default function DashboardHome() {return <Suspense fallback={<Loading />}><DashboardHomeContent /></Suspense>};

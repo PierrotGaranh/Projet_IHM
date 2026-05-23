@@ -12,7 +12,6 @@ export function useParkingSpaces() {
     const allSpaces = store.getSpaces();
     setSpaces(allSpaces);
 
-    // Group by level
     const groupedByLevel: Record<number, ParkingSpace[]> = {};
     allSpaces.forEach(space => {
       if (!groupedByLevel[space.level]) {
