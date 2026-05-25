@@ -115,3 +115,11 @@
     @apply text-sm font-medium text-foreground;
   }
 }
+
+@media (max-width: 640px) {
+  .parking-cell {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 0.75rem;
+  }
+}

@@ -1,13 +1,14 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/lib/context';
 import { Lock } from 'lucide-react';
 import { LoadingDots } from '@/components/loading-dots';
-import Loading from './loading';
+import { useToast } from '@/hooks/use-toast';
 
-function ProfilePageContent() {
+export default function ProfilePage() {
   const { user, updateProfile } = useAuth();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -17,20 +18,48 @@ function ProfilePageContent() {
   });
   const [message, setMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    let value = e.target.value;
+    if (e.target.name === 'firstName' || e.target.name === 'lastName') {
+      value = value.slice(0, 50);
+    } else if (e.target.name === 'phone') {
+      value = value.slice(0, 20);
+    } else if (e.target.name === 'vehiclePlate') {
+      value = value.slice(0, 15);
+    }
+    setFormData({ ...formData, [e.target.name]: value });
   };
 
   const handleSave = () => {
     setMessage('');
+    setError('');
+    const nameRegex = /^[A-Za-zÀ-ÿ\s-]{1,50}$/;
+    if (!nameRegex.test(formData.firstName)) {
+      setError('Le prénom ne doit contenir que des lettres, espaces ou tirets (max 50)');
+      return;
+    }
+    if (!nameRegex.test(formData.lastName)) {
+      setError('Le nom ne doit contenir que des lettres, espaces ou tirets (max 50)');
+      return;
+    }
+    if (formData.phone && !/^[\d+\s-]{10,20}$/.test(formData.phone)) {
+      setError('Téléphone invalide (10 à 20 chiffres, espaces, +, -)');
+      return;
+    }
+    if (formData.vehiclePlate && !/^[A-Za-z0-9\s-]{1,15}$/.test(formData.vehiclePlate)) {
+      setError('Plaque d\'immatriculation invalide (lettres, chiffres, espaces, tirets)');
+      return;
+    }
     setIsSaving(true);
     const success = updateProfile(formData);
     if (success) {
       setMessage('Profil mis à jour avec succès !');
+      toast({ variant: 'success', title: 'Profil mis à jour', description: 'Vos informations ont été enregistrées.' });
       setIsEditing(false);
     } else {
-      setMessage('Erreur lors de la mise à jour du profil');
+      setError('Erreur lors de la mise à jour du profil');
     }
     setIsSaving(false);
   };
@@ -44,6 +73,7 @@ function ProfilePageContent() {
     });
     setIsEditing(false);
     setMessage('');
+    setError('');
   };
 
   return (
@@ -70,8 +100,13 @@ function ProfilePageContent() {
         </div>
 
         {message && (
-          <div className={`p-4 rounded-lg text-sm ${message.includes('succès') ? 'bg-secondary/10 border border-secondary/20 text-secondary' : 'bg-destructive/10 border border-destructive/20 text-destructive'}`}>
+          <div className="p-4 rounded-lg text-sm bg-secondary/10 border border-secondary/20 text-secondary">
             {message}
+          </div>
+        )}
+        {error && (
+          <div className="p-4 rounded-lg text-sm bg-destructive/10 border border-destructive/20 text-destructive" role="alert">
+            {error}
           </div>
         )}
 
@@ -81,11 +116,11 @@ function ProfilePageContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="label-base">Prénom</label>
-                {isEditing ? <input name="firstName" value={formData.firstName} onChange={handleChange} className="input-base w-full" /> : <p className="text-foreground py-2">{user?.firstName}</p>}
+                {isEditing ? <input name="firstName" value={formData.firstName} onChange={handleChange} className="input-base w-full" maxLength={50} /> : <p className="text-foreground py-2">{user?.firstName}</p>}
               </div>
               <div className="space-y-2">
                 <label className="label-base">Nom</label>
-                {isEditing ? <input name="lastName" value={formData.lastName} onChange={handleChange} className="input-base w-full" /> : <p className="text-foreground py-2">{user?.lastName}</p>}
+                {isEditing ? <input name="lastName" value={formData.lastName} onChange={handleChange} className="input-base w-full" maxLength={50} /> : <p className="text-foreground py-2">{user?.lastName}</p>}
               </div>
               <div className="space-y-2">
                 <label className="label-base">Email</label>
@@ -93,7 +128,7 @@ function ProfilePageContent() {
               </div>
               <div className="space-y-2">
                 <label className="label-base">Téléphone</label>
-                {isEditing ? <input name="phone" value={formData.phone} onChange={handleChange} className="input-base w-full" /> : <p className="text-foreground py-2">{user?.phone || 'Non renseigné'}</p>}
+                {isEditing ? <input name="phone" value={formData.phone} onChange={handleChange} className="input-base w-full" maxLength={20} /> : <p className="text-foreground py-2">{user?.phone || 'Non renseigné'}</p>}
               </div>
             </div>
           </div>
@@ -102,7 +137,7 @@ function ProfilePageContent() {
             <h2 className="font-semibold text-foreground text-lg">Informations véhicule</h2>
             <div className="space-y-2">
               <label className="label-base">Immatriculation</label>
-              {isEditing ? <input name="vehiclePlate" value={formData.vehiclePlate} onChange={handleChange} placeholder="AB123CD" className="input-base w-full" /> : <p className="text-foreground py-2">{user?.vehiclePlate || 'Non renseignée'}</p>}
+              {isEditing ? <input name="vehiclePlate" value={formData.vehiclePlate} onChange={handleChange} placeholder="AB123CD" className="input-base w-full" maxLength={15} /> : <p className="text-foreground py-2">{user?.vehiclePlate || 'Non renseignée'}</p>}
             </div>
           </div>
 
@@ -117,10 +152,10 @@ function ProfilePageContent() {
 
         <div className="flex gap-3 pt-6 border-t border-border">
           {!isEditing ? (
-            <button onClick={() => setIsEditing(true)} className="btn-primary flex-1 cursor-pointer ">Modifier le profil</button>
+            <button onClick={() => setIsEditing(true)} className="btn-primary flex-1 cursor-pointer">Modifier le profil</button>
           ) : (
             <>
-              <button onClick={handleSave} disabled={isSaving} className="btn-primary flex-1 cursor-pointer ">{isSaving ? <LoadingDots /> : 'Enregistrer'}</button>
+              <button onClick={handleSave} disabled={isSaving} className="btn-primary flex-1 cursor-pointer">{isSaving ? <LoadingDots /> : 'Enregistrer'}</button>
               <button onClick={handleCancel} className="btn-secondary flex-1 cursor-pointer">Annuler</button>
             </>
           )}
@@ -136,5 +171,3 @@ function ProfilePageContent() {
     </div>
   );
 }
-
-export default function ProfilePage() {return <Suspense fallback={<Loading />}><ProfilePageContent /></Suspense>};

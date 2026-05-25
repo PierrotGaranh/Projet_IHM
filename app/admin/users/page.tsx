@@ -4,9 +4,12 @@ import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { User } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
+import { useToast } from '@/hooks/use-toast';
 import Loading from './loading';
 
 function UsersManagementPageContent() {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [filter, setFilter] = useState<'all' | 'users' | 'admins'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,10 +19,17 @@ function UsersManagementPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
-  useEffect(() => {
+  const fetchData = () => {
     const store = getStore();
     setUsers(store.getAllUsers());
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [refreshKey]);
+
+  if (loading) return <Loading />;
 
   const filteredUsers = users.filter(user => {
     const matchesFilter = filter === 'all' ? true : filter === 'users' ? user.role === 'user' : user.role === 'admin';
@@ -31,22 +41,34 @@ function UsersManagementPageContent() {
 
   const handleAddUser = async () => {
     setFormError('');
-    if (!newUser.firstName || !newUser.lastName || !newUser.email || !newUser.password) {
-      setFormError('Veuillez remplir tous les champs obligatoires');
+    // Validation
+    const nameRegex = /^[A-Za-zÀ-ÿ\s-]{1,50}$/;
+    if (!nameRegex.test(newUser.firstName)) {
+      setFormError('Le prénom ne doit contenir que des lettres, espaces ou tirets (max 50 caractères)');
       return;
     }
-    if (!newUser.email.includes('@')) {
-      setFormError('Email invalide');
+    if (!nameRegex.test(newUser.lastName)) {
+      setFormError('Le nom ne doit contenir que des lettres, espaces ou tirets (max 50 caractères)');
       return;
     }
-    if (newUser.password.length < 6) {
-      setFormError('Le mot de passe doit contenir au moins 6 caractères');
+    if (!newUser.email || !newUser.email.includes('@') || newUser.email.length > 100) {
+      setFormError('Email invalide (max 100 caractères)');
       return;
     }
+    if (newUser.password.length < 6 || newUser.password.length > 100) {
+      setFormError('Le mot de passe doit contenir entre 6 et 100 caractères');
+      return;
+    }
+    if (newUser.phone && !/^[\d+\s-]{10,20}$/.test(newUser.phone)) {
+      setFormError('Téléphone invalide (10 à 20 chiffres, espaces, +, -)');
+      return;
+    }
+
     setIsSubmitting(true);
     const store = getStore();
     const result = store.register(newUser.email, newUser.password, newUser.firstName, newUser.lastName, newUser.phone);
     if (result.success) {
+      toast({ variant: 'success', title: 'Utilisateur créé', description: `L'utilisateur ${newUser.firstName} ${newUser.lastName} a été ajouté.` });
       setRefreshKey(prev => prev + 1);
       setShowAddModal(false);
       setNewUser({ firstName: '', lastName: '', email: '', phone: '', password: '' });
@@ -83,7 +105,6 @@ function UsersManagementPageContent() {
         </div>
       </div>
 
-      {/* Liste des utilisateurs */}
       {filteredUsers.length === 0 ? (
         <div className="card-base p-12 text-center">Aucun utilisateur trouvé</div>
       ) : (
@@ -114,18 +135,17 @@ function UsersManagementPageContent() {
         </div>
       )}
 
-      {/* Modal d'ajout */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg max-w-md w-full p-6 space-y-4">
             <h2 className="text-xl font-bold text-foreground">Ajouter un utilisateur</h2>
-            {formError && <div className="p-3 bg-destructive/10 text-destructive text-sm rounded">{formError}</div>}
+            {formError && <div className="p-3 bg-destructive/10 text-destructive text-sm rounded" role="alert">{formError}</div>}
             <div className="space-y-3">
-              <input type="text" placeholder="Prénom *" value={newUser.firstName} onChange={e => setNewUser({ ...newUser, firstName: e.target.value })} className="input-base w-full" />
-              <input type="text" placeholder="Nom *" value={newUser.lastName} onChange={e => setNewUser({ ...newUser, lastName: e.target.value })} className="input-base w-full" />
-              <input type="email" placeholder="Email *" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} className="input-base w-full" />
-              <input type="tel" placeholder="Téléphone" value={newUser.phone} onChange={e => setNewUser({ ...newUser, phone: e.target.value })} className="input-base w-full" />
-              <input type="password" placeholder="Mot de passe *" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} className="input-base w-full" />
+              <input type="text" placeholder="Prénom *" value={newUser.firstName} onChange={e => setNewUser({ ...newUser, firstName: e.target.value.slice(0,50) })} className="input-base w-full" />
+              <input type="text" placeholder="Nom *" value={newUser.lastName} onChange={e => setNewUser({ ...newUser, lastName: e.target.value.slice(0,50) })} className="input-base w-full" />
+              <input type="email" placeholder="Email *" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value.slice(0,100) })} className="input-base w-full" />
+              <input type="tel" placeholder="Téléphone" value={newUser.phone} onChange={e => setNewUser({ ...newUser, phone: e.target.value.slice(0,20) })} className="input-base w-full" />
+              <input type="password" placeholder="Mot de passe *" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value.slice(0,100) })} className="input-base w-full" />
             </div>
             <div className="flex gap-3 pt-4">
               <button onClick={handleAddUser} disabled={isSubmitting} className="btn-primary flex-1 cursor-pointer">
@@ -137,7 +157,6 @@ function UsersManagementPageContent() {
         </div>
       )}
 
-      {/* Résumé */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card-base p-6"><p className="text-sm text-muted-foreground">Total utilisateurs</p><p className="text-3xl font-bold text-primary">{users.length}</p></div>
         <div className="card-base p-6"><p className="text-sm text-muted-foreground">Utilisateurs réguliers</p><p className="text-3xl font-bold text-secondary">{users.filter(u => u.role === 'user').length}</p></div>

@@ -1,5 +1,8 @@
 import { User, ParkingSpace, Reservation, ActivityLog, DashboardStats, ParkingStats } from '@/lib/types';
 
+const STORAGE_KEY = 'parkhub_store_data';
+const SESSION_KEY = 'parkhub_current_user';
+
 const hashPassword = (password: string): string => {
   return Buffer.from(password).toString('base64');
 };
@@ -55,7 +58,7 @@ function generateRealisticUsers(): User[] {
 function generateParkingSpaces(): ParkingSpace[] {
   const spaces: ParkingSpace[] = [];
   const types: Array<'compact' | 'standard' | 'premium'> = ['compact', 'standard', 'premium'];
-  const features = ['handicap', 'chargée', 'abritée', 'sécurisée'];
+  const features = ['handicap', 'chargeur', 'abritée', 'sécurisée'];
 
   for (let level = 1; level <= 5; level++) {
     const spacesPerLevel = 15;
@@ -142,6 +145,14 @@ function syncSpacesWithReservations(spaces: ParkingSpace[], reservations: Reserv
   }
 }
 
+interface StoreData {
+  users: User[];
+  spaces: ParkingSpace[];
+  reservations: Reservation[];
+  activities: ActivityLog[];
+  userPasswords: [string, string][];
+}
+
 class StoreManager {
   private users: User[];
   private spaces: ParkingSpace[];
@@ -151,22 +162,50 @@ class StoreManager {
   private userPasswords: Map<string, string>;
 
   constructor() {
-    this.users = generateRealisticUsers();
-    this.spaces = generateParkingSpaces();
-    this.reservations = generateRealisticReservations(this.users, this.spaces);
-    this.activities = [];
-    this.userPasswords = new Map();
+    const stored = this.loadFromStorage();
+    if (stored) {
+      this.users = stored.users;
+      this.spaces = stored.spaces;
+      this.reservations = stored.reservations;
+      this.activities = stored.activities;
+      this.userPasswords = new Map(stored.userPasswords);
+      this.currentUser = this.loadCurrentUserFromStorage();
 
-    syncSpacesWithReservations(this.spaces, this.reservations);
+      this.users = this.users.map(u => ({
+        ...u,
+        createdAt: u.createdAt instanceof Date ? u.createdAt : new Date(u.createdAt)
+      }));
 
-    this.generateInitialActivities();
+      this.reservations = this.reservations.map(r => ({
+        ...r,
+        startDate: r.startDate instanceof Date ? r.startDate : new Date(r.startDate),
+        endDate: r.endDate instanceof Date ? r.endDate : new Date(r.endDate),
+        createdAt: r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt)
+      }));
 
-    for (const user of this.users) {
-      if (user.email === 'admin@example.com') {
-        this.userPasswords.set(user.email, hashPassword('admin123'));
-      } else {
-        this.userPasswords.set(user.email, hashPassword('password123'));
+      this.activities = this.activities.map(a => ({
+        ...a,
+        timestamp: a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp)
+      }));
+    } else {
+      this.users = generateRealisticUsers();
+      this.spaces = generateParkingSpaces();
+      this.reservations = generateRealisticReservations(this.users, this.spaces);
+      this.activities = [];
+      this.userPasswords = new Map();
+
+      syncSpacesWithReservations(this.spaces, this.reservations);
+      this.generateInitialActivities();
+
+      for (const user of this.users) {
+        if (user.email === 'admin@example.com') {
+          this.userPasswords.set(user.email, hashPassword('admin123'));
+        } else {
+          this.userPasswords.set(user.email, hashPassword('password123'));
+        }
       }
+
+      this.saveToStorage();
     }
   }
 
@@ -175,13 +214,12 @@ class StoreManager {
     for (const res of reservationsToLog) {
       const space = this.getSpace(res.spaceId);
       if (!space) continue;
-      const userName = this.getUser(res.userId)?.firstName || 'Utilisateur';
       let message = '';
       let type: ActivityLog['type'] = 'reservation';
       let timestamp = res.createdAt;
       
       if (res.status === 'active') {
-        message = `Nouvelle réservation #${res.id} pour la place ${space.number} (Niveau ${space.level})`;
+        message = `Nouvelle réservation #${res.id} pour la place ${space.number}`;
       } else if (res.status === 'cancelled') {
         message = `La réservation #${res.id} a été annulée`;
       } else if (res.status === 'completed') {
@@ -207,7 +245,7 @@ class StoreManager {
       this.activities.push({
         id: `act-init-${Date.now()}-${Math.random()}`,
         type: 'parking',
-        message: `La place ${space.number} (Niveau ${space.level}) a été mise à jour -> Statut: maintenance`,
+        message: `La place ${space.number} a été mise à jour -> Statut: maintenance`,
         timestamp: randomDate,
         userId: undefined,
       });
@@ -250,6 +288,83 @@ class StoreManager {
       userId,
     });
     if (this.activities.length > 50) this.activities.pop();
+    this.saveToStorage();
+  }
+
+  private saveToStorage() {
+    if (typeof window === 'undefined') return;
+    const data: StoreData = {
+      users: this.users,
+      spaces: this.spaces,
+      reservations: this.reservations,
+      activities: this.activities,
+      userPasswords: Array.from(this.userPasswords.entries()),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data, (key, value) => {
+      if (value instanceof Date) return { __type: 'Date', value: value.toISOString() };
+      return value;
+    }));
+  }
+
+  private loadFromStorage(): StoreData | null {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    try {
+      const data = JSON.parse(raw, (key, value) => {
+        if (value && typeof value === 'object' && value.__type === 'Date') {
+          return new Date(value.value);
+        }
+        return value;
+      });
+      return data;
+    } catch (e) {
+      console.error('Failed to load store data', e);
+      return null;
+    }
+  }
+
+  private saveCurrentUserToStorage() {
+    if (typeof window === 'undefined') return;
+    if (this.currentUser) {
+      localStorage.setItem(SESSION_KEY, this.currentUser.id);
+    } else {
+      localStorage.removeItem(SESSION_KEY);
+    }
+  }
+
+  private loadCurrentUserFromStorage(): User | null {
+    if (typeof window === 'undefined') return null;
+    const userId = localStorage.getItem(SESSION_KEY);
+    if (!userId) return null;
+    return this.users.find(u => u.id === userId) || null;
+  }
+
+  resetStore(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SESSION_KEY);
+    }
+    this.users = generateRealisticUsers();
+    this.spaces = generateParkingSpaces();
+    this.reservations = generateRealisticReservations(this.users, this.spaces);
+    this.activities = [];
+    this.userPasswords = new Map();
+
+    syncSpacesWithReservations(this.spaces, this.reservations);
+    this.generateInitialActivities();
+
+    for (const user of this.users) {
+      if (user.email === 'admin@example.com') {
+        this.userPasswords.set(user.email, hashPassword('admin123'));
+      } else {
+        this.userPasswords.set(user.email, hashPassword('password123'));
+      }
+    }
+
+    this.currentUser = null;
+    this.saveToStorage();
+    this.saveCurrentUserToStorage();
   }
 
   getActivities(): ActivityLog[] {
@@ -264,13 +379,14 @@ class StoreManager {
       return { success: false, error: 'Mot de passe invalide' };
     }
     this.currentUser = user;
+    this.saveCurrentUserToStorage();
     this.addActivity('system', `${user.firstName} ${user.lastName} s'est connecté`, user.id);
     return { success: true, user };
   }
 
   register(email: string, password: string, firstName: string, lastName: string, phone: string) {
     if (this.users.find(u => u.email === email)) {
-      return { success: false, error: 'Cet email est déjà utilisé' };
+      return { success: false, error: 'Un compte avec cette adresse email existe déjà. Utilisez une autre adresse' };
     }
     const newUser: User = {
       id: `user-${Date.now()}`,
@@ -285,7 +401,9 @@ class StoreManager {
     this.users.push(newUser);
     this.userPasswords.set(email, hashPassword(password));
     this.currentUser = newUser;
+    this.saveCurrentUserToStorage();
     this.addActivity('user', `Nouvel utilisateur enregistré: ${firstName} ${lastName}`, newUser.id);
+    this.saveToStorage();
     return { success: true, user: newUser };
   }
 
@@ -294,6 +412,7 @@ class StoreManager {
       this.addActivity('system', `${this.currentUser.firstName} ${this.currentUser.lastName} s'est déconnecté`, this.currentUser.id);
     }
     this.currentUser = null;
+    this.saveCurrentUserToStorage();
   }
 
   getCurrentUser() { return this.currentUser; }
@@ -306,6 +425,7 @@ class StoreManager {
     Object.assign(user, updates);
     if (this.currentUser?.id === id) this.currentUser = user;
     this.addActivity('user', `${user.firstName} ${user.lastName} a mis à jour son profil`, id);
+    this.saveToStorage();
     return true;
   }
 
@@ -316,7 +436,8 @@ class StoreManager {
     const space = this.spaces.find(s => s.id === id);
     if (!space) return false;
     Object.assign(space, updates);
-    this.addActivity('parking', `La place ${space.number} (Niveau ${space.level}) a été mise à jour -> Statut: ${space.status}`, space.reservedBy);
+    this.addActivity('parking', `La place ${space.number} a été mise à jour -> Statut: ${space.status}`, space.reservedBy);
+    this.saveToStorage();
     return true;
   }
 
@@ -351,7 +472,8 @@ class StoreManager {
     };
     this.reservations.push(reservation);
     this.updateSpace(spaceId, { status: 'reserved', reservedBy: userId });
-    this.addActivity('reservation', `Nouvelle réservation #${reservation.id} pour la place ${space.number} (Niveau ${space.level})`, userId);
+    this.addActivity('reservation', `Nouvelle réservation #${reservation.id} pour la place ${space.number}`, userId);
+    this.saveToStorage();
     return { success: true, reservation };
   }
 
@@ -364,6 +486,7 @@ class StoreManager {
       this.updateSpace(space.id, { status: 'available', reservedBy: undefined });
     }
     this.addActivity('reservation', `La réservation #${reservation.id} a été annulée`, reservation.userId);
+    this.saveToStorage();
     return true;
   }
 

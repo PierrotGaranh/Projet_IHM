@@ -5,29 +5,45 @@ import { getStore } from '@/lib/store';
 import { Reservation } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
 import { Mailbox } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import Loading from './loading';
 
 function AdminReservationsPageContent() {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [reservationToCancel, setReservationToCancel] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchData = () => {
     const store = getStore();
     const allRes = store.getReservations();
     setReservations(allRes);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [refreshKey]);
 
   const handleCancel = (reservationId: string) => {
-    if (window.confirm('Annuler cette réservation ?')) {
-      setCancellingId(reservationId);
-      const store = getStore();
-      store.cancelReservation(reservationId);
-      setRefreshKey(prev => prev + 1);
-      setCancellingId(null);
-    }
+    setCancellingId(reservationId);
+    const store = getStore();
+    store.cancelReservation(reservationId);
+    setRefreshKey(prev => prev + 1);
+    setCancellingId(null);
+    toast({
+      variant: 'success',
+      title: 'Réservation annulée',
+      description: 'La réservation a été annulée avec succès.',
+    });
   };
+
+  if (loading) return <Loading />;
 
   const filteredReservations = reservations.filter(r =>
     filter === 'all' ? true : r.status === filter
@@ -103,7 +119,7 @@ function AdminReservationsPageContent() {
                   </div>
                   {reservation.status === 'active' && (
                     <button
-                      onClick={() => handleCancel(reservation.id)}
+                      onClick={() => { setReservationToCancel(reservation.id); setShowCancelModal(true); }}
                       disabled={cancellingId === reservation.id}
                       className="btn-secondary text-sm w-full sm:w-auto disabled:opacity-50 cursor-pointer"
                     >
@@ -184,6 +200,17 @@ function AdminReservationsPageContent() {
           <p className="text-xs text-muted-foreground">Réservations actives uniquement</p>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={() => {
+          if (reservationToCancel) handleCancel(reservationToCancel);
+          setShowCancelModal(false);
+        }}
+        title="Annuler la réservation"
+        message="Êtes-vous sûr de vouloir annuler cette réservation ? Cette action est irréversible."
+      />
     </div>
   );
 }

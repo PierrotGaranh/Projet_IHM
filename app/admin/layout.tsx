@@ -2,44 +2,50 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ActiveLink } from '@/components/active-link';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LoadingScreen } from '@/components/loading-screen';
+import { AccessDenied } from '@/components/access-denied';
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Car, Users, Calendar, BarChart3, Settings, LogOut, Menu, X } from 'lucide-react';
+import Loading from '../auth/login/loading';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = () => {
+    setIsLoggingOut(true);
     logout();
     router.push('/auth/login');
   };
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background"><div className="w-12 h-12 rounded-lg bg-primary animate-pulse" /></div>;
+  useEffect(() => {
+    if (!isLoading && !isLoggingOut && (!user || user.role !== 'admin')) {
+      router.push('/auth/login');
+    }
+  }, [isLoading, user, router, isLoggingOut]);
+
+  if (isLoggingOut) {
+    return <Loading/>;
   }
 
-  if (!user || user.role !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <p className="text-destructive font-semibold">Accès refusé</p>
-          <button onClick={() => { logout(); router.push('/auth/login'); }} className="btn-primary cursor-pointer">Retour à la connexion</button>
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if ((!user || user.role !== 'admin') && (!isLoggingOut && !isLoading)) {
+    return <AccessDenied />;
   }
 
   const navItems = [
@@ -53,13 +59,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Overlay mobile */}
       {isMobile && sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-transform duration-300 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="h-full flex flex-col">
           <div className="h-16 flex items-center justify-between px-6 border-b border-border">
             <ActiveLink href="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -90,8 +98,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="px-4 py-4 border-t border-border space-y-4">
             <div className="space-y-1">
               <p className="text-xs font-semibold text-muted-foreground">CONNECTÉ</p>
-              <p className="text-sm font-semibold text-foreground">{user.firstName} {user.lastName}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <p className="text-sm font-semibold text-foreground">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <button onClick={() => setShowLogoutModal(true)} className="btn-secondary w-full text-sm flex items-center justify-center gap-2 cursor-pointer">
               <LogOut className="w-4 h-4" /> Déconnexion
@@ -105,11 +113,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      <div className="md:ml-64">
+      <div className={`transition-all duration-300 ${sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'}`}>
         <header className="sticky top-0 z-30 h-16 bg-card border-b border-border flex items-center justify-between px-6">
-          <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 text-muted-foreground hover:text-foreground cursor-pointer">
-            <Menu className="w-5 h-5" />
-          </button>
+          {isMobile && (
+            <button onClick={() => setSidebarOpen(true)} className="p-2 text-muted-foreground hover:text-foreground cursor-pointer">
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
           <div className="flex-1" />
           <div className="flex items-center gap-3">
             <p className="text-sm text-muted-foreground hidden sm:block">Admin Panel</p>
