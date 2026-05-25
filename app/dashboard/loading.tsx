@@ -7,20 +7,20 @@ export default function Loading() {
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-5 w-80" />
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {Array(3).fill(0).map((_, i) => (
-          <div key={i} className="card-base p-6 space-y-4">
-            <div className="flex justify-between">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-10 w-10 rounded-lg" />
+        {Array(3)
+          .fill(0)
+          .map((_, i) => (
+            <div key={i} className="card-base p-6 space-y-4">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-10 w-10 rounded-lg" />
+              </div>
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-3 w-40" />
             </div>
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="h-3 w-40" />
-          </div>
-        ))}
+          ))}
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[1, 2].map((i) => (
           <div key={i} className="card-base p-8 space-y-4">
@@ -33,7 +33,6 @@ export default function Loading() {
           </div>
         ))}
       </div>
-
       <div className="card-base p-6 space-y-3">
         <div className="flex items-start gap-3">
           <Skeleton className="w-5 h-5 mt-1" />

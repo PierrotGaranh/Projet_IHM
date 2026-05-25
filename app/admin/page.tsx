@@ -2,12 +2,12 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
-import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Car, CheckCircle2, Users, Settings, Activity } from 'lucide-react';
 import { ActivityLog } from '@/lib/types';
 import Loading from './loading';
 
 function AdminDashboardContent() {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
 
@@ -15,11 +15,10 @@ function AdminDashboardContent() {
     const store = getStore();
     setStats(store.getDashboardStats());
     setActivities(store.getActivities());
+    setLoading(false);
   }, []);
 
-  if (!stats) {
-    return <div className="space-y-8"><Skeleton className="h-10 w-48" /><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">{Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}</div></div>;
-  }
+  if (loading) return <Loading />;
 
   const StatCard = ({ title, value, unit = '', icon: Icon, color = 'primary', description }: any) => {
     const bgColors: Record<string, string> = {
@@ -103,4 +102,4 @@ function AdminDashboardContent() {
   );
 }
 
-export default function AdminDashboard() {return <Suspense fallback={<Loading />}><AdminDashboardContent /></Suspense>};
+export default function AdminDashboard() { return <Suspense fallback={<Loading />}><AdminDashboardContent /></Suspense>};

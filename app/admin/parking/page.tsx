@@ -2,27 +2,46 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
-import { ParkingSpace, ParkingLevel } from '@/lib/types';
+import { ParkingSpace, ParkingLevel, User, Reservation } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
+import { useToast } from '@/hooks/use-toast';
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { ParkingGrid } from '@/components/parking-grid';
 import Loading from './loading';
 
 function ParkingManagementPageContent() {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<ParkingSpace | null>(null);
   const [filterLevel, setFilterLevel] = useState<number | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'occupied' | 'reserved' | 'maintenance'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
   const [changingSpaceId, setChangingSpaceId] = useState<string | null>(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [newStatus, setNewStatus] = useState<string | null>(null);
+  const [spaceToChange, setSpaceToChange] = useState<string | null>(null);
+  const [showReserveModal, setShowReserveModal] = useState(false);
+  const [showEditReservationModal, setShowEditReservationModal] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [reserveStartDate, setReserveStartDate] = useState('');
+  const [reserveStartTime, setReserveStartTime] = useState('09:00');
+  const [reserveEndDate, setReserveEndDate] = useState('');
+  const [reserveEndTime, setReserveEndTime] = useState('17:00');
+  const [reserveError, setReserveError] = useState('');
+  const [isReserving, setIsReserving] = useState(false);
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
-  useEffect(() => {
+  const fetchData = () => {
     const store = getStore();
     const spaces = store.getSpaces();
+    const allUsers = store.getAllUsers();
+    setUsers(allUsers.filter(u => u.role === 'user'));
     
     const groupedByLevel: Record<number, ParkingSpace[]> = {};
     spaces.forEach(space => {
-      if (!groupedByLevel[space.level]) {
-        groupedByLevel[space.level] = [];
-      }
+      if (!groupedByLevel[space.level]) groupedByLevel[space.level] = [];
       groupedByLevel[space.level].push(space);
     });
 
@@ -36,52 +55,148 @@ function ParkingManagementPageContent() {
       .sort((a, b) => a.level - b.level);
 
     setLevels(levelArray);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [refreshKey]);
 
-  const handleStatusChange = async (spaceId: string, newStatus: string) => {
-    setChangingSpaceId(spaceId);
+  if (loading) return <Loading />;
+
+  const handleMaintenanceRequest = (spaceId: string, toMaintenance: boolean) => {
+    setSpaceToChange(spaceId);
+    setNewStatus(toMaintenance ? 'maintenance' : 'available');
+    setShowStatusModal(true);
+  };
+
+  const confirmStatusChange = () => {
+    if (spaceToChange && newStatus) {
+      setChangingSpaceId(spaceToChange);
+      const store = getStore();
+      store.updateSpace(spaceToChange, { status: newStatus as any });
+      setRefreshKey(prev => prev + 1);
+      setSelectedSpace(null);
+      setChangingSpaceId(null);
+      toast({
+        variant: 'success',
+        title: newStatus === 'maintenance' ? 'Place en maintenance' : 'Place disponible',
+        description: `La place a été mise ${newStatus === 'maintenance' ? 'en maintenance' : 'disponible'}.`,
+      });
+    }
+    setShowStatusModal(false);
+    setSpaceToChange(null);
+    setNewStatus(null);
+  };
+
+  const handleReserveForUser = () => {
+    setShowReserveModal(true);
+    const today = new Date().toISOString().split('T')[0];
+    setReserveStartDate(today);
+    setReserveEndDate(today);
+    setReserveError('');
+    setSelectedUserId('');
+  };
+
+  const handleEditReservationForAdmin = () => {
     const store = getStore();
-    store.updateSpace(spaceId, { status: newStatus as any });
-    setRefreshKey(prev => prev + 1);
-    setSelectedSpace(null);
-    setChangingSpaceId(null);
+    const reservation = store.getReservations().find(r => r.spaceId === selectedSpace?.id && r.status === 'active');
+    if (reservation) {
+      setEditingReservation(reservation);
+      setReserveStartDate(new Date(reservation.startDate).toISOString().split('T')[0]);
+      setReserveStartTime(new Date(reservation.startDate).toTimeString().slice(0,5));
+      setReserveEndDate(new Date(reservation.endDate).toISOString().split('T')[0]);
+      setReserveEndTime(new Date(reservation.endDate).toTimeString().slice(0,5));
+      setSelectedUserId(reservation.userId);
+      setShowEditReservationModal(true);
+      setReserveError('');
+    }
   };
 
-  const getSpaceStatusColor = (status: string) => {
-    const statusColors: Record<string, string> = {
-      available: 'bg-secondary hover:bg-secondary/90 cursor-pointer',
-      occupied: 'bg-destructive opacity-50',
-      reserved: 'bg-primary opacity-50',
-      maintenance: 'bg-muted opacity-50',
-    };
-    return statusColors[status] || 'bg-muted';
+  const confirmReserve = () => {
+    setReserveError('');
+    if (!selectedUserId) {
+      setReserveError('Veuillez sélectionner un utilisateur');
+      return;
+    }
+    if (!selectedSpace) {
+      setReserveError('Veuillez sélectionner une place');
+      return;
+    }
+    const start = new Date(`${reserveStartDate}T${reserveStartTime}`);
+    const end = new Date(`${reserveEndDate}T${reserveEndTime}`);
+    const now = new Date();
+    if (start < now) {
+      setReserveError('La date de début doit être aujourd\'hui ou ultérieure');
+      return;
+    }
+    if (start >= end) {
+      setReserveError('La date de fin doit être antérieure à la date de début');
+      return;
+    }
+    setIsReserving(true);
+    const store = getStore();
+    const result = store.createReservation(selectedUserId, selectedSpace.id, start, end);
+    if (result.success) {
+      toast({ variant: 'success', title: 'Réservation créée', description: `Réservation pour ${users.find(u => u.id === selectedUserId)?.firstName} effectuée.` });
+      setRefreshKey(prev => prev + 1);
+      setSelectedSpace(null);
+      setShowReserveModal(false);
+    } else {
+      setReserveError(result.error || 'Erreur lors de la réservation');
+    }
+    setIsReserving(false);
   };
 
-  const filteredLevels = levels.filter(level => 
-    filterLevel === 'all' ? true : level.level === filterLevel
-  );
+  const confirmEditReservation = () => {
+    if (!editingReservation || !selectedSpace) return;
+    const newStart = new Date(`${reserveStartDate}T${reserveStartTime}`);
+    const newEnd = new Date(`${reserveEndDate}T${reserveEndTime}`);
+    const now = new Date();
+    if (newStart < now) {
+      setReserveError('La date de début doit être aujourd\'hui ou ultérieure');
+      return;
+    }
+    if (newStart >= newEnd) {
+      setReserveError('La date de fin doit être antérieure à la date de début');
+      return;
+    }
+    setIsReserving(true);
+    const store = getStore();
+    store.cancelReservation(editingReservation.id);
+    const result = store.createReservation(editingReservation.userId, selectedSpace.id, newStart, newEnd);
+    if (result.success) {
+      toast({ variant: 'success', title: 'Réservation modifiée', description: 'La réservation a été mise à jour.' });
+      setRefreshKey(prev => prev + 1);
+      setSelectedSpace(null);
+      setShowEditReservationModal(false);
+      setEditingReservation(null);
+    } else {
+      setReserveError(result.error || 'Erreur lors de la modification');
+    }
+    setIsReserving(false);
+  };
 
-  const filteredSpaces = filteredLevels.flatMap(level => 
-    level.spaces.filter(space => 
-      filterStatus === 'all' ? true : space.status === filterStatus
-    )
-  );
+  const filteredLevels = levels
+    .filter(level => filterLevel === 'all' || level.level === filterLevel)
+    .map(level => ({
+      ...level,
+      spaces: level.spaces.filter(space => filterStatus === 'all' || space.status === filterStatus),
+    }))
+    .filter(level => level.spaces.length > 0);
+
+  const filteredSpaces = filteredLevels.flatMap(level => level.spaces);
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">Gestion du parking</h1>
-        <p className="text-muted-foreground">
-          Gérez les statuts et configurations des places de parking
-        </p>
+        <p className="text-muted-foreground">Gérez les statuts et configurations des places de parking</p>
       </div>
 
-      {/* Filters */}
       <div className="card-base p-6 space-y-4">
         <h3 className="font-semibold text-foreground">Filtres</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Level Filter */}
           <div className="space-y-2">
             <label className="label-base">Filtre par niveau</label>
             <select
@@ -95,8 +210,6 @@ function ParkingManagementPageContent() {
               ))}
             </select>
           </div>
-
-          {/* Status Filter */}
           <div className="space-y-2">
             <label className="label-base">Filtre par statut</label>
             <select
@@ -115,74 +228,42 @@ function ParkingManagementPageContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Parking Grid */}
-        <div className="lg:col-span-2 space-y-6">
-          {filteredLevels.map(level => (
-            <div key={level.level} className="card-base p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">Niveau {level.level}</h2>
-                <div className="text-sm text-muted-foreground">
-                  {Math.round(level.occupancyRate)}% occupé
-                </div>
-              </div>
-
-              {/* Parking Grid */}
-              <div className="grid grid-cols-5 sm:grid-cols-6 gap-3">
-                {level.spaces.map(space => (
-                  <button
-                    key={space.id}
-                    onClick={() => setSelectedSpace(space)}
-                    className={`aspect-square rounded-lg transition-all font-semibold text-sm text-white cursor-pointer ${getSpaceStatusColor(space.status)} ${
-                      selectedSpace?.id === space.id ? 'ring-2 ring-accent ring-offset-2' : ''
-                    }`}
-                    title={`Place ${space.number} - ${space.type}`}
-                  >
-                    {space.number}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+        <div className="lg:col-span-2">
+          <ParkingGrid
+            levels={filteredLevels}
+            selectedSpaceId={selectedSpace?.id}
+            onSelectSpace={setSelectedSpace}
+            isAdmin={true}
+          />
         </div>
 
-        {/* Details Panel */}
         <div className="space-y-4">
           {selectedSpace ? (
             <div className="card-base p-6 space-y-4 sticky top-24">
               <h3 className="font-semibold text-foreground text-lg">Détails de la place</h3>
-              
               <div className="space-y-3 text-sm">
                 <div className="space-y-1">
                   <p className="text-muted-foreground">Numéro</p>
                   <p className="font-semibold text-foreground text-lg">{selectedSpace.number}</p>
                 </div>
-
                 <div className="space-y-1">
                   <p className="text-muted-foreground">Niveau</p>
                   <p className="font-semibold text-foreground">{selectedSpace.level}</p>
                 </div>
-
                 <div className="space-y-1">
                   <p className="text-muted-foreground">Type</p>
                   <p className="font-semibold text-foreground capitalize">{selectedSpace.type}</p>
                 </div>
-
                 <div className="space-y-1">
                   <p className="text-muted-foreground">Prix/heure</p>
                   <p className="font-semibold text-foreground">{selectedSpace.pricePerHour}€</p>
                 </div>
-
                 <div className="pt-3 border-t border-border space-y-2">
                   <p className="text-muted-foreground text-xs font-semibold">ÉQUIPEMENTS</p>
                   {selectedSpace.features.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {selectedSpace.features.map(feature => (
-                        <span
-                          key={feature}
-                          className="text-xs bg-primary/10 text-primary px-2 py-1 rounded capitalize"
-                        >
-                          {feature}
-                        </span>
+                        <span key={feature} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded capitalize">{feature}</span>
                       ))}
                     </div>
                   ) : (
@@ -191,23 +272,27 @@ function ParkingManagementPageContent() {
                 </div>
               </div>
 
+              {/* ACTIONS ADMIN : 3 boutons */}
               <div className="pt-4 border-t border-border space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground">CHANGER LE STATUT</p>
+                <p className="text-xs font-semibold text-muted-foreground">ACTIONS ADMIN</p>
                 <div className="space-y-2">
-                  {['available', 'occupied', 'reserved', 'maintenance'].map(status => (
-                    <button
-                      key={status}
-                      onClick={() => handleStatusChange(selectedSpace.id, status)}
-                      disabled={changingSpaceId === selectedSpace.id}
-                      className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                        selectedSpace.status === status
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground hover:bg-muted/80'
-                      } ${changingSpaceId === selectedSpace.id ? 'opacity-50' : ''}`}
-                    >
-                      {changingSpaceId === selectedSpace.id ? <LoadingDots /> : (status === 'available' ? 'Disponible' : status === 'occupied' ? 'Occupée' : status === 'reserved' ? 'Réservée' : 'Maintenance')}
+                  <button onClick={handleReserveForUser} className="btn-primary w-full cursor-pointer">
+                    Réserver pour un utilisateur
+                  </button>
+                  {selectedSpace.status === 'reserved' && (
+                    <button onClick={handleEditReservationForAdmin} className="btn-secondary w-full cursor-pointer">
+                      Modifier la réservation
                     </button>
-                  ))}
+                  )}
+                  {selectedSpace.status !== 'maintenance' ? (
+                    <button onClick={() => handleMaintenanceRequest(selectedSpace.id, true)} className="btn-secondary w-full border-destructive text-destructive hover:bg-destructive/10 cursor-pointer">
+                      Mettre en maintenance
+                    </button>
+                  ) : (
+                    <button onClick={() => handleMaintenanceRequest(selectedSpace.id, false)} className="btn-secondary w-full cursor-pointer">
+                      Retirer de maintenance
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -219,7 +304,6 @@ function ParkingManagementPageContent() {
             </div>
           )}
 
-          {/* Stats */}
           <div className="card-base p-6 space-y-3">
             <h3 className="font-semibold text-foreground">Statistiques</h3>
             <div className="space-y-2 text-sm">
@@ -249,6 +333,87 @@ function ParkingManagementPageContent() {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showStatusModal}
+        onClose={() => setShowStatusModal(false)}
+        onConfirm={confirmStatusChange}
+        title="Changer le statut"
+        message={`Êtes-vous sûr de vouloir mettre cette place ${newStatus === 'maintenance' ? 'en maintenance' : 'disponible'} ?`}
+      />
+
+      {showReserveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full space-y-4">
+            <h2 className="text-xl font-bold text-foreground">Réserver pour un utilisateur</h2>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="label-base">Utilisateur</label>
+                <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="input-base w-full">
+                  <option value="">Sélectionnez un utilisateur</option>
+                  {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName} ({u.email})</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="label-base">Date de début</label>
+                <input type="date" value={reserveStartDate} onChange={(e) => setReserveStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="input-base w-full" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-base">Heure de début</label>
+                <input type="time" value={reserveStartTime} onChange={(e) => setReserveStartTime(e.target.value)} className="input-base w-full" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-base">Date de fin</label>
+                <input type="date" value={reserveEndDate} onChange={(e) => setReserveEndDate(e.target.value)} min={reserveStartDate || new Date().toISOString().split('T')[0]} className="input-base w-full" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-base">Heure de fin</label>
+                <input type="time" value={reserveEndTime} onChange={(e) => setReserveEndTime(e.target.value)} className="input-base w-full" />
+              </div>
+              {reserveError && <p className="text-sm text-destructive">{reserveError}</p>}
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button onClick={confirmReserve} disabled={isReserving} className="btn-primary flex-1">
+                {isReserving ? <LoadingDots /> : 'Confirmer'}
+              </button>
+              <button onClick={() => setShowReserveModal(false)} className="btn-secondary flex-1">Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditReservationModal && editingReservation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full space-y-4">
+            <h2 className="text-xl font-bold text-foreground">Modifier la réservation</h2>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="label-base">Date de début</label>
+                <input type="date" value={reserveStartDate} onChange={(e) => setReserveStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="input-base w-full" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-base">Heure de début</label>
+                <input type="time" value={reserveStartTime} onChange={(e) => setReserveStartTime(e.target.value)} className="input-base w-full" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-base">Date de fin</label>
+                <input type="date" value={reserveEndDate} onChange={(e) => setReserveEndDate(e.target.value)} min={reserveStartDate} className="input-base w-full" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-base">Heure de fin</label>
+                <input type="time" value={reserveEndTime} onChange={(e) => setReserveEndTime(e.target.value)} className="input-base w-full" />
+              </div>
+              {reserveError && <p className="text-sm text-destructive">{reserveError}</p>}
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button onClick={confirmEditReservation} disabled={isReserving} className="btn-primary flex-1">
+                {isReserving ? <LoadingDots /> : 'Mettre à jour'}
+              </button>
+              <button onClick={() => setShowEditReservationModal(false)} className="btn-secondary flex-1">Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,14 +9,6 @@ export async function proxy(request) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  if (pathname.startsWith('/auth') && isAuthenticated) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL(isAuthenticated ? '/dashboard' : '/auth/login', request.url));
-  }
-
   return NextResponse.next();
 }
 

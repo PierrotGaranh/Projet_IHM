@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context';
 import { LoadingDots } from '@/components/loading-dots';
+import { useToast } from '@/hooks/use-toast';
 import Loading from './loading';
 
 function LoginPageContent() {
   const router = useRouter();
   const { login } = useAuth();
+  const { toast } = useToast();
   const [email, setEmail] = useState('user@example.com');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState('');
@@ -21,6 +23,7 @@ function LoginPageContent() {
     setIsLoading(true);
     const result = await login(email, password);
     if (result.success) {
+      toast({ variant: 'success', title: 'Connexion réussie', description: `Bienvenue ${result.user?.firstName}` });
       const redirectTo = result.user?.role === 'admin' ? '/admin' : '/dashboard';
       router.push(redirectTo);
     } else {
@@ -57,7 +60,7 @@ function LoginPageContent() {
             <label htmlFor="password" className="label-base">Mot de passe</label>
             <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-base w-full" required />
           </div>
-          {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">{error}</div>}
+          {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive" role="alert">{error}</div>}
           <button type="submit" disabled={isLoading} className="btn-primary w-full cursor-pointer">{isLoading ? <LoadingDots /> : 'Se connecter'}</button>
         </form>
 

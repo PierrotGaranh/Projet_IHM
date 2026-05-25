@@ -1,22 +1,27 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 import { LoadingDots } from '@/components/loading-dots';
-import Loading from './loading';
+import { useToast } from '@/hooks/use-toast';
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { getStore } from '@/lib/store';
 
-function SettingsPageContent() {
+export default function SettingsPage() {
+  const { toast } = useToast();
   const [settings, setSettings] = useState({
     parkingName: 'ParkHub Central',
     totalLevels: 5,
-    openingHour: '06:00',
-    closingHour: '23:00',
-    maintenanceDay: 'Monday',
+    openingHour: '00:00',
+    closingHour: '23:59',
+    maintenanceDay: 'Sunday',
     contactEmail: 'admin@parkhub.com',
     phoneNumber: '+33612345678',
   });
 
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setSettings({ ...settings, [e.target.name]: e.target.value });
@@ -25,12 +30,27 @@ function SettingsPageContent() {
   const handleSave = () => {
     setIsSaving(true);
     setMessage('');
-    // Ici on simule juste un enregistrement (pas de store pour les settings)
     setTimeout(() => {
       setMessage('Paramètres sauvegardés avec succès !');
+      toast({ variant: 'success', title: 'Paramètres sauvegardés', description: 'Les paramètres ont été mis à jour.' });
       setIsSaving(false);
       setTimeout(() => setMessage(''), 3000);
     }, 300);
+  };
+
+  const handleReset = () => {
+    setIsResetting(true);
+    try {
+      const store = getStore();
+      store.resetStore();
+      toast({ variant: 'success', title: 'Réinitialisation réussie', description: 'Toutes les données ont été réinitialisées.' });
+      setShowResetModal(false);
+      setIsResetting(false);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erreur', description: 'Une erreur est survenue lors de la réinitialisation.' });
+      setShowResetModal(false);
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -44,10 +64,10 @@ function SettingsPageContent() {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Informations générales</h2>
           <div className="space-y-4">
-            <div className="space-y-2"><label className="label-base">Nom du parking</label><input type="text" name="parkingName" value={settings.parkingName} onChange={handleChange} className="input-base w-full" /></div>
+            <div className="space-y-2"><label className="label-base">Nom du parking</label><input type="text" name="parkingName" value={settings.parkingName} onChange={handleChange} maxLength={100} className="input-base w-full" /></div>
             <div className="space-y-2"><label className="label-base">Nombre de niveaux</label><select name="totalLevels" value={settings.totalLevels} onChange={handleChange} className="input-base w-full">{Array.from({ length: 6 }, (_, i) => i + 3).map(l => <option key={l} value={l}>{l} niveaux</option>)}</select></div>
-            <div className="space-y-2"><label className="label-base">Email de contact</label><input type="email" name="contactEmail" value={settings.contactEmail} onChange={handleChange} className="input-base w-full" /></div>
-            <div className="space-y-2"><label className="label-base">Téléphone</label><input type="tel" name="phoneNumber" value={settings.phoneNumber} onChange={handleChange} className="input-base w-full" /></div>
+            <div className="space-y-2"><label className="label-base">Email de contact</label><input type="email" name="contactEmail" value={settings.contactEmail} onChange={handleChange} maxLength={100} className="input-base w-full" /></div>
+            <div className="space-y-2"><label className="label-base">Téléphone</label><input type="tel" name="phoneNumber" value={settings.phoneNumber} onChange={handleChange} maxLength={20} className="input-base w-full" /></div>
           </div>
         </div>
 
@@ -90,10 +110,18 @@ function SettingsPageContent() {
       <div className="card-base p-6 border-l-4 border-l-destructive bg-destructive/5 space-y-4">
         <h2 className="text-lg font-semibold text-destructive">Zone dangereuse</h2>
         <p className="text-sm text-muted-foreground">Ces actions sont irréversibles. Procédez avec prudence.</p>
-        <button className="btn-secondary text-sm border-destructive text-destructive hover:bg-destructive/10 w-full cursor-pointer">Réinitialiser les données de la base de données</button>
+        <button onClick={() => setShowResetModal(true)} disabled={isResetting} className="btn-secondary text-sm border-destructive text-destructive hover:bg-destructive/10 w-full cursor-pointer">
+          {isResetting ? <LoadingDots /> : 'Réinitialiser les données de la base de données'}
+        </button>
       </div>
+
+      <ConfirmationModal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        onConfirm={handleReset}
+        title="Réinitialiser toutes les données"
+        message="Cette action supprimera définitivement toutes les réservations, utilisateurs et données. Êtes-vous absolument sûr ?"
+      />
     </div>
   );
 }
-
-export default function SettingsPage() {return <Suspense fallback={<Loading />}><SettingsPageContent /></Suspense>};

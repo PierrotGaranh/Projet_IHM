@@ -5,6 +5,7 @@ import { getStore } from '@/lib/store';
 import Loading from './loading';
 
 function AnalyticsPageContent() {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [revenueByType, setRevenueByType] = useState<Record<string, number>>({});
   const [occupancyByDay, setOccupancyByDay] = useState<number[]>([]);
@@ -16,9 +17,10 @@ function AnalyticsPageContent() {
     setRevenueByType(store.getRevenueBySpaceType());
     setOccupancyByDay(store.getOccupancyByDayOfWeek());
     setPeakHours(store.getPeakHours());
+    setLoading(false);
   }, []);
 
-  if (!stats) return <div className="space-y-8">Chargement...</div>;
+  if (loading) return <Loading />;
 
   return (
     <div className="space-y-8">

@@ -10,6 +10,7 @@ import Loading from './loading';
 
 function DashboardHomeContent() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     activeReservations: 0,
     availableSpaces: 0,
@@ -21,13 +22,15 @@ function DashboardHomeContent() {
     const reservations = store.getUserReservations(user?.id || '');
     const activeRes = reservations.filter(r => r.status === 'active');
     const parkingStats = store.getParkingStats();
-
     setStats({
       activeReservations: activeRes.length,
       availableSpaces: parkingStats.availableSpaces,
       nextReservation: activeRes.length > 0 ? activeRes[0] : null,
     });
+    setLoading(false);
   }, [user?.id]);
+
+  if (loading) return <Loading />;
 
   return (
     <div className="space-y-8">
@@ -150,4 +153,4 @@ function DashboardHomeContent() {
   );
 }
 
-export default function DashboardHome() {return <Suspense fallback={<Loading />}><DashboardHomeContent /></Suspense>};
+export default function DashboardHome() { return <Suspense fallback={<Loading />}><DashboardHomeContent /></Suspense>};

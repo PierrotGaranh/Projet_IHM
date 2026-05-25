@@ -1,16 +1,21 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
+import { useToast } from '@/hooks/use-toast';
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { ParkingGrid } from '@/components/parking-grid';
 import Loading from './loading';
 
 function BookingPageContent() {
   const router = useRouter();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<ParkingSpace | null>(null);
   const [startDate, setStartDate] = useState('');
@@ -20,6 +25,10 @@ function BookingPageContent() {
   const [estimatedPrice, setEstimatedPrice] = useState(0);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [editingReservationId, setEditingReservationId] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReservationId, setCancelReservationId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const store = getStore();
@@ -27,9 +36,7 @@ function BookingPageContent() {
     
     const groupedByLevel: Record<number, ParkingSpace[]> = {};
     spaces.forEach(space => {
-      if (!groupedByLevel[space.level]) {
-        groupedByLevel[space.level] = [];
-      }
+      if (!groupedByLevel[space.level]) groupedByLevel[space.level] = [];
       groupedByLevel[space.level].push(space);
     });
 
@@ -43,11 +50,20 @@ function BookingPageContent() {
       .sort((a, b) => a.level - b.level);
 
     setLevels(levelArray);
+    setLoading(false);
 
     const today = new Date().toISOString().split('T')[0];
     setStartDate(today);
     setEndDate(today);
   }, []);
+
+  if (loading) return <Loading />;
+
+  useEffect(() => {
+    if (selectedSpace && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedSpace]);
 
   useEffect(() => {
     if (selectedSpace && startDate && endDate) {
@@ -63,7 +79,23 @@ function BookingPageContent() {
     }
   }, [selectedSpace, startDate, startTime, endDate, endTime]);
 
-  const handleReserve = () => {
+  const handleEditReservation = (space: ParkingSpace) => {
+    const store = getStore();
+    const reservation = store.getUserReservations(user?.id || '').find(r => r.spaceId === space.id && r.status === 'active');
+    if (reservation) {
+      setSelectedSpace(space);
+      const start = new Date(reservation.startDate);
+      const end = new Date(reservation.endDate);
+      setStartDate(start.toISOString().split('T')[0]);
+      setStartTime(start.toTimeString().slice(0,5));
+      setEndDate(end.toISOString().split('T')[0]);
+      setEndTime(end.toTimeString().slice(0,5));
+      setEditingReservationId(reservation.id);
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleReserveOrUpdate = () => {
     setError('');
 
     if (!selectedSpace) {
@@ -78,33 +110,74 @@ function BookingPageContent() {
 
     const start = new Date(`${startDate}T${startTime}`);
     const end = new Date(`${endDate}T${endTime}`);
+    const now = new Date();
 
+    if (start < now) {
+      setError('La date de début doit être aujourd\'hui ou ultérieure');
+      return;
+    }
     if (start >= end) {
-      setError('La date de fin doit être après la date de début');
+      setError('La date de fin doit être antérieure à la date de début');
       return;
     }
 
     setIsLoading(true);
     const store = getStore();
-    const result = store.createReservation(user?.id || '', selectedSpace.id, start, end);
 
-    if (result.success) {
-      router.push('/dashboard/reservations');
+    if (editingReservationId) {
+      // Annuler l'ancienne réservation
+      store.cancelReservation(editingReservationId);
+      // Créer la nouvelle
+      const result = store.createReservation(user?.id || '', selectedSpace.id, start, end);
+      if (result.success) {
+        toast({
+          variant: 'success',
+          title: 'Réservation modifiée',
+          description: `Place ${selectedSpace.number} réservée du ${start.toLocaleDateString('fr-FR')} au ${end.toLocaleDateString('fr-FR')}`,
+        });
+        setEditingReservationId(null);
+        router.push('/dashboard/reservations');
+      } else {
+        setError(result.error || 'Erreur lors de la modification');
+      }
     } else {
-      setError(result.error || 'Réservation échouée');
+      const result = store.createReservation(user?.id || '', selectedSpace.id, start, end);
+      if (result.success) {
+        toast({
+          variant: 'success',
+          title: 'Réservation confirmée',
+          description: `Place ${selectedSpace.number} réservée du ${start.toLocaleDateString('fr-FR')} au ${end.toLocaleDateString('fr-FR')}`,
+        });
+        router.push('/dashboard/reservations');
+      } else {
+        setError(result.error || 'Réservation échouée');
+      }
     }
     setIsLoading(false);
   };
 
-  const getSpaceStatusColor = (status: string) => {
-    const statusColors: Record<string, string> = {
-      available: 'bg-secondary hover:bg-secondary/90 cursor-pointer',
-      occupied: 'bg-destructive opacity-50 cursor-not-allowed',
-      reserved: 'bg-primary opacity-50 cursor-not-allowed',
-      maintenance: 'bg-muted opacity-50 cursor-not-allowed',
-    };
-    return statusColors[status] || 'bg-muted';
+  const handleCancelMyReservation = (space: ParkingSpace) => {
+    const store = getStore();
+    const reservation = store.getUserReservations(user?.id || '').find(r => r.spaceId === space.id && r.status === 'active');
+    if (reservation) {
+      setCancelReservationId(reservation.id);
+      setShowCancelModal(true);
+    }
   };
+
+  const confirmCancel = () => {
+    if (cancelReservationId) {
+      const store = getStore();
+      store.cancelReservation(cancelReservationId);
+      toast({ variant: 'success', title: 'Réservation annulée', description: 'Votre réservation a été annulée avec succès.' });
+      setShowCancelModal(false);
+      window.location.reload();
+    }
+  };
+
+  const store = getStore();
+  const userReservations = store.getUserReservations(user?.id || '').filter(r => r.status === 'active');
+  const userReservedSpaceIds = new Set(userReservations.map(r => r.spaceId));
 
   return (
     <div className="space-y-8">
@@ -114,39 +187,18 @@ function BookingPageContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          {levels.map(level => (
-            <div key={level.level} className="card-base p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">Niveau {level.level}</h2>
-                <div className="text-sm text-muted-foreground">{Math.round(level.occupancyRate)}% occupé</div>
-              </div>
-              <div className="grid grid-cols-5 sm:grid-cols-6 gap-3">
-                {level.spaces.map(space => (
-                  <button
-                    key={space.id}
-                    onClick={() => space.status === 'available' && setSelectedSpace(space)}
-                    disabled={space.status !== 'available'}
-                    className={`aspect-square rounded-lg transition-all font-semibold text-sm text-white cursor-pointer ${getSpaceStatusColor(space.status)} ${
-                      selectedSpace?.id === space.id ? 'ring-2 ring-accent ring-offset-2' : ''
-                    }`}
-                    title={`Place ${space.number} - ${space.type}`}
-                  >
-                    {space.number}
-                  </button>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-4 text-xs pt-4 border-t border-border">
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-secondary" /><span>Disponible</span></div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-destructive opacity-50" /><span>Occupée</span></div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-primary opacity-50" /><span>Réservée</span></div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-muted opacity-50" /><span>Maintenance</span></div>
-              </div>
-            </div>
-          ))}
+        <div className="lg:col-span-2">
+          <ParkingGrid
+            levels={levels}
+            selectedSpaceId={selectedSpace?.id}
+            onSelectSpace={setSelectedSpace}
+            userReservedSpaceIds={userReservedSpaceIds}
+            onEditReservation={handleEditReservation}
+            onCancelReservation={handleCancelMyReservation}
+          />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4" ref={formRef}>
           {selectedSpace ? (
             <div className="card-base p-4 bg-secondary/5 border-2 border-secondary space-y-3">
               <p className="text-sm text-muted-foreground">Place sélectionnée</p>
@@ -178,7 +230,7 @@ function BookingPageContent() {
             <h3 className="font-semibold text-foreground">Détails de réservation</h3>
             <div className="space-y-2">
               <label className="label-base">Date de début</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input-base w-full" disabled={!selectedSpace} />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="input-base w-full" disabled={!selectedSpace} />
             </div>
             <div className="space-y-2">
               <label className="label-base">Heure de début</label>
@@ -186,7 +238,7 @@ function BookingPageContent() {
             </div>
             <div className="space-y-2">
               <label className="label-base">Date de fin</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="input-base w-full" disabled={!selectedSpace} />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} min={startDate || new Date().toISOString().split('T')[0]} className="input-base w-full" disabled={!selectedSpace} />
             </div>
             <div className="space-y-2">
               <label className="label-base">Heure de fin</label>
@@ -196,13 +248,21 @@ function BookingPageContent() {
               <p className="text-sm text-muted-foreground">Estimation du tarif</p>
               <p className="text-3xl font-bold text-primary">{estimatedPrice.toFixed(2)} €</p>
             </div>
-            {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">{error}</div>}
-            <button onClick={handleReserve} disabled={!selectedSpace || isLoading} className="btn-primary w-full cursor-pointer">
-              {isLoading ? <LoadingDots /> : 'Confirmer la réservation'}
+            {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive" role="alert">{error}</div>}
+            <button onClick={handleReserveOrUpdate} disabled={!selectedSpace || isLoading} className="btn-primary w-full cursor-pointer">
+              {isLoading ? <LoadingDots /> : (editingReservationId ? 'Modifier la réservation' : 'Confirmer la réservation')}
             </button>
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={confirmCancel}
+        title="Annuler la réservation"
+        message="Êtes-vous sûr de vouloir annuler cette réservation ? Cette action est irréversible."
+      />
     </div>
   );
 }
