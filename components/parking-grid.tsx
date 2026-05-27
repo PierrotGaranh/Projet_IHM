@@ -1,7 +1,7 @@
 'use client';
 
 import { ParkingSpace, ParkingLevel } from '@/lib/types';
-import { Plug, Home, ShieldCheck, Minimize2, CarFront, Crown, Accessibility, Info, Edit, Trash2 } from 'lucide-react';
+import { Plug, Home, ShieldCheck, Minimize2, CarFront, Crown, Accessibility, Info, Edit, Trash2, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState } from 'react';
 
@@ -22,7 +22,6 @@ const featureIcons: Record<string, React.ElementType> = {
   sécurisée: ShieldCheck,
 };
 
-// Pour mobile, on garde la bordure colorée en bas
 const typeColor = {
   compact: 'border-b-2 border-blue-400',
   standard: 'border-b-2 border-gray-400',
@@ -40,6 +39,17 @@ export function ParkingGrid({
 }: ParkingGridProps) {
   const isMobile = useIsMobile();
   const [showLegend, setShowLegend] = useState(false);
+  const [mobileActionSpace, setMobileActionSpace] = useState<ParkingSpace | null>(null);
+
+  const handleMobileReservationClick = (space: ParkingSpace) => {
+    if (space.status === 'available') {
+      onSelectSpace(space);
+    } else if (userReservedSpaceIds.has(space.id) && !isAdmin && onEditReservation && onCancelReservation) {
+      setMobileActionSpace(space);
+    }
+  };
+
+  const closeMobileModal = () => setMobileActionSpace(null);
 
   const getStatusClasses = (status: string) => {
     switch (status) {
@@ -56,17 +66,10 @@ export function ParkingGrid({
     }
   };
 
-  // Version mobile (inchangée)
   const renderMobileCell = (space: ParkingSpace, isMyReservation: boolean, isSelected: boolean) => (
     <button
       key={space.id}
-      onClick={() => {
-        if (space.status === 'available') {
-          onSelectSpace(space);
-        } else if (isMyReservation && !isAdmin && onEditReservation) {
-          onEditReservation(space);
-        }
-      }}
+      onClick={() => handleMobileReservationClick(space)}
       disabled={space.status !== 'available' && !isMyReservation}
       className={`
         relative w-full aspect-square rounded-lg transition-all font-bold text-base
@@ -89,12 +92,11 @@ export function ParkingGrid({
     </button>
   );
 
-  // Version desktop : icône PCS invisible par défaut, visible au survol
   const renderDesktopCell = (space: ParkingSpace, isMyReservation: boolean, isSelected: boolean) => {
     const TypeIcon = space.type === 'compact' ? Minimize2 : space.type === 'standard' ? CarFront : Crown;
 
     return (
-      <div key={space.id} className="relative">
+      <div key={space.id} className="relative z-0 hover:z-20">
         <button
           onClick={() => {
             if (space.status === 'available') {
@@ -111,26 +113,19 @@ export function ParkingGrid({
           `}
           title={`Place ${space.number} - ${space.type} - ${space.features.join(', ')}`}
         >
-          {/* Numéro de place : grand et centré */}
           <span className="absolute inset-0 flex items-center justify-center text-xl sm:text-2xl font-bold">
             {space.number}
           </span>
-
-          {/* Équipements : en bas, centrés */}
           <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
             {space.features.map((feature) => {
               const Icon = featureIcons[feature];
               return Icon ? <Icon key={feature} className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-current opacity-80" /> : null;
             })}
           </div>
-
-          {/* Icône PCS (Premium, Compact, Standard) : visible uniquement au survol */}
           <div className="absolute top-1 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
             <TypeIcon className="w-4 h-4" />
           </div>
         </button>
-
-        {/* Boutons d'action (survol) - design modernisé */}
         {isMyReservation && !isAdmin && onEditReservation && onCancelReservation && (
           <div className="absolute inset-0 bg-gradient-to-br from-black/60 to-black/40 backdrop-blur-sm flex items-center justify-center gap-3 opacity-0 hover:opacity-100 transition-all duration-200 rounded-lg">
             <button
@@ -174,7 +169,6 @@ export function ParkingGrid({
             })}
           </div>
 
-          {/* Légende */}
           {isMobile ? (
             <div className="pt-2 border-t border-border">
               <button
@@ -214,6 +208,40 @@ export function ParkingGrid({
           )}
         </div>
       ))}
+
+      {mobileActionSpace && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closeMobileModal}>
+          <div className="bg-card rounded-lg p-6 max-w-xs w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-foreground">Place {mobileActionSpace.number}</h3>
+              <button onClick={closeMobileModal} className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground">Que souhaitez-vous faire ?</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  closeMobileModal();
+                  onEditReservation?.(mobileActionSpace);
+                }}
+                className="btn-primary flex-1"
+              >
+                Modifier
+              </button>
+              <button
+                onClick={() => {
+                  closeMobileModal();
+                  onCancelReservation?.(mobileActionSpace);
+                }}
+                className="btn-secondary flex-1 border-destructive text-destructive hover:bg-destructive/10"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

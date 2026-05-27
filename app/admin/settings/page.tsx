@@ -65,7 +65,7 @@ export default function SettingsPage() {
           <h2 className="text-lg font-semibold text-foreground">Informations générales</h2>
           <div className="space-y-4">
             <div className="space-y-2"><label className="label-base">Nom du parking</label><input type="text" name="parkingName" value={settings.parkingName} onChange={handleChange} maxLength={100} className="input-base w-full" /></div>
-            <div className="space-y-2"><label className="label-base">Nombre de niveaux</label><select name="totalLevels" value={settings.totalLevels} onChange={handleChange} className="input-base w-full">{Array.from({ length: 6 }, (_, i) => i + 3).map(l => <option key={l} value={l}>{l} niveaux</option>)}</select></div>
+            <div className="space-y-2"><label className="label-base">Nombre de niveaux</label><select name="totalLevels" value={settings.totalLevels} onChange={handleChange} className="input-base w-full cursor-pointer">{Array.from({ length: 6 }, (_, i) => i + 3).map(l => <option key={l} value={l}>{l} niveaux</option>)}</select></div>
             <div className="space-y-2"><label className="label-base">Email de contact</label><input type="email" name="contactEmail" value={settings.contactEmail} onChange={handleChange} maxLength={100} className="input-base w-full" /></div>
             <div className="space-y-2"><label className="label-base">Téléphone</label><input type="tel" name="phoneNumber" value={settings.phoneNumber} onChange={handleChange} maxLength={20} className="input-base w-full" /></div>
           </div>
@@ -77,7 +77,7 @@ export default function SettingsPage() {
             <div className="space-y-2"><label className="label-base">Ouverture</label><input type="time" name="openingHour" value={settings.openingHour} onChange={handleChange} className="input-base w-full" /></div>
             <div className="space-y-2"><label className="label-base">Fermeture</label><input type="time" name="closingHour" value={settings.closingHour} onChange={handleChange} className="input-base w-full" /></div>
           </div>
-          <div className="space-y-2"><label className="label-base">Jour de maintenance</label><select name="maintenanceDay" value={settings.maintenanceDay} onChange={handleChange} className="input-base w-full">
+          <div className="space-y-2"><label className="label-base">Jour de maintenance</label><select name="maintenanceDay" value={settings.maintenanceDay} onChange={handleChange} className="input-base w-full cursor-pointer">
             {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => <option key={day} value={day}>{day === 'Monday' ? 'Lundi' : day === 'Tuesday' ? 'Mardi' : day === 'Wednesday' ? 'Mercredi' : day === 'Thursday' ? 'Jeudi' : day === 'Friday' ? 'Vendredi' : day === 'Saturday' ? 'Samedi' : 'Dimanche'}</option>)}
           </select></div>
         </div>

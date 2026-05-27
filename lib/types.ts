@@ -1,4 +1,3 @@
-// User Types
 export type UserRole = 'user' | 'admin';
 
 export interface User {
@@ -8,7 +7,7 @@ export interface User {
   lastName: string;
   role: UserRole;
   phone: string;
-  vehiclePlate: string;
+  vehiclePlates: string[];
   createdAt: Date;
 }
 
@@ -18,7 +17,6 @@ export interface AuthState {
   isLoading: boolean;
 }
 
-// Parking Space Types
 export type SpaceStatus = 'available' | 'occupied' | 'reserved' | 'maintenance';
 export type SpaceType = 'compact' | 'standard' | 'premium';
 
@@ -39,7 +37,6 @@ export interface ParkingLevel {
   occupancyRate: number;
 }
 
-// Reservation Types
 export type ReservationStatus = 'active' | 'completed' | 'cancelled';
 
 export interface Reservation {
@@ -51,9 +48,9 @@ export interface Reservation {
   status: ReservationStatus;
   createdAt: Date;
   amount: number;
+  vehiclePlate: string;
 }
 
-// Analytics Types
 export interface DashboardStats {
   activeReservations: number;
   occupancyRate: number;
@@ -71,7 +68,6 @@ export interface ParkingStats {
   totalSpaces: number;
 }
 
-// Activity Log
 export interface ActivityLog {
   id: string;
   type: 'user' | 'reservation' | 'parking' | 'system';

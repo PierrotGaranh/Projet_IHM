@@ -37,11 +37,7 @@ function ReservationsPageContent() {
     store.cancelReservation(reservationId);
     setRefreshKey(prev => prev + 1);
     setCancellingId(null);
-    toast({
-      variant: 'success',
-      title: 'Réservation annulée',
-      description: 'Votre réservation a été annulée avec succès.',
-    });
+    toast({ variant: 'success', title: 'Réservation annulée', description: 'Votre réservation a été annulée avec succès.' });
   };
 
   if (loading) return <Loading />;
@@ -88,16 +84,16 @@ function ReservationsPageContent() {
             const endDate = new Date(res.endDate);
             return (
               <div key={res.id} className="card-base p-6 space-y-4">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <h3 className="text-lg font-semibold text-foreground">Place {space?.number || 'N/A'} - Niveau {space?.level || 'N/A'}</h3>
                       {getStatusBadge(res.status)}
                     </div>
                     <p className="text-sm text-muted-foreground">ID: {res.id}</p>
                   </div>
                   {res.status === 'active' && (
-                    <button onClick={() => { setReservationToCancel(res.id); setShowCancelModal(true); }} className="btn-secondary text-sm disabled:opacity-50 cursor-pointer">
+                    <button onClick={() => { setReservationToCancel(res.id); setShowCancelModal(true); }} className="btn-secondary text-sm w-full sm:w-auto disabled:opacity-50 cursor-pointer">
                       Annuler
                     </button>
                   )}
@@ -107,13 +103,12 @@ function ReservationsPageContent() {
                   <div><p className="text-muted-foreground">Fin</p><p className="font-semibold">{endDate.toLocaleDateString('fr-FR')}</p><p className="text-xs">{endDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p></div>
                   <div><p className="text-muted-foreground">Type</p><p className="font-semibold capitalize">{space?.type || 'N/A'}</p></div>
                   <div><p className="text-muted-foreground">Montant</p><p className="font-semibold">{res.amount.toFixed(2)} €</p></div>
+                  <div><p className="text-muted-foreground">Véhicule</p><p className="font-semibold">{res.vehiclePlate || 'N/A'}</p></div>
                 </div>
                 {space?.features?.length ? (
                   <div className="pt-4 border-t border-border space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">Équipements</p>
-                    <div className="flex flex-wrap gap-2">
-                      {space.features.map(f => <span key={f} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary capitalize">{f}</span>)}
-                    </div>
+                    <div className="flex flex-wrap gap-2">{space.features.map(f => <span key={f} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary capitalize">{f}</span>)}</div>
                   </div>
                 ) : null}
               </div>
@@ -122,18 +117,11 @@ function ReservationsPageContent() {
         </div>
       )}
 
-      <ConfirmationModal
-        isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        onConfirm={() => {
-          if (reservationToCancel) handleCancel(reservationToCancel);
-          setShowCancelModal(false);
-        }}
-        title="Annuler la réservation"
-        message="Êtes-vous sûr de vouloir annuler cette réservation ? Cette action est irréversible."
-      />
+      <ConfirmationModal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} onConfirm={() => { if (reservationToCancel) handleCancel(reservationToCancel); setShowCancelModal(false); }} title="Annuler la réservation" message="Êtes-vous sûr de vouloir annuler cette réservation ? Cette action est irréversible." />
     </div>
   );
 }
 
-export default function ReservationsPage() {return <Suspense fallback={<Loading />}><ReservationsPageContent /></Suspense>};
+export default function ReservationsPage() {
+  return <Suspense fallback={<Loading />}><ReservationsPageContent /></Suspense>;
+}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/context';
-import { Lock } from 'lucide-react';
+import { Lock, X } from 'lucide-react';
 import { LoadingDots } from '@/components/loading-dots';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,52 +14,67 @@ export default function ProfilePage() {
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     phone: user?.phone || '',
-    vehiclePlate: user?.vehiclePlate || '',
   });
+  const [vehiclePlates, setVehiclePlates] = useState<string[]>(user?.vehiclePlates?.length ? user.vehiclePlates : ['']);
   const [message, setMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validateField = (name: string, value: string): string => {
+    const nameRegex = /^[A-Za-zÀ-ÿ\s-]{1,50}$/;
+    if (name === 'firstName' || name === 'lastName') {
+      if (!value) return 'Ce champ est requis';
+      if (!nameRegex.test(value)) return 'Lettres, espaces ou tirets (max 50)';
+    }
+    if (name === 'phone' && value && !/^[\d+\s-]{10,20}$/.test(value)) return 'Téléphone invalide (10-20 chiffres, +, -, espace)';
+    if (name === 'plate' && value && !/^[A-Za-z0-9\s-]{1,15}$/.test(value)) return 'Plaque invalide (lettres, chiffres, -, espace)';
+    return '';
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
-    if (e.target.name === 'firstName' || e.target.name === 'lastName') {
-      value = value.slice(0, 50);
-    } else if (e.target.name === 'phone') {
-      value = value.slice(0, 20);
-    } else if (e.target.name === 'vehiclePlate') {
-      value = value.slice(0, 15);
-    }
+    if (e.target.name === 'firstName' || e.target.name === 'lastName') value = value.slice(0, 50);
+    else if (e.target.name === 'phone') value = value.slice(0, 20);
     setFormData({ ...formData, [e.target.name]: value });
+    const error = validateField(e.target.name, value);
+    setFieldErrors(prev => ({ ...prev, [e.target.name]: error }));
+  };
+
+  const addPlate = () => setVehiclePlates([...vehiclePlates, '']);
+  const removePlate = (idx: number) => setVehiclePlates(vehiclePlates.filter((_, i) => i !== idx));
+  const updatePlate = (idx: number, value: string) => {
+    const newPlates = [...vehiclePlates];
+    newPlates[idx] = value.slice(0, 15);
+    setVehiclePlates(newPlates);
+    const error = validateField('plate', value);
+    setFieldErrors(prev => ({ ...prev, [`plate_${idx}`]: error }));
   };
 
   const handleSave = () => {
     setMessage('');
-    setError('');
-    const nameRegex = /^[A-Za-zÀ-ÿ\s-]{1,50}$/;
-    if (!nameRegex.test(formData.firstName)) {
-      setError('Le prénom ne doit contenir que des lettres, espaces ou tirets (max 50)');
-      return;
-    }
-    if (!nameRegex.test(formData.lastName)) {
-      setError('Le nom ne doit contenir que des lettres, espaces ou tirets (max 50)');
-      return;
-    }
-    if (formData.phone && !/^[\d+\s-]{10,20}$/.test(formData.phone)) {
-      setError('Téléphone invalide (10 à 20 chiffres, espaces, +, -)');
-      return;
-    }
-    if (formData.vehiclePlate && !/^[A-Za-z0-9\s-]{1,15}$/.test(formData.vehiclePlate)) {
-      setError('Plaque d\'immatriculation invalide (lettres, chiffres, espaces, tirets)');
+    const errors: Record<string, string> = {};
+    errors.firstName = validateField('firstName', formData.firstName);
+    errors.lastName = validateField('lastName', formData.lastName);
+    if (formData.phone) errors.phone = validateField('phone', formData.phone);
+    vehiclePlates.forEach((plate, idx) => {
+      if (plate) {
+        const err = validateField('plate', plate);
+        if (err) errors[`plate_${idx}`] = err;
+      }
+    });
+    if (Object.values(errors).some(e => e)) {
+      setFieldErrors(errors);
       return;
     }
     setIsSaving(true);
-    const success = updateProfile(formData);
+    const filteredPlates = vehiclePlates.filter(p => p.trim() !== '');
+    const success = updateProfile({ ...formData, vehiclePlates: filteredPlates });
     if (success) {
       setMessage('Profil mis à jour avec succès !');
       toast({ variant: 'success', title: 'Profil mis à jour', description: 'Vos informations ont été enregistrées.' });
       setIsEditing(false);
     } else {
-      setError('Erreur lors de la mise à jour du profil');
+      setFieldErrors({ global: 'Erreur lors de la mise à jour du profil' });
     }
     setIsSaving(false);
   };
@@ -69,11 +84,11 @@ export default function ProfilePage() {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
       phone: user?.phone || '',
-      vehiclePlate: user?.vehiclePlate || '',
     });
+    setVehiclePlates(user?.vehiclePlates?.length ? user.vehiclePlates : ['']);
     setIsEditing(false);
     setMessage('');
-    setError('');
+    setFieldErrors({});
   };
 
   return (
@@ -99,46 +114,73 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {message && (
-          <div className="p-4 rounded-lg text-sm bg-secondary/10 border border-secondary/20 text-secondary">
-            {message}
-          </div>
-        )}
-        {error && (
-          <div className="p-4 rounded-lg text-sm bg-destructive/10 border border-destructive/20 text-destructive" role="alert">
-            {error}
-          </div>
-        )}
+        {message && <div className="p-4 rounded-lg text-sm bg-secondary/10 border border-secondary/20 text-secondary">{message}</div>}
+        {fieldErrors.global && <div className="p-4 rounded-lg text-sm bg-destructive/10 border border-destructive/20 text-destructive">{fieldErrors.global}</div>}
 
         <div className="space-y-6 pt-6 border-t border-border">
           <div className="space-y-4">
             <h2 className="font-semibold text-foreground text-lg">Informations de contact</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <label className="label-base">Prénom</label>
-                {isEditing ? <input name="firstName" value={formData.firstName} onChange={handleChange} className="input-base w-full" maxLength={50} /> : <p className="text-foreground py-2">{user?.firstName}</p>}
+                {isEditing ? (
+                  <>
+                    <input name="firstName" value={formData.firstName} onChange={handleChange} className={`input-base w-full ${fieldErrors.firstName ? 'border-destructive' : ''}`} maxLength={50} />
+                    {fieldErrors.firstName && <p className="text-xs text-destructive">{fieldErrors.firstName}</p>}
+                  </>
+                ) : (
+                  <p className="text-foreground py-2">{user?.firstName}</p>
+                )}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <label className="label-base">Nom</label>
-                {isEditing ? <input name="lastName" value={formData.lastName} onChange={handleChange} className="input-base w-full" maxLength={50} /> : <p className="text-foreground py-2">{user?.lastName}</p>}
+                {isEditing ? (
+                  <>
+                    <input name="lastName" value={formData.lastName} onChange={handleChange} className={`input-base w-full ${fieldErrors.lastName ? 'border-destructive' : ''}`} maxLength={50} />
+                    {fieldErrors.lastName && <p className="text-xs text-destructive">{fieldErrors.lastName}</p>}
+                  </>
+                ) : (
+                  <p className="text-foreground py-2">{user?.lastName}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="label-base">Email</label>
                 <p className="text-muted-foreground py-2">{user?.email}</p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <label className="label-base">Téléphone</label>
-                {isEditing ? <input name="phone" value={formData.phone} onChange={handleChange} className="input-base w-full" maxLength={20} /> : <p className="text-foreground py-2">{user?.phone || 'Non renseigné'}</p>}
+                {isEditing ? (
+                  <>
+                    <input name="phone" value={formData.phone} onChange={handleChange} className={`input-base w-full ${fieldErrors.phone ? 'border-destructive' : ''}`} maxLength={20} />
+                    {fieldErrors.phone && <p className="text-xs text-destructive">{fieldErrors.phone}</p>}
+                  </>
+                ) : (
+                  <p className="text-foreground py-2">{user?.phone || 'Non renseigné'}</p>
+                )}
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
             <h2 className="font-semibold text-foreground text-lg">Informations véhicule</h2>
-            <div className="space-y-2">
-              <label className="label-base">Immatriculation</label>
-              {isEditing ? <input name="vehiclePlate" value={formData.vehiclePlate} onChange={handleChange} placeholder="AB123CD" className="input-base w-full" maxLength={15} /> : <p className="text-foreground py-2">{user?.vehiclePlate || 'Non renseignée'}</p>}
-            </div>
+            {isEditing ? (
+              <div className="space-y-2">
+                {vehiclePlates.map((plate, idx) => (
+                  <div key={idx} className="flex gap-2 items-start">
+                    <div className="flex-1">
+                      <input type="text" value={plate} onChange={e => updatePlate(idx, e.target.value)} placeholder="ex: AB-123-CD" className={`input-base w-full ${fieldErrors[`plate_${idx}`] ? 'border-destructive' : ''}`} maxLength={15} />
+                      {fieldErrors[`plate_${idx}`] && <p className="text-xs text-destructive">{fieldErrors[`plate_${idx}`]}</p>}
+                    </div>
+                    {idx > 0 && <button type="button" onClick={() => removePlate(idx)} className="text-destructive hover:text-destructive/80 mt-1"><X className="w-4 h-4" /></button>}
+                  </div>
+                ))}
+                <button type="button" onClick={addPlate} className="text-sm text-primary hover:underline">+ Ajouter une plaque</button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {user?.vehiclePlates?.length ? user.vehiclePlates.map((plate, idx) => <span key={idx} className="bg-muted px-2 py-1 rounded text-sm">{plate}</span>) : <p className="text-foreground py-2">Non renseignée</p>}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-4 border-t border-border">

@@ -202,7 +202,7 @@ function ParkingManagementPageContent() {
             <select
               value={filterLevel}
               onChange={(e) => setFilterLevel(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-              className="input-base w-full"
+              className="input-base w-full cursor-pointer"
             >
               <option value="all">Tous les niveaux</option>
               {[1, 2, 3, 4, 5].map(level => (
@@ -215,7 +215,7 @@ function ParkingManagementPageContent() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="input-base w-full"
+              className="input-base w-full cursor-pointer"
             >
               <option value="all">Tous les statuts</option>
               <option value="available">Disponible</option>
@@ -349,7 +349,7 @@ function ParkingManagementPageContent() {
             <div className="space-y-3">
               <div className="space-y-1">
                 <label className="label-base">Utilisateur</label>
-                <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="input-base w-full">
+                <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="input-base w-full cursor-pointer">
                   <option value="">Sélectionnez un utilisateur</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName} ({u.email})</option>)}
                 </select>

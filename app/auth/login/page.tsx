@@ -61,7 +61,13 @@ function LoginPageContent() {
             <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-base w-full" required />
           </div>
           {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive" role="alert">{error}</div>}
-          <button type="submit" disabled={isLoading} className="btn-primary w-full cursor-pointer">{isLoading ? <LoadingDots /> : 'Se connecter'}</button>
+          <div>
+            {isLoading ? 
+            <button disabled className="btn-primary gap-2 w-full opacity-75 cursor-not-allowed">
+              <span>Connexion</span>
+              <LoadingDots />
+            </button> : <button type="submit" className="btn-primary w-full cursor-pointer">Se connecter</button>}
+          </div>
         </form>
 
         <div className="flex items-center gap-3"><div className="flex-1 h-px bg-border" /><span className="text-sm text-muted-foreground">ou</span><div className="flex-1 h-px bg-border" /></div>

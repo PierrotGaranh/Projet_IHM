@@ -23,7 +23,7 @@ function generateRealisticUsers(): User[] {
     lastName: 'System',
     role: 'admin',
     phone: '+33698765432',
-    vehiclePlate: 'ADMIN01',
+    vehiclePlates: ['ADMIN01'],
     createdAt: new Date('2024-01-01'),
   });
 
@@ -34,7 +34,7 @@ function generateRealisticUsers(): User[] {
     lastName: 'Dupont',
     role: 'user',
     phone: '+33612345678',
-    vehiclePlate: 'AB123CD',
+    vehiclePlates: ['AB123CD'],
     createdAt: new Date('2024-01-15'),
   });
 
@@ -48,7 +48,7 @@ function generateRealisticUsers(): User[] {
       lastName: lastNames[i % lastNames.length],
       role: 'user',
       phone: `+336${Math.floor(10000000 + Math.random() * 90000000)}`,
-      vehiclePlate: `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(100 + Math.random() * 900)}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`,
+      vehiclePlates: [`${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(100 + Math.random() * 900)}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`],
       createdAt,
     });
   }
@@ -84,8 +84,10 @@ function generateRealisticReservations(users: User[], spaces: ParkingSpace[]): R
 
   for (const user of users.filter(u => u.role === 'user')) {
     const numRes = Math.floor(Math.random() * 4) + 1;
+    const userReservations: Reservation[] = [];
+
     for (let i = 0; i < numRes; i++) {
-      const startDate = new Date();
+      let startDate = new Date();
       startDate.setDate(now.getDate() + Math.floor(Math.random() * 60) - 30);
       startDate.setHours(
         Math.floor(Math.random() * 24),
@@ -94,7 +96,27 @@ function generateRealisticReservations(users: User[], spaces: ParkingSpace[]): R
       );
 
       const durationHours = Math.floor(Math.random() * 48) + 2;
-      const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
+      let endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
+
+      let conflicts = true;
+      let attempts = 0;
+      let selectedPlate = '';
+      while (conflicts && attempts < 10) {
+        conflicts = false;
+        selectedPlate = user.vehiclePlates.length > 0
+          ? user.vehiclePlates[Math.floor(Math.random() * user.vehiclePlates.length)]
+          : `AB${Math.floor(100 + Math.random() * 900)}CD`;
+        for (const existing of userReservations) {
+          if (existing.vehiclePlate === selectedPlate &&
+              ((startDate < existing.endDate && endDate > existing.startDate))) {
+            conflicts = true;
+            startDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+            endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
+            break;
+          }
+        }
+        attempts++;
+      }
 
       let status: 'active' | 'completed' | 'cancelled';
       if (endDate < now) status = 'completed';
@@ -105,7 +127,7 @@ function generateRealisticReservations(users: User[], spaces: ParkingSpace[]): R
       const hours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
       const amount = Math.round(hours * space.pricePerHour * 100) / 100;
 
-      reservations.push({
+      const reservation: Reservation = {
         id: `res-${user.id}-${i}`,
         userId: user.id,
         spaceId: space.id,
@@ -114,7 +136,10 @@ function generateRealisticReservations(users: User[], spaces: ParkingSpace[]): R
         status,
         createdAt: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
         amount,
-      });
+        vehiclePlate: selectedPlate,
+      };
+      userReservations.push(reservation);
+      reservations.push(reservation);
     }
   }
   return reservations;
@@ -384,9 +409,9 @@ class StoreManager {
     return { success: true, user };
   }
 
-  register(email: string, password: string, firstName: string, lastName: string, phone: string) {
+  register(email: string, password: string, firstName: string, lastName: string, phone: string, vehiclePlates: string[] = []) {
     if (this.users.find(u => u.email === email)) {
-      return { success: false, error: 'Un compte avec cette adresse email existe déjà. Utilisez une autre adresse' };
+      return { success: false, error: 'Un compte avec cette adresse email existe déjà.' };
     }
     const newUser: User = {
       id: `user-${Date.now()}`,
@@ -395,7 +420,7 @@ class StoreManager {
       lastName,
       phone,
       role: 'user',
-      vehiclePlate: '',
+      vehiclePlates: vehiclePlates.filter(p => p.trim() !== ''),
       createdAt: new Date(),
     };
     this.users.push(newUser);
@@ -422,11 +447,27 @@ class StoreManager {
   updateUser(id: string, updates: Partial<User>): boolean {
     const user = this.users.find(u => u.id === id);
     if (!user) return false;
+    if (updates.vehiclePlates) {
+      updates.vehiclePlates = updates.vehiclePlates.filter(p => p.trim() !== '');
+    }
     Object.assign(user, updates);
     if (this.currentUser?.id === id) this.currentUser = user;
     this.addActivity('user', `${user.firstName} ${user.lastName} a mis à jour son profil`, id);
     this.saveToStorage();
     return true;
+  }
+
+  addVehiclePlate(userId: string, plate: string): boolean {
+    const user = this.users.find(u => u.id === userId);
+    if (!user) return false;
+    if (!user.vehiclePlates.includes(plate) && plate.trim() !== '') {
+      user.vehiclePlates.push(plate.trim());
+      if (this.currentUser?.id === userId) this.currentUser = user;
+      this.addActivity('user', `${user.firstName} ${user.lastName} a ajouté une plaque: ${plate}`, userId);
+      this.saveToStorage();
+      return true;
+    }
+    return false;
   }
 
   getSpaces() { return this.spaces; }
@@ -453,11 +494,10 @@ class StoreManager {
   getUserReservations(userId: string) { return this.reservations.filter(r => r.userId === userId); }
   getReservation(id: string) { return this.reservations.find(r => r.id === id); }
 
-  createReservation(userId: string, spaceId: string, startDate: Date, endDate: Date) {
+  createReservation(userId: string, spaceId: string, startDate: Date, endDate: Date, vehiclePlate: string) {
     const space = this.getSpace(spaceId);
-    if (!space) return { success: false, error: 'La place mentionnée n\'existe pas' };
+    if (!space) return { success: false, error: 'La place n\'existe pas' };
     if (space.status !== 'available') return { success: false, error: 'Cette place n\'est pas disponible' };
-
     const hours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
     const amount = Math.round(hours * space.pricePerHour * 100) / 100;
     const reservation: Reservation = {
@@ -469,10 +509,11 @@ class StoreManager {
       status: 'active',
       createdAt: new Date(),
       amount,
+      vehiclePlate,
     };
     this.reservations.push(reservation);
     this.updateSpace(spaceId, { status: 'reserved', reservedBy: userId });
-    this.addActivity('reservation', `Nouvelle réservation #${reservation.id} pour la place ${space.number}`, userId);
+    this.addActivity('reservation', `Nouvelle réservation #${reservation.id} pour la place ${space.number} (${vehiclePlate})`, userId);
     this.saveToStorage();
     return { success: true, reservation };
   }

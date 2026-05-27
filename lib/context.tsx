@@ -9,9 +9,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; user?: User; error?: string }>;
-  register: (email: string, password: string, firstName: string, lastName: string, phone: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string, firstName: string, lastName: string, phone: string, vehiclePlates?: string[]) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => boolean;
+  addVehiclePlate: (plate: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,9 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: false, error: result.error };
   };
 
-  const register = async (email: string, password: string, firstName: string, lastName: string, phone: string) => {
+  const register = async (email: string, password: string, firstName: string, lastName: string, phone: string, vehiclePlates?: string[]) => {
     const store = getStore();
-    const result = store.register(email, password, firstName, lastName, phone);
+    const result = store.register(email, password, firstName, lastName, phone, vehiclePlates || []);
     
     if (result.success && result.user) {
       setUser(result.user);
@@ -79,6 +80,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return success;
   };
 
+  const addVehiclePlate = (plate: string): boolean => {
+    if (!user) return false;
+    const store = getStore();
+    const success = store.addVehiclePlate(user.id, plate);
+    if (success) {
+      const updatedUser = store.getUser(user.id);
+      if (updatedUser) {
+        setUser(updatedUser);
+      }
+    }
+    return success;
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -88,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       updateProfile,
+      addVehiclePlate,
     }}>
       {children}
     </AuthContext.Provider>
