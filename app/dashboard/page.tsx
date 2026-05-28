@@ -21,11 +21,12 @@ function DashboardHomeContent() {
     const store = getStore();
     const reservations = store.getUserReservations(user?.id || '');
     const activeRes = reservations.filter(r => r.status === 'active');
+    const nextRes = activeRes.length > 0 ? activeRes.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0] : null;
     const parkingStats = store.getParkingStats();
     setStats({
       activeReservations: activeRes.length,
       availableSpaces: parkingStats.availableSpaces,
-      nextReservation: activeRes.length > 0 ? activeRes[0] : null,
+      nextReservation: nextRes,
     });
     setLoading(false);
   }, [user?.id]);
@@ -34,7 +35,6 @@ function DashboardHomeContent() {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Section */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">
           Bienvenue, {user?.firstName}!
@@ -44,9 +44,7 @@ function DashboardHomeContent() {
         </p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Active Reservations */}
         <div className="card-base p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">Réservations actives</h3>
@@ -58,7 +56,6 @@ function DashboardHomeContent() {
           <p className="text-xs text-muted-foreground">Gérées à partir de votre compte</p>
         </div>
 
-        {/* Available Spaces */}
         <div className="card-base p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">Places disponibles</h3>
@@ -70,7 +67,6 @@ function DashboardHomeContent() {
           <p className="text-xs text-muted-foreground">Prêtes à être réservées</p>
         </div>
 
-        {/* Next Reservation */}
         <div className="card-base p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">Prochaine réservation</h3>
@@ -85,15 +81,13 @@ function DashboardHomeContent() {
           </p>
           <p className="text-xs text-muted-foreground">
             {stats.nextReservation 
-              ? 'Réservation programmée'
+              ? `Place ${getStore().getSpace(stats.nextReservation.spaceId)?.number}`
               : 'Pas de réservation en cours'}
           </p>
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Booking CTA */}
         <Link
           href="/dashboard/booking"
           className="card-base p-8 hover:shadow-md transition-shadow group cursor-pointer"
@@ -114,7 +108,6 @@ function DashboardHomeContent() {
           </div>
         </Link>
 
-        {/* Reservations List */}
         <Link
           href="/dashboard/reservations"
           className="card-base p-8 hover:shadow-md transition-shadow group cursor-pointer"
@@ -136,7 +129,6 @@ function DashboardHomeContent() {
         </Link>
       </div>
 
-      {/* Info Box */}
       <div className="card-base p-6 border-l-4 border-l-accent bg-accent/5 space-y-3">
         <div className="flex items-start gap-3">
           <span className="text-2xl mt-1"><Lightbulb className="w-5 h-5"/></span>

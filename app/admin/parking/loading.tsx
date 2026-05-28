@@ -8,17 +8,17 @@ export default function Loading() {
         <Skeleton className="h-5 w-80" />
       </div>
       {/* Filtres */}
-      <div className="card-base p-6 space-y-4">
-        <Skeleton className="h-6 w-20" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-10 w-full" />
-          </div>
+      <div className="card-base p-4 space-y-3">
+        <Skeleton className="h-6 w-32" />
+        <div className="flex flex-wrap gap-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex-1 min-w-[150px]">
+              <div className="flex items-center justify-between mb-2">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-4 w-4 rounded" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
       {/* Grille des places + panneau latéral */}

@@ -74,23 +74,23 @@ function AdminDashboardContent() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions with hover effect */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <a href="/admin/parking" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
+        <a href="/admin/parking" className="card-base p-6 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer group">
           <div className="space-y-3">
             <Car className="w-6 h-6 text-primary" />
             <h3 className="font-semibold text-foreground">Gestion du parking</h3>
             <p className="text-sm text-muted-foreground">Gérer les places et statuts</p>
           </div>
         </a>
-        <a href="/admin/users" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
+        <a href="/admin/users" className="card-base p-6 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer group">
           <div className="space-y-3">
             <Users className="w-6 h-6 text-secondary" />
             <h3 className="font-semibold text-foreground">Utilisateurs</h3>
             <p className="text-sm text-muted-foreground">{stats.totalUsers} utilisateurs actifs</p>
           </div>
         </a>
-        <a href="/admin/settings" className="card-base p-6 hover:shadow-md transition-shadow group cursor-pointer">
+        <a href="/admin/settings" className="card-base p-6 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer group">
           <div className="space-y-3">
             <Settings className="w-6 h-6 text-accent" />
             <h3 className="font-semibold text-foreground">Paramètres</h3>
@@ -102,4 +102,4 @@ function AdminDashboardContent() {
   );
 }
 
-export default function AdminDashboard() { return <Suspense fallback={<Loading />}><AdminDashboardContent /></Suspense>};
+export default function AdminDashboard() { return <Suspense fallback={<Loading />}><AdminDashboardContent /></Suspense> };

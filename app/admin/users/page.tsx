@@ -230,15 +230,17 @@ function UsersManagementPageContent() {
             <h2 className="text-xl font-bold text-foreground">Ajouter un utilisateur</h2>
             {fieldErrors.global && <div className="p-3 bg-destructive/10 text-destructive text-sm rounded" role="alert">{fieldErrors.global}</div>}
             <div className="space-y-4">
-              <div className="space-y-1">
-                <label className="label-base">Prénom <span className="text-destructive">*</span></label>
-                <input type="text" value={newUser.firstName} onChange={e => handleFieldChange('firstName', e.target.value.slice(0, 50))} placeholder="ex: Jean" className={`input-base w-full ${fieldErrors.firstName ? 'border-destructive' : ''}`} />
-                {fieldErrors.firstName && <p className="text-xs text-destructive">{fieldErrors.firstName}</p>}
-              </div>
-              <div className="space-y-1">
-                <label className="label-base">Nom <span className="text-destructive">*</span></label>
-                <input type="text" value={newUser.lastName} onChange={e => handleFieldChange('lastName', e.target.value.slice(0, 50))} placeholder="ex: Dupont" className={`input-base w-full ${fieldErrors.lastName ? 'border-destructive' : ''}`} />
-                {fieldErrors.lastName && <p className="text-xs text-destructive">{fieldErrors.lastName}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="label-base">Prénom <span className="text-destructive">*</span></label>
+                  <input type="text" value={newUser.firstName} onChange={e => handleFieldChange('firstName', e.target.value.slice(0, 50))} placeholder="ex: Jean" className={`input-base w-full ${fieldErrors.firstName ? 'border-destructive' : ''}`} />
+                  {fieldErrors.firstName && <p className="text-xs text-destructive">{fieldErrors.firstName}</p>}
+                </div>
+                <div className="space-y-1">
+                  <label className="label-base">Nom <span className="text-destructive">*</span></label>
+                  <input type="text" value={newUser.lastName} onChange={e => handleFieldChange('lastName', e.target.value.slice(0, 50))} placeholder="ex: Dupont" className={`input-base w-full ${fieldErrors.lastName ? 'border-destructive' : ''}`} />
+                  {fieldErrors.lastName && <p className="text-xs text-destructive">{fieldErrors.lastName}</p>}
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="label-base">Email <span className="text-destructive">*</span></label>
@@ -265,7 +267,7 @@ function UsersManagementPageContent() {
                 {newUser.vehiclePlates.map((plate, idx) => (
                   <div key={idx} className="flex gap-2 items-start">
                     <div className="flex-1">
-                      <input type="text" value={plate} onChange={e => handleFieldChange(`plate${idx}`, e.target.value.slice(0, 15), idx)} placeholder="ex: AB-123-CD" className={`input-base w-full ${fieldErrors[`plate_${idx}`] ? 'border-destructive' : ''}`} />
+                      <input type="text" value={plate} onChange={e => handleFieldChange(`plate${idx}`, e.target.value.slice(0, 15), idx)} placeholder="ex: AB123CD" className={`input-base w-full ${fieldErrors[`plate_${idx}`] ? 'border-destructive' : ''}`} />
                       {fieldErrors[`plate_${idx}`] && <p className="text-xs text-destructive">{fieldErrors[`plate_${idx}`]}</p>}
                     </div>
                     {idx > 0 && <button type="button" onClick={() => removePlateField(idx)} className="text-destructive hover:text-destructive/80 mt-1"><X className="w-4 h-4" /></button>}

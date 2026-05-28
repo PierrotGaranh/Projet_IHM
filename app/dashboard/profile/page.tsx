@@ -168,7 +168,7 @@ export default function ProfilePage() {
                 {vehiclePlates.map((plate, idx) => (
                   <div key={idx} className="flex gap-2 items-start">
                     <div className="flex-1">
-                      <input type="text" value={plate} onChange={e => updatePlate(idx, e.target.value)} placeholder="ex: AB-123-CD" className={`input-base w-full ${fieldErrors[`plate_${idx}`] ? 'border-destructive' : ''}`} maxLength={15} />
+                      <input type="text" value={plate} onChange={e => updatePlate(idx, e.target.value)} placeholder="ex: AB123CD" className={`input-base w-full ${fieldErrors[`plate_${idx}`] ? 'border-destructive' : ''}`} maxLength={15} />
                       {fieldErrors[`plate_${idx}`] && <p className="text-xs text-destructive">{fieldErrors[`plate_${idx}`]}</p>}
                     </div>
                     {idx > 0 && <button type="button" onClick={() => removePlate(idx)} className="text-destructive hover:text-destructive/80 mt-1"><X className="w-4 h-4" /></button>}

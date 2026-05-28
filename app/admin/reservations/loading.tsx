@@ -7,11 +7,20 @@ export default function Loading() {
         <Skeleton className="h-10 w-72" />
         <Skeleton className="h-5 w-96" />
       </div>
-      {/* Filtres */}
-      <div className="flex flex-wrap gap-3">
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-9 w-28" />
-        ))}
+      <div className="card-base p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-40" />
+          </div>
+          <div className="flex items-end">
+            <Skeleton className="h-10 w-48" />
+          </div>
+        </div>
       </div>
       {/* Liste des réservations */}
       <div className="space-y-4">
@@ -25,7 +34,10 @@ export default function Loading() {
                 </div>
                 <Skeleton className="h-4 w-48" />
               </div>
-              <Skeleton className="h-9 w-24" />
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-24" />
+              </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t border-border">
               {Array(5)

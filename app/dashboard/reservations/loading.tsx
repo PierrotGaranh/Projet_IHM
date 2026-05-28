@@ -8,7 +8,7 @@ export default function Loading() {
         <Skeleton className="h-5 w-80" />
       </div>
       <div className="flex flex-wrap gap-3">
-        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-9 w-28" />)}
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-9 w-24" />)}
       </div>
       <div className="grid gap-4">
         {[1, 2, 3].map(i => (
@@ -21,7 +21,10 @@ export default function Loading() {
                 </div>
                 <Skeleton className="h-4 w-32" />
               </div>
-              <Skeleton className="h-9 w-24" />
+              <div className="flex gap-2">
+                <Skeleton className="h-9 w-24" />
+                <Skeleton className="h-9 w-24" />
+              </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               {Array(4).fill(0).map((_, j) => (

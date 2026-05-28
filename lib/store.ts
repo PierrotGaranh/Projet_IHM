@@ -212,6 +212,7 @@ class StoreManager {
         ...a,
         timestamp: a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp)
       }));
+      this.refreshSpaceStatuses();
     } else {
       this.users = generateRealisticUsers();
       this.spaces = generateParkingSpaces();
@@ -231,6 +232,7 @@ class StoreManager {
       }
 
       this.saveToStorage();
+      this.refreshSpaceStatuses();
     }
   }
 
@@ -515,6 +517,7 @@ class StoreManager {
     this.updateSpace(spaceId, { status: 'reserved', reservedBy: userId });
     this.addActivity('reservation', `Nouvelle réservation #${reservation.id} pour la place ${space.number} (${vehiclePlate})`, userId);
     this.saveToStorage();
+    this.refreshSpaceStatuses();
     return { success: true, reservation };
   }
 
@@ -528,6 +531,7 @@ class StoreManager {
     }
     this.addActivity('reservation', `La réservation #${reservation.id} a été annulée`, reservation.userId);
     this.saveToStorage();
+    this.refreshSpaceStatuses();
     return true;
   }
 
@@ -590,6 +594,27 @@ class StoreManager {
       hours[hour]++;
     }
     return hours.map((count, idx) => ({ time: `${idx}:00`, count }));
+  }
+
+  refreshSpaceStatuses(): void {
+    const now = new Date();
+    for (const space of this.spaces) {
+      if (space.status === 'maintenance') continue;
+      const activeRes = this.reservations.find(r => r.spaceId === space.id && r.status === 'active');
+      if (activeRes) {
+        if (activeRes.startDate <= now && activeRes.endDate >= now) {
+          space.status = 'occupied';
+        } else if (activeRes.startDate > now) {
+          space.status = 'reserved';
+        } else if (activeRes.endDate < now) {
+          space.status = 'available';
+          activeRes.status = 'completed';
+        }
+      } else {
+        space.status = 'available';
+      }
+    }
+    this.saveToStorage();
   }
 }
 
