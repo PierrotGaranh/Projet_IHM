@@ -39,7 +39,7 @@ function AdminReservationsPageContent() {
     const allRes = store.getReservations();
     setReservations(allRes);
     setAllUsers(store.getAllUsers());
-    setLoading(true);
+    setLoading(false);
   };
 
   useEffect(() => {

@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { LoadingDots } from '@/components/loading-dots';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { getStore } from '@/lib/store';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [isEditMode, setIsEditMode] = useState(false);
   const [settings, setSettings] = useState({
@@ -72,6 +74,7 @@ export default function SettingsPage() {
       toast({ variant: 'success', title: 'Réinitialisation réussie', description: 'Toutes les données ont été réinitialisées.' });
       setShowResetModal(false);
       setIsResetting(false);
+      router.push('/auth/login');
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erreur', description: 'Une erreur est survenue lors de la réinitialisation.' });
       setShowResetModal(false);
