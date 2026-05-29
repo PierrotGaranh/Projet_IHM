@@ -48,16 +48,6 @@ export default function Loading() {
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {Array(3)
-          .fill(0)
-          .map((_, i) => (
-            <div key={i} className="card-base p-6 space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-8 w-20" />
-            </div>
-          ))}
-      </div>
     </div>
   );
 }

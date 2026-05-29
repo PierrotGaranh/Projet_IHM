@@ -55,7 +55,6 @@ function AnalyticsPageContent() {
         </div>
       </div>
 
-      {/* Heures de pointe - Histogramme modernisé */}
       <div className="card-base p-6 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Heures de pointe</h2>
         
@@ -64,7 +63,7 @@ function AnalyticsPageContent() {
             <div className="flex items-end gap-2 pt-4 overflow-x-auto pb-2">
               {peakHours
                 .filter(item => item.count > 0)
-                .sort((a, b) => a.time.localeCompare(b.time)) // tri chronologique
+                .sort((a, b) => a.time.localeCompare(b.time))
                 .map((item) => {
                   const maxCount = Math.max(...peakHours.map(h => h.count));
                   const heightPercent = maxCount === 0 ? 0 : (item.count / maxCount) * 100;
@@ -99,7 +98,6 @@ function AnalyticsPageContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Occupation par jour */}
         <div className="card-base p-6 space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Tendance d'occupation</h2>
           <div className="space-y-4">
@@ -118,7 +116,6 @@ function AnalyticsPageContent() {
           <p className="text-xs text-muted-foreground">Basé sur les réservations actives</p>
         </div>
 
-        {/* Revenu par type de place */}
         <div className="card-base p-6 space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Revenu par type de place</h2>
           <div className="space-y-3">
@@ -138,7 +135,6 @@ function AnalyticsPageContent() {
         </div>
       </div>
 
-      {/* Distribution des places */}
       <div className="card-base p-6 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Distribution des places</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

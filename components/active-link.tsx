@@ -17,21 +17,14 @@ export function ActiveLink({
   ...props
 }: ActiveLinkProps) {
   const pathname = usePathname();
-
   const hrefString = href.toString();
-
   let isActive = false;
 
-  // Routes principales
   if (hrefString === "/dashboard" || hrefString === "/admin") {
     isActive = pathname === hrefString;
-  }
-  // Route racine
-  else if (hrefString === "/") {
+  } else if (hrefString === "/") {
     isActive = pathname === "/";
-  }
-  // Sous-routes normales
-  else {
+  } else {
     isActive =
       pathname === hrefString ||
       pathname.startsWith(hrefString + "/");

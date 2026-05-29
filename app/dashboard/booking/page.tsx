@@ -12,7 +12,7 @@ import { ParkingGrid } from '@/components/parking-grid';
 import { FilterSection } from '@/components/filter-section';
 import { VehiclePlateInput } from '@/components/vehicle-plate-input';
 import Loading from './loading';
-import { X } from 'lucide-react';
+import { CarFront, Crown, Minimize2, X } from 'lucide-react';
 
 function BookingPageContent() {
   const router = useRouter();
@@ -37,6 +37,11 @@ function BookingPageContent() {
   const [reservePayload, setReservePayload] = useState<any>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
+  const smoothScrollToElement = (element: HTMLElement, offset = 80) => {
+    const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+  };
+
   const statusLabels: Record<string, string> = {
     available: 'Disponible',
     occupied: 'Occupée',
@@ -51,13 +56,13 @@ function BookingPageContent() {
   const featureLabels: Record<string, string> = {
     handicap: 'Handicapé',
     chargeur: 'Chargeur électrique',
-    abritée: 'Abritée',
+    surveillée: 'Surveillée',
     sécurisée: 'Sécurisée'
   };
 
   const allStatuses = ['available', 'occupied', 'reserved', 'maintenance'];
   const allTypes = ['compact', 'standard', 'premium'];
-  const allFeatures = ['handicap', 'chargeur', 'abritée', 'sécurisée'];
+  const allFeatures = ['handicap', 'chargeur', 'surveillée', 'sécurisée'];
 
   const [filterStatus, setFilterStatus] = useState<Record<string, 'neutral' | 'selected' | 'deselected'>>({});
   const [filterType, setFilterType] = useState<Record<string, 'neutral' | 'selected' | 'deselected'>>({});
@@ -119,7 +124,7 @@ function BookingPageContent() {
 
   useEffect(() => {
     if (selectedSpace && formRef.current) {
-      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      smoothScrollToElement(formRef.current);
     }
   }, [selectedSpace]);
 
@@ -155,7 +160,9 @@ function BookingPageContent() {
       setEndTime(end.toTimeString().slice(0,5));
       setEditingReservationId(reservation.id);
       setSelectedPlate(reservation.vehiclePlate);
-      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (formRef.current) {
+        smoothScrollToElement(formRef.current);
+      }
     }
   };
 
@@ -363,6 +370,54 @@ function BookingPageContent() {
           </div>
         </div>
       </div>
+
+      {user?.role !== 'admin' && (
+        <div className="card-base p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+            <div className="flex items-center gap-3 p-2 hover:bg-muted/50 transition-colors rounded-lg sm:rounded-none">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                <Minimize2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-semibold text-sm">Compact</span>
+                  <span className="text-base font-bold text-foreground">2€<span className="text-xs font-normal text-muted-foreground">/h</span></span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Idéale pour les petits véhicules</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-2 hover:bg-muted/50 transition-colors rounded-lg sm:rounded-none">
+              <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                <CarFront className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-semibold text-sm">Standard</span>
+                  <span className="text-base font-bold text-foreground">3€<span className="text-xs font-normal text-muted-foreground">/h</span></span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Bon équilibre entre la place et le prix</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-2 hover:bg-yellow-50/50 dark:hover:bg-yellow-900/10 transition-colors rounded-lg sm:rounded-none">
+              <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+                <Crown className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <div className="flex items-center gap-1">
+                    <span className="font-semibold text-sm">Premium</span>
+                    <span className="text-[10px] font-bold bg-yellow-500 text-white px-1.5 py-0.5 rounded-full">Recommandé</span>
+                  </div>
+                  <span className="text-base font-bold text-yellow-600 dark:text-yellow-400">5€<span className="text-xs font-normal text-muted-foreground">/h</span></span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Recharge incluse - Sécurité renforcée - Place surveillée</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmationModal 
         isOpen={showCancelModal} 

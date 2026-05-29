@@ -55,7 +55,6 @@ function AdminDashboardContent() {
         <StatCard title="Revenu total" value={stats.totalRevenue.toFixed(0)} unit="€" icon={CheckCircle2} color="secondary" description="Réservations actives + complétées" />
       </div>
 
-      {/* Section des logs d'activité */}
       <div className="card-base p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Activity className="w-5 h-5 text-muted-foreground" />
@@ -74,7 +73,6 @@ function AdminDashboardContent() {
         </div>
       </div>
 
-      {/* Quick Actions with hover effect */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <a href="/admin/parking" className="card-base p-6 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer group">
           <div className="space-y-3">

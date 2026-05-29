@@ -7,7 +7,6 @@ export default function Loading() {
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-5 w-80" />
       </div>
-      {/* Filtres */}
       <div className="card-base p-4 space-y-3">
         <Skeleton className="h-6 w-32" />
         <div className="flex flex-wrap gap-4">
@@ -21,7 +20,6 @@ export default function Loading() {
           ))}
         </div>
       </div>
-      {/* Grille des places + panneau latéral */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {[1, 2, 3].map((level) => (
@@ -41,7 +39,6 @@ export default function Loading() {
           ))}
         </div>
         <div className="space-y-4">
-          {/* Détails de la place */}
           <div className="card-base p-6 space-y-4">
             <Skeleton className="h-6 w-40" />
             <div className="space-y-3">
@@ -66,7 +63,6 @@ export default function Loading() {
               </div>
             </div>
           </div>
-          {/* Statistiques */}
           <div className="card-base p-6 space-y-3">
             <Skeleton className="h-6 w-32" />
             <div className="space-y-2">

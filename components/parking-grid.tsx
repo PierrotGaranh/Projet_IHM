@@ -1,7 +1,7 @@
 'use client';
 
 import { ParkingSpace, ParkingLevel } from '@/lib/types';
-import { Plug, Home, ShieldCheck, Minimize2, CarFront, Crown, Accessibility, Info, Edit, Trash2, X } from 'lucide-react';
+import { Camera, Plug, ShieldCheck, Minimize2, CarFront, Crown, Accessibility, Info, Edit, Trash2, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState } from 'react';
 
@@ -19,7 +19,7 @@ interface ParkingGridProps {
 const featureIcons: Record<string, React.ElementType> = {
   handicap: Accessibility,
   chargeur: Plug,
-  abritée: Home,
+  surveillée: Camera,
   sécurisée: ShieldCheck,
 };
 
@@ -60,52 +60,57 @@ export function ParkingGrid({
 
   const getStatusClasses = (space: ParkingSpace) => {
     const selectable = canSelect(space);
+    let baseClass = '';
     if (space.status === 'available') {
-      return 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-800 dark:text-green-200 cursor-pointer';
-    }
-    if (space.status === 'occupied') {
-      return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 opacity-70 cursor-not-allowed';
-    }
-    if (space.status === 'reserved') {
+      baseClass = 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-800 dark:text-green-200 cursor-pointer';
+    } else if (space.status === 'occupied') {
+      baseClass = 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 opacity-70 cursor-not-allowed';
+    } else if (space.status === 'reserved') {
       if (selectable) {
-        return 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300 cursor-pointer';
+        baseClass = 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300 cursor-pointer';
+      } else {
+        baseClass = 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 opacity-70 cursor-not-allowed';
       }
-      return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 opacity-70 cursor-not-allowed';
-    }
-    if (space.status === 'maintenance') {
+    } else if (space.status === 'maintenance') {
       if (selectable) {
-        return 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-pointer';
+        baseClass = 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-pointer';
+      } else {
+        baseClass = 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 opacity-70 cursor-not-allowed';
       }
-      return 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 opacity-70 cursor-not-allowed';
     }
-    return 'bg-gray-100 dark:bg-gray-800';
+    if (!isAdmin && space.type === 'premium' && space.status === 'available') {
+      baseClass += ' premium-marker';
+    }
+    return baseClass;
   };
 
-  const renderMobileCell = (space: ParkingSpace, isMyReservation: boolean, isSelected: boolean) => (
-    <button
-      key={space.id}
-      onClick={() => handleMobileReservationClick(space)}
-      disabled={!canSelect(space) && !isMyReservation}
-      className={`
-        relative w-full aspect-square rounded-lg transition-all font-bold text-base
-        ${getStatusClasses(space)}
-        ${isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background' : ''}
-        ${isMyReservation && !isAdmin ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''}
-        disabled:opacity-70
-        ${typeColor[space.type]}
-      `}
-      title={`Place ${space.number} - ${space.type}`}
-    >
-      <span className="block w-full text-center">{space.number}</span>
-      <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
-        {space.features.slice(0, 2).map((feature) => {
-          const Icon = featureIcons[feature];
-          return Icon ? <Icon key={feature} className="w-3 h-3 text-current opacity-80" /> : null;
-        })}
-        {space.features.length > 2 && <span className="text-[10px]">+{space.features.length - 2}</span>}
-      </div>
-    </button>
-  );
+  const renderMobileCell = (space: ParkingSpace, isMyReservation: boolean, isSelected: boolean) => {
+    return (
+      <button
+        key={space.id}
+        onClick={() => handleMobileReservationClick(space)}
+        disabled={!canSelect(space) && !isMyReservation}
+        className={`
+          relative w-full aspect-square rounded-lg transition-all font-bold text-base
+          ${getStatusClasses(space)}
+          ${isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background' : ''}
+          ${isMyReservation && !isAdmin ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''}
+          disabled:opacity-70
+          ${typeColor[space.type]}
+        `}
+        title={`Place ${space.number} - ${space.type}`}
+      >
+        <span className="block w-full text-center">{space.number}</span>
+        <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
+          {space.features.slice(0, 2).map((feature) => {
+            const Icon = featureIcons[feature];
+            return Icon ? <Icon key={feature} className="w-3 h-3 text-current opacity-80" /> : null;
+          })}
+          {space.features.length > 2 && <span className="text-[10px]">+{space.features.length - 2}</span>}
+        </div>
+      </button>
+    );
+  };
 
   const renderDesktopCell = (space: ParkingSpace, isMyReservation: boolean, isSelected: boolean) => {
     const TypeIcon = space.type === 'compact' ? Minimize2 : space.type === 'standard' ? CarFront : Crown;
@@ -124,7 +129,7 @@ export function ParkingGrid({
             ${isMyReservation && !isAdmin ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''}
             disabled:opacity-70
           `}
-          title={`Place ${space.number} - ${space.type} - ${space.features.join(', ')}`}
+          title={`Place ${space.number} - ${space.type}`}
         >
           <span className="absolute inset-0 flex items-center justify-center text-xl sm:text-2xl font-bold">{space.number}</span>
           <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
@@ -190,7 +195,7 @@ export function ParkingGrid({
               <div className="flex items-center gap-1"><Crown className="w-3 h-3 text-yellow-600" /><span>Premium</span></div>
               <div className="flex items-center gap-1"><Accessibility className="w-3 h-3" /><span>Handicap</span></div>
               <div className="flex items-center gap-1"><Plug className="w-3 h-3" /><span>Chargeur</span></div>
-              <div className="flex items-center gap-1"><Home className="w-3 h-3" /><span>Abritée</span></div>
+              <div className="flex items-center gap-1"><Camera className="w-3 h-3" /><span>Surveillée</span></div>
               <div className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /><span>Sécurisée</span></div>
             </div>
           )}

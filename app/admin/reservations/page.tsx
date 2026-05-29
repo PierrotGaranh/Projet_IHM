@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { getStore } from '@/lib/store';
 import { Reservation } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
@@ -34,6 +34,16 @@ function AdminReservationsPageContent() {
   const [vehiclePlateOptions, setVehiclePlateOptions] = useState<string[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const smoothScrollToElement = (element: HTMLElement, offset = 80) => {
+    const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+  };
+
   const fetchData = () => {
     const store = getStore();
     const allRes = store.getReservations();
@@ -45,6 +55,16 @@ function AdminReservationsPageContent() {
   useEffect(() => {
     fetchData();
   }, [refreshKey]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchTerm]);
+
+  useEffect(() => {
+    if (listRef.current) {
+      smoothScrollToElement(listRef.current);
+    }
+  }, [currentPage]);
 
   const handleCancel = (reservationId: string) => {
     setCancellingId(reservationId);
@@ -97,9 +117,6 @@ function AdminReservationsPageContent() {
     setIsUpdating(false);
   };
 
-  if (loading) return <Loading />;
-
-  const now = new Date();
   const filteredReservations = reservations
     .filter(r => filter === 'all' ? true : r.status === filter)
     .filter(r => {
@@ -113,6 +130,68 @@ function AdminReservationsPageContent() {
         r.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
         space?.number.toLowerCase().includes(searchTerm.toLowerCase());
     });
+
+  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedReservations = filteredReservations.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisible = 3;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = startPage + maxVisible - 1;
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    if (startPage > 1) pages.push(1, '...');
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
+    if (endPage < totalPages) pages.push('...', totalPages);
+
+    return (
+      <div className="flex justify-center items-center gap-2 my-8">
+        <button
+          onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-2 rounded-md border border-border bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors cursor-pointer"
+        >
+          &lt;
+        </button>
+        {pages.map((p, idx) => (
+          typeof p === 'number' ? (
+            <button
+              key={idx}
+              onClick={() => goToPage(p)}
+              className={`px-3 py-2 rounded-md border transition-colors cursor-pointer ${
+                p === currentPage
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'border-border bg-card text-foreground hover:bg-muted'
+              }`}
+            >
+              {p}
+            </button>
+          ) : (
+            <span key={idx} className="px-2 text-muted-foreground">…</span>
+          )
+        ))}
+        <button
+          onClick={() => goToPage(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-2 rounded-md border border-border bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors cursor-pointer"
+        >
+          &gt;
+        </button>
+      </div>
+    );
+  };
+
+  if (loading) return <Loading />;
 
   const isReservationOngoing = (reservation: Reservation) => {
     const now = new Date();
@@ -175,7 +254,7 @@ function AdminReservationsPageContent() {
             <select
               value={filter}
               onChange={e => setFilter(e.target.value as any)}
-              className="input-base w-full cursor-pointer sm:w-48"
+              className="input-base w-full cursor-pointer sm:w-56"
             >
               <option value="all">Toutes ({reservations.length})</option>
               <option value="active">Actives ({reservations.filter(r => r.status === 'active').length})</option>
@@ -197,74 +276,71 @@ function AdminReservationsPageContent() {
           <p className="text-lg font-semibold text-foreground">Aucune réservation</p>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {filteredReservations.map((reservation) => {
-            const store = getStore();
-            const space = store.getSpace(reservation.spaceId);
-            const user = store.getUser(reservation.userId);
-            const startDate = new Date(reservation.startDate);
-            const endDate = new Date(reservation.endDate);
+        <>
+          <div ref={listRef} className="grid gap-4">
+            {displayedReservations.map((reservation) => {
+              const store = getStore();
+              const space = store.getSpace(reservation.spaceId);
+              const user = store.getUser(reservation.userId);
+              const startDate = new Date(reservation.startDate);
+              const endDate = new Date(reservation.endDate);
 
-            return (
-              <div key={reservation.id} className="card-base p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="text-lg font-semibold text-foreground">Réservation #{reservation.id}</h3>{getStatusBadge(reservation)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{user?.firstName} {user?.lastName} • {user?.email}</p>
-                  </div>
-                  {reservation.status === 'active' &&
-                    !isReservationOngoing(reservation) && (
-                      <div className="flex gap-2">
-                        <button onClick={() => handleEdit(reservation)} className="btn-secondary text-sm cursor-pointer">Modifier</button>
-                        <button onClick={() => {setReservationToCancel(reservation); setShowCancelModal(true);}} disabled={cancellingId === reservation.id} className="btn-secondary text-sm disabled:opacity-50 cursor-pointer">
-                          {cancellingId === reservation.id ? (<LoadingDots />) : ('Annuler')}
-                        </button>
+              return (
+                <div key={reservation.id} className="card-base p-6 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h3 className="text-lg font-semibold text-foreground">Réservation #{reservation.id}</h3>{getStatusBadge(reservation)}
                       </div>
-                    )}
-                </div>
+                      <p className="text-sm text-muted-foreground">{user?.firstName} {user?.lastName} • {user?.email}</p>
+                    </div>
+                    {reservation.status === 'active' &&
+                      !isReservationOngoing(reservation) && (
+                        <div className="flex gap-2">
+                          <button onClick={() => handleEdit(reservation)} className="btn-secondary text-sm cursor-pointer">Modifier</button>
+                          <button onClick={() => {setReservationToCancel(reservation); setShowCancelModal(true);}} disabled={cancellingId === reservation.id} className="btn-secondary text-sm disabled:opacity-50 cursor-pointer">
+                            {cancellingId === reservation.id ? (<LoadingDots />) : ('Annuler')}
+                          </button>
+                        </div>
+                      )}
+                  </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm pt-4 border-t border-border">
-                  <div>
-                    <p className="text-muted-foreground text-xs">Place</p>
-                    <p className="font-semibold text-foreground">{space?.number || 'N/A'} (N{space?.level || 'A'})</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Début</p>
-                    <p className="font-semibold text-foreground">{startDate.toLocaleDateString('fr-FR')}</p>
-                    <p className="text-xs text-muted-foreground">{startDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Fin</p>
-                    <p className="font-semibold text-foreground">{endDate.toLocaleDateString('fr-FR')}</p>
-                    <p className="text-xs text-muted-foreground">{endDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit',})}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Type</p>
-                    <p className="font-semibold text-foreground capitalize">{space?.type || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Montant</p>
-                    <p className="font-semibold text-foreground text-lg">{reservation.amount.toFixed(2)}€</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Véhicule</p>
-                    <p className="font-semibold text-foreground">{reservation.vehiclePlate || 'N/A'}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm pt-4 border-t border-border">
+                    <div>
+                      <p className="text-muted-foreground text-xs">Place</p>
+                      <p className="font-semibold text-foreground">{space?.number || 'N/A'} (N{space?.level || 'A'})</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Début</p>
+                      <p className="font-semibold text-foreground">{startDate.toLocaleDateString('fr-FR')}</p>
+                      <p className="text-xs text-muted-foreground">{startDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Fin</p>
+                      <p className="font-semibold text-foreground">{endDate.toLocaleDateString('fr-FR')}</p>
+                      <p className="text-xs text-muted-foreground">{endDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit',})}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Type</p>
+                      <p className="font-semibold text-foreground capitalize">{space?.type || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Montant</p>
+                      <p className="font-semibold text-foreground text-lg">{reservation.amount.toFixed(2)}€</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Véhicule</p>
+                      <p className="font-semibold text-foreground">{reservation.vehiclePlate || 'N/A'}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && renderPagination()}
+        </>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card-base p-6"><p className="text-sm text-muted-foreground">Total réservations</p><p className="text-3xl font-bold text-primary">{reservations.length}</p><p className="text-xs text-muted-foreground">Toutes réservations confondues</p></div>
-        <div className="card-base p-6"><p className="text-sm text-muted-foreground">Actives</p><p className="text-3xl font-bold text-secondary">{reservations.filter(r => r.status === 'active').length}</p><p className="text-xs text-muted-foreground">En cours de validité</p></div>
-        <div className="card-base p-6"><p className="text-sm text-muted-foreground">Revenu total</p><p className="text-3xl font-bold text-accent">{reservations.reduce((sum, r) => sum + r.amount, 0).toFixed(0)}€</p><p className="text-xs text-muted-foreground">Actives + complétées</p></div>
-        <div className="card-base p-6"><p className="text-sm text-muted-foreground">Revenu actif</p><p className="text-3xl font-bold text-primary">{reservations.filter(r => r.status === 'active').reduce((sum, r) => sum + r.amount, 0).toFixed(0)}€</p><p className="text-xs text-muted-foreground">Réservations actives uniquement</p></div>
-      </div>
 
       <ConfirmationModal 
         isOpen={showCancelModal} 

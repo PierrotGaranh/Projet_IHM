@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { getStore } from '@/lib/store';
 import { User } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
@@ -28,6 +28,16 @@ function UsersManagementPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const smoothScrollToElement = (element: HTMLElement, offset = 80) => {
+    const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+  };
+
   const fetchData = () => {
     const store = getStore();
     setUsers(store.getAllUsers());
@@ -38,7 +48,15 @@ function UsersManagementPageContent() {
     fetchData();
   }, [refreshKey]);
 
-  if (loading) return <Loading />;
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchTerm]);
+
+  useEffect(() => {
+    if (listRef.current) {
+      smoothScrollToElement(listRef.current);
+    }
+  }, [currentPage]);
 
   const filteredUsers = users.filter(user => {
     const matchesFilter = filter === 'all' ? true : filter === 'users' ? user.role === 'user' : user.role === 'admin';
@@ -48,6 +66,68 @@ function UsersManagementPageContent() {
     return matchesFilter && matchesSearch;
   });
 
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisible = 3;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = startPage + maxVisible - 1;
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    if (startPage > 1) pages.push(1, '...');
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
+    if (endPage < totalPages) pages.push('...', totalPages);
+
+    return (
+      <div className="flex justify-center items-center gap-2 mt-8">
+        <button
+          onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-2 rounded-md border border-border bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors cursor-pointer"
+        >
+          &lt;
+        </button>
+        {pages.map((p, idx) => (
+          typeof p === 'number' ? (
+            <button
+              key={idx}
+              onClick={() => goToPage(p)}
+              className={`px-3 py-2 rounded-md border transition-colors cursor-pointer ${
+                p === currentPage
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'border-border bg-card text-foreground hover:bg-muted'
+              }`}
+            >
+              {p}
+            </button>
+          ) : (
+            <span key={idx} className="px-2 text-muted-foreground">…</span>
+          )
+        ))}
+        <button
+          onClick={() => goToPage(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-2 rounded-md border border-border bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors cursor-pointer"
+        >
+          &gt;
+        </button>
+      </div>
+    );
+  };
+
+  if (loading) return <Loading />;
+  
   const validateField = (name: string, value: string): string => {
     const nameRegex = /^[A-Za-zÀ-ÿ\s-]{1,50}$/;
     if (name === 'firstName' || name === 'lastName') {
@@ -162,11 +242,11 @@ function UsersManagementPageContent() {
             <select
               value={filter}
               onChange={e => setFilter(e.target.value as any)}
-              className="input-base w-full cursor-pointer sm:w-48"
+              className="input-base w-full cursor-pointer sm:w-56"
             >
-              <option value="all">Tous les utilisateurs</option>
-              <option value="users">Utilisateurs réguliers</option>
-              <option value="admins">Administrateurs</option>
+              <option value="all">Tous les utilisateurs ({users.length})</option>
+              <option value="users">Utilisateurs réguliers ({users.filter(u => u.role === 'user').length})</option>
+              <option value="admins">Administrateurs ({users.filter(u => u.role === 'admin').length})</option>
             </select>
           </div>
           <div className="flex items-end">
@@ -180,48 +260,52 @@ function UsersManagementPageContent() {
       {filteredUsers.length === 0 ? (
         <div className="card-base p-12 text-center">Aucun utilisateur trouvé</div>
       ) : (
-        <div className="space-y-4">
-          {filteredUsers.map(user => (
-            <div key={user.id} className="card-base p-6 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold flex-shrink-0">
-                    {user.firstName[0]}{user.lastName[0]}
+        <>
+          <div ref={listRef} className="space-y-4">
+            {displayedUsers.map(user => (
+              <div key={user.id} className="card-base p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold flex-shrink-0">
+                      {user.firstName[0]}{user.lastName[0]}
+                    </div>
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <h3 className="font-semibold text-foreground truncate">{user.firstName} {user.lastName}</h3>
+                      <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                    </div>
                   </div>
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <h3 className="font-semibold text-foreground truncate">{user.firstName} {user.lastName}</h3>
-                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start sm:self-center ${user.role === 'admin' ? 'bg-destructive/10 text-destructive' : 'bg-secondary/10 text-secondary'}`}>
+                    {user.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm pt-4 border-t border-border">
+                  <div className="break-words">
+                    <p className="text-muted-foreground text-xs">Téléphone</p>
+                    <p className="font-semibold">{user.phone || 'N/A'}</p>
+                  </div>
+                  <div className="break-words">
+                    <p className="text-muted-foreground text-xs">Immatriculations</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {user.vehiclePlates.length ? (
+                        user.vehiclePlates.map((plate, idx) => (
+                          <span key={idx} className="inline-block bg-muted px-1.5 py-0.5 rounded text-xs break-all">{plate}</span>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">Aucune</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="break-words">
+                    <p className="text-muted-foreground text-xs">Inscrit depuis</p>
+                    <p className="font-semibold">{new Date(user.createdAt).toLocaleDateString('fr-FR')}</p>
                   </div>
                 </div>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start sm:self-center ${user.role === 'admin' ? 'bg-destructive/10 text-destructive' : 'bg-secondary/10 text-secondary'}`}>
-                  {user.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
-                </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm pt-4 border-t border-border">
-                <div className="break-words">
-                  <p className="text-muted-foreground text-xs">Téléphone</p>
-                  <p className="font-semibold">{user.phone || 'N/A'}</p>
-                </div>
-                <div className="break-words">
-                  <p className="text-muted-foreground text-xs">Immatriculations</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {user.vehiclePlates.length ? (
-                      user.vehiclePlates.map((plate, idx) => (
-                        <span key={idx} className="inline-block bg-muted px-1.5 py-0.5 rounded text-xs break-all">{plate}</span>
-                      ))
-                    ) : (
-                      <span className="text-muted-foreground">Aucune</span>
-                    )}
-                  </div>
-                </div>
-                <div className="break-words">
-                  <p className="text-muted-foreground text-xs">Inscrit depuis</p>
-                  <p className="font-semibold">{new Date(user.createdAt).toLocaleDateString('fr-FR')}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && renderPagination()}
+        </>
       )}
 
       {showAddModal && (
@@ -283,12 +367,6 @@ function UsersManagementPageContent() {
           </div>
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card-base p-6"><p className="text-sm text-muted-foreground">Total utilisateurs</p><p className="text-3xl font-bold text-primary">{users.length}</p></div>
-        <div className="card-base p-6"><p className="text-sm text-muted-foreground">Utilisateurs réguliers</p><p className="text-3xl font-bold text-secondary">{users.filter(u => u.role === 'user').length}</p></div>
-        <div className="card-base p-6"><p className="text-sm text-muted-foreground">Administrateurs</p><p className="text-3xl font-bold text-destructive">{users.filter(u => u.role === 'admin').length}</p></div>
-      </div>
     </div>
   );
 }

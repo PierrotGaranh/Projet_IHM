@@ -22,7 +22,6 @@ export default function Loading() {
           </div>
         </div>
       </div>
-      {/* Liste des réservations */}
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
           <div key={i} className="card-base p-6 space-y-4">
@@ -52,18 +51,6 @@ export default function Loading() {
             </div>
           </div>
         ))}
-      </div>
-      {/* 4 cartes de stats en bas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {Array(4)
-          .fill(0)
-          .map((_, i) => (
-            <div key={i} className="card-base p-6 space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-8 w-20" />
-              <Skeleton className="h-3 w-40" />
-            </div>
-          ))}
       </div>
     </div>
   );

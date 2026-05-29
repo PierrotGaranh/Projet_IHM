@@ -7,7 +7,6 @@ export default function Loading() {
         <Skeleton className="h-10 w-56" />
         <Skeleton className="h-5 w-80" />
       </div>
-      {/* 4 cartes stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array(4)
           .fill(0)
@@ -22,7 +21,6 @@ export default function Loading() {
             </div>
           ))}
       </div>
-      {/* Activité récente (logs) */}
       <div className="card-base p-6 space-y-4">
         <Skeleton className="h-6 w-40" />
         {Array(6)
@@ -37,7 +35,6 @@ export default function Loading() {
             </div>
           ))}
       </div>
-      {/* 3 actions rapides */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {Array(3)
           .fill(0)

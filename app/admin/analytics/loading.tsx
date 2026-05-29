@@ -7,7 +7,6 @@ export default function Loading() {
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-5 w-72" />
       </div>
-      {/* 4 cartes stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array(4)
           .fill(0)
@@ -19,7 +18,6 @@ export default function Loading() {
             </div>
           ))}
       </div>
-      {/* Heures de pointe (barres horizontales) */}
       <div className="card-base p-6 space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="flex items-end gap-2 pt-4 overflow-x-auto pb-2">
@@ -34,7 +32,6 @@ export default function Loading() {
         </div>
         <Skeleton className="h-3 w-64" />
       </div>
-      {/* Deux colonnes : tendance d'occupation + revenu par type */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card-base p-6 space-y-4">
           <Skeleton className="h-6 w-48" />
@@ -65,7 +62,6 @@ export default function Loading() {
             ))}
         </div>
       </div>
-      {/* Distribution des places */}
       <div className="card-base p-6 space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

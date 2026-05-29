@@ -58,19 +58,30 @@ function generateRealisticUsers(): User[] {
 function generateParkingSpaces(): ParkingSpace[] {
   const spaces: ParkingSpace[] = [];
   const types: Array<'compact' | 'standard' | 'premium'> = ['compact', 'standard', 'premium'];
-  const features = ['handicap', 'chargeur', 'abritée', 'sécurisée'];
 
   for (let level = 1; level <= 5; level++) {
     const spacesPerLevel = 15;
     for (let i = 1; i <= spacesPerLevel; i++) {
-      const spaceType = types[Math.floor(Math.random() * types.length)];
+      let spaceType: 'compact' | 'standard' | 'premium';
+      if (i <= 3) spaceType = 'premium';
+      else if (i <= 8) spaceType = 'standard';
+      else spaceType = 'compact';
+
+      let features: string[] = [];
+      if (spaceType === 'premium') {
+        features = ['chargeur', 'surveillée', 'sécurisée'];
+        if (Math.random() > 0.7) features.push('handicap');
+      } else {
+        if (Math.random() > 0.8) features.push('handicap');
+      }
+
       spaces.push({
         id: `space-${level}-${i}`,
         level,
         number: `${level}${String(i).padStart(2, '0')}`,
         status: 'available',
         type: spaceType,
-        features: features.filter(() => Math.random() > 0.6),
+        features,
         pricePerHour: spaceType === 'premium' ? 5 : spaceType === 'standard' ? 3 : 2,
       });
     }

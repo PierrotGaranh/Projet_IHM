@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel, User, Reservation } from '@/lib/types';
 import { LoadingDots } from '@/components/loading-dots';
@@ -40,6 +40,13 @@ function ParkingManagementPageContent() {
   const [reservePayload, setReservePayload] = useState<any>(null);
   const [messageFromReservations, setMessageFromReservations] = useState('');
 
+  const detailsRef = useRef<HTMLDivElement>(null);
+
+  const smoothScrollToElement = (element: HTMLElement, offset = 80) => {
+    const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+  };
+
   const statusLabels: Record<string, string> = {
     available: 'Disponible',
     occupied: 'Occupée',
@@ -54,13 +61,13 @@ function ParkingManagementPageContent() {
   const featureLabels: Record<string, string> = {
     handicap: 'Handicapé',
     chargeur: 'Chargeur électrique',
-    abritée: 'Abritée',
+    surveillée: 'Surveillée',
     sécurisée: 'Sécurisée'
   };
 
   const allStatuses = ['available', 'occupied', 'reserved', 'maintenance'];
   const allTypes = ['compact', 'standard', 'premium'];
-  const allFeatures = ['handicap', 'chargeur', 'abritée', 'sécurisée'];
+  const allFeatures = ['handicap', 'chargeur', 'surveillée', 'sécurisée'];
 
   const [filterStatus, setFilterStatus] = useState<Record<string, 'neutral' | 'selected' | 'deselected'>>({});
   const [filterType, setFilterType] = useState<Record<string, 'neutral' | 'selected' | 'deselected'>>({});
@@ -140,6 +147,12 @@ function ParkingManagementPageContent() {
       setVehiclePlateOptions([]);
     }
   }, [selectedUserId, users]);
+
+  useEffect(() => {
+    if (selectedSpace && detailsRef.current) {
+      smoothScrollToElement(detailsRef.current);
+    }
+  }, [selectedSpace]);
 
   if (loading) return <Loading />;
 
@@ -388,7 +401,7 @@ function ParkingManagementPageContent() {
           />
         </div>
 
-        <div className="space-y-4">
+        <div ref={detailsRef} className="space-y-4">
           {selectedSpace ? (
             <div className="card-base p-6 space-y-4">
               <div className="flex justify-between items-start">
@@ -410,57 +423,19 @@ function ParkingManagementPageContent() {
                 </p>
 
                 <div className="space-y-2">
-                  
-                  {/* Place disponible */}
                   {selectedSpace.status === 'available' && (
                     <>
-                      <button
-                        onClick={handleReserveForUser}
-                        className="btn-primary w-full cursor-pointer"
-                      >
-                        Réserver pour un utilisateur
-                      </button>
-
-                      <button
-                        onClick={handleEditReservationForAdmin}
-                        className="btn-secondary w-full cursor-pointer"
-                      >
-                        Modifier la réservation
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          handleMaintenanceRequest(selectedSpace.id, true)
-                        }
-                        className="btn-secondary w-full border-destructive text-destructive hover:bg-destructive/10 cursor-pointer"
-                      >
-                        Mettre en maintenance
-                      </button>
+                      <button onClick={handleReserveForUser} className="btn-primary w-full cursor-pointer">Réserver pour un utilisateur</button>
+                      <button onClick={handleEditReservationForAdmin} className="btn-secondary w-full cursor-pointer">Modifier la réservation</button>
+                      <button onClick={() => handleMaintenanceRequest(selectedSpace.id, true)} className="btn-secondary w-full border-destructive text-destructive hover:bg-destructive/10 cursor-pointer">Mettre en maintenance</button>
                     </>
                   )}
-
-                  {/* Place réservée */}
                   {selectedSpace.status === 'reserved' && (
-                    <button
-                      onClick={handleEditReservationForAdmin}
-                      className="btn-secondary w-full cursor-pointer"
-                    >
-                      Modifier la réservation
-                    </button>
+                    <button onClick={handleEditReservationForAdmin} className="btn-secondary w-full cursor-pointer">Modifier la réservation</button>
                   )}
-
-                  {/* Place en maintenance */}
                   {selectedSpace.status === 'maintenance' && (
-                    <button
-                      onClick={() =>
-                        handleMaintenanceRequest(selectedSpace.id, false)
-                      }
-                      className="btn-secondary w-full cursor-pointer"
-                    >
-                      Retirer de maintenance
-                    </button>
+                    <button onClick={() => handleMaintenanceRequest(selectedSpace.id, false)} className="btn-secondary w-full cursor-pointer">Retirer de maintenance</button>
                   )}
-
                 </div>
               </div>
             </div>

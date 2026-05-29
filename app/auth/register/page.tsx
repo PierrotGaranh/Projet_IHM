@@ -162,7 +162,6 @@ export default function RegisterPage() {
 
   return (
     <div className="space-y-8 max-w-md mx-auto px-4 py-8">
-      {/* En-tête avec logo et progression */}
       <div className="text-center space-y-3">
         <div className="flex items-center justify-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
@@ -171,8 +170,6 @@ export default function RegisterPage() {
           <h1 className="text-2xl font-bold text-foreground">ParkHub</h1>
         </div>
         <p className="text-muted-foreground">Créer un nouveau compte</p>
-
-        {/* Barre de progression */}
         <div className="pt-4">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span className={currentStep >= 0 ? 'text-primary font-medium' : ''}>Identité</span>
@@ -193,7 +190,6 @@ export default function RegisterPage() {
 
       <div className="card-base p-6 md:p-8 space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Étape 1 : Nom et prénom */}
           {currentStep === 0 && (
             <div className="space-y-4 animate-in fade-in duration-300">
               <div className="space-y-1">
@@ -239,7 +235,6 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Étape 2 : Email, téléphone, plaques */}
           {currentStep === 1 && (
             <div className="space-y-4 animate-in fade-in duration-300">
               <div className="space-y-1">
@@ -321,7 +316,6 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Étape 3 : Mot de passe */}
           {currentStep === 2 && (
             <div className="space-y-4 animate-in fade-in duration-300">
               <PasswordInput
@@ -344,7 +338,6 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Erreur générale */}
           {error && (
             <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
               {error}
