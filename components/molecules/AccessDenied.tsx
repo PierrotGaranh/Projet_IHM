@@ -3,6 +3,7 @@
 import { ShieldAlert, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
+import { Button } from '@/components/atoms/Button';
 
 interface AccessDeniedProps {
   onRetry?: () => void;
@@ -31,17 +32,11 @@ export function AccessDenied({ onRetry }: AccessDeniedProps) {
         </div>
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground">Accès refusé</h1>
-          <p className="text-muted-foreground">
-            Vous n'avez pas les autorisations nécessaires pour accéder à cette page.
-          </p>
+          <p className="text-muted-foreground">Vous n'avez pas les autorisations nécessaires pour accéder à cette page.</p>
         </div>
-        <button
-          onClick={handleGoToLogin}
-          className="btn-primary inline-flex items-center gap-2 cursor-pointer"
-        >
-          <LogIn className="w-4 h-4" />
-          Retour à la connexion
-        </button>
+        <Button onClick={handleGoToLogin} className="inline-flex items-center gap-2">
+          <LogIn className="w-4 h-4" /> Retour à la connexion
+        </Button>
       </div>
     </div>
   );

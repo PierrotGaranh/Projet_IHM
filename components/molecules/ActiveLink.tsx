@@ -9,35 +9,16 @@ interface ActiveLinkProps extends React.ComponentProps<typeof Link> {
   inactiveClassName?: string;
 }
 
-export function ActiveLink({
-  href,
-  className,
-  activeClassName,
-  inactiveClassName,
-  ...props
-}: ActiveLinkProps) {
+export function ActiveLink({ href, className, activeClassName, inactiveClassName, ...props }: ActiveLinkProps) {
   const pathname = usePathname();
   const hrefString = href.toString();
   let isActive = false;
-
   if (hrefString === "/dashboard" || hrefString === "/admin") {
     isActive = pathname === hrefString;
   } else if (hrefString === "/") {
     isActive = pathname === "/";
   } else {
-    isActive =
-      pathname === hrefString ||
-      pathname.startsWith(hrefString + "/");
+    isActive = pathname === hrefString || pathname.startsWith(hrefString + "/");
   }
-
-  return (
-    <Link
-      href={href}
-      className={cn(
-        className,
-        isActive ? activeClassName : inactiveClassName
-      )}
-      {...props}
-    />
-  );
+  return <Link href={href} className={cn(className, isActive ? activeClassName : inactiveClassName)} {...props} />;
 }

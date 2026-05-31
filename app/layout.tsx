@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/context';
-import { ThemeProvider } from '@/components/theme-provider';
-import { Toaster } from '@/components/toaster';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { Toaster } from '@/components/molecules/Toaster';
 import './globals.css';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const geistSans = Geist({ subsets: ['latin'], variable: '--font-sans' });
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <AuthProvider>

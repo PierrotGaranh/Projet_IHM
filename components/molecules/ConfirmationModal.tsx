@@ -2,7 +2,7 @@
 
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
-import { LoadingDots } from '@/components/loading-dots';
+import { Button } from '@/components/atoms/Button';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -13,16 +13,9 @@ interface ConfirmationModalProps {
   children?: React.ReactNode;
 }
 
-export function ConfirmationModal({
-  isOpen,
-  onClose,
-  onConfirm,
-  title = 'Confirmation',
-  message = 'Êtes-vous sûr de vouloir vous déconnecter ?',
-  children,
-}: ConfirmationModalProps) {
+export function ConfirmationModal({ isOpen, onClose, onConfirm, title = 'Confirmation', message = 'Êtes-vous sûr de vouloir continuer ?', children }: ConfirmationModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [onTreatment, setOnTreatment] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -30,12 +23,12 @@ export function ConfirmationModal({
   }, []);
 
   const handleConfirm = async () => {
-    if (onTreatment) return;
-    setOnTreatment(true);
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
       await onConfirm();
     } finally {
-      setOnTreatment(false);
+      setIsProcessing(false);
     }
   };
 
@@ -48,12 +41,8 @@ export function ConfirmationModal({
         {message && <p className="text-muted-foreground mb-4">{message}</p>}
         {children && <div className="mb-6">{children}</div>}
         <div className="flex flex-row gap-3">
-          {onTreatment ? (
-            <button disabled className="btn-primary flex-1 inline-flex items-center justify-center gap-2 opacity-75 cursor-not-allowed"><span>Confirmation</span><LoadingDots /></button>
-          ) : (
-            <button onClick={handleConfirm} className="btn-primary flex-1 cursor-pointer">Confirmer</button>
-          )}
-          <button onClick={onClose} disabled={onTreatment} className={`btn-secondary flex-1 cursor-pointer ${onTreatment ? 'opacity-50 cursor-not-allowed' : ''}`}>Annuler</button>
+          <Button variant="primary" onClick={handleConfirm} isLoading={isProcessing} loadingText="Confirmation" className="flex-1">Confirmer</Button>
+          <Button variant="secondary" onClick={onClose} disabled={isProcessing} className="flex-1">Annuler</Button>
         </div>
       </div>
     </div>,
