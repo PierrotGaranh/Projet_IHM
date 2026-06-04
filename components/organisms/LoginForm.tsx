@@ -24,7 +24,7 @@ export function LoginForm() {
     const result = await login(email, password);
     if (result.success) {
       toast({ variant: 'success', title: 'Connexion réussie', description: `Bienvenue ${result.user?.firstName}` });
-      const redirectTo = result.user?.role === 'admin' ? '/admin' : '/dashboard';
+      const redirectTo = result.user?.role === 'admin' ? '/admin' : '/home';
       router.push(redirectTo);
     } else {
       setError(result.error || 'Échec de la connexion');

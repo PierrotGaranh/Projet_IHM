@@ -116,13 +116,13 @@ function BookingPageContent() {
       if (result.success) {
         toast({ variant: 'success', title: 'Réservation modifiée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
         setEditingReservationId(null);
-        router.push('/dashboard/reservations');
+        router.push('/reservations');
       } else setError(result.error || 'Erreur lors de la modification');
     } else {
       const result = storeLocal.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
       if (result.success) {
         toast({ variant: 'success', title: 'Réservation confirmée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
-        router.push('/dashboard/reservations');
+        router.push('/reservations');
       } else setError(result.error || 'Réservation échouée');
     }
   };

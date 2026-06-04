@@ -16,19 +16,11 @@ export default function ProfilePage() {
   const handleSubmit = async (data: any) => {
     const success = updateProfile(data);
     if (success) {
-      toast({
-        variant: 'success',
-        title: 'Profil mis à jour',
-        description: 'Vos informations ont été enregistrées.',
-      });
+      toast({ variant: 'success', title: 'Profil mis à jour', description: 'Vos informations ont été enregistrées.'});
       setIsEditing(false);
       return true;
     } else {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: 'Erreur lors de la mise à jour du profil',
-      });
+      toast({ variant: 'error', title: 'Erreur', description: 'Erreur lors de la mise à jour du profil' });
       return false;
     }
   };

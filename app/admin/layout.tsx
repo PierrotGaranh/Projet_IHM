@@ -11,7 +11,7 @@ import { AccessDenied } from '@/components/molecules/AccessDenied';
 import { AdminLayoutSidebar } from '@/components/organisms/AdminLayoutSidebar';
 import { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
-import Loading from '../auth/login/loading';
+import Loading from '../(auth)/login/loading';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleLogout = () => {
     setIsLoggingOut(true);
     logout();
-    router.push('/auth/login');
+    router.push('/login');
   };
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isLoading && !isLoggingOut && (!user || user.role !== 'admin')) {
-      router.push('/auth/login');
+      router.push('/login');
     }
   }, [isLoading, user, router, isLoggingOut]);
 

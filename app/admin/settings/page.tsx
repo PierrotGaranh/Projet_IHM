@@ -50,11 +50,7 @@ export default function SettingsPage() {
     setSettings(newSettings);
     setOriginalSettings(newSettings);
     setMessage('Paramètres sauvegardés avec succès !');
-    toast({
-      variant: 'success',
-      title: 'Paramètres sauvegardés',
-      description: 'Les paramètres ont été mis à jour.',
-    });
+    toast({ variant: 'success', title: 'Paramètres sauvegardés', description: 'Les paramètres ont été mis à jour.' });
     setIsEditMode(false);
     setTimeout(() => setMessage(''), 3000);
   };
@@ -70,20 +66,11 @@ export default function SettingsPage() {
     try {
       const store = getStore();
       store.resetStore();
-      toast({
-        variant: 'success',
-        title: 'Réinitialisation réussie',
-        description: 'Toutes les données ont été réinitialisées.',
-      });
+      toast({ variant: 'success', title: 'Réinitialisation réussie', description: 'Toutes les données ont été réinitialisées.'});
       setShowResetModal(false);
-      router.push('/auth/login');
+      router.push('/login');
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description:
-          'Une erreur est survenue lors de la réinitialisation.',
-      });
+      toast({ variant: 'error', title: 'Erreur', description: 'Une erreur est survenue lors de la réinitialisation.',});
       setShowResetModal(false);
     } finally {
       setIsResetting(false);

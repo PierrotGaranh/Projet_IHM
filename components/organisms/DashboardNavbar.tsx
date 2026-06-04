@@ -15,10 +15,10 @@ interface DashboardNavbarProps {
 export function DashboardNavbar({isMobile = false, user, onLogout }: DashboardNavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navItems = [
-    { href: '/dashboard', label: 'Accueil', icon: Home },
-    { href: '/dashboard/reservations', label: 'Mes réservations', icon: Calendar },
-    { href: '/dashboard/booking', label: 'Réserver une place', icon: Car },
-    { href: '/dashboard/profile', label: 'Mon profil', icon: User },
+    { href: '/home', label: 'Accueil', icon: Home },
+    { href: '/reservations', label: 'Mes réservations', icon: Calendar },
+    { href: '/booking', label: 'Réserver une place', icon: Car },
+    { href: '/profile', label: 'Mon profil', icon: User },
   ];
 
   return (
@@ -29,7 +29,7 @@ export function DashboardNavbar({isMobile = false, user, onLogout }: DashboardNa
             <Button variant="ghost" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="sm:hidden">
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
-            {!mobileMenuOpen && !isMobile && <ActiveLink href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity ml-2 sm:ml-0">
+            {!mobileMenuOpen && !isMobile && <ActiveLink href="/home" className="flex items-center gap-2 hover:opacity-80 transition-opacity ml-2 sm:ml-0">
               <AppIcon className="w-8 h-8"/>
               <span className="font-bold text-foreground">ParkHub</span>
             </ActiveLink>}

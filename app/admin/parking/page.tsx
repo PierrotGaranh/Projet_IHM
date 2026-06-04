@@ -166,21 +166,13 @@ function ParkingManagementPageContent() {
     if (result.success) {
       const u = users.find(u => u.id === selectedUserId);
       if (u && !u.vehiclePlates.includes(vehiclePlate)) store.addVehiclePlate(selectedUserId, vehiclePlate);
-      toast({
-        variant: 'success',
-        title: 'Réservation créée',
-        description: `Réservation pour ${u?.firstName} effectuée.`,
-      });
+      toast({ variant: 'success', title: 'Réservation créée', description: `Réservation pour ${u?.firstName} effectuée.` });
       setRefreshKey(prev => prev + 1);
       setSelectedSpace(null);
       setShowReserveModal(false);
       setShowConfirmReserveModal(false);
     } else {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: result.error || 'Erreur lors de la réservation',
-      });
+      toast({ variant: 'error', title: 'Erreur', description: result.error || 'Erreur lors de la réservation' });
     }
   };
 
@@ -199,22 +191,14 @@ function ParkingManagementPageContent() {
     if (result.success) {
       const u = users.find(u => u.id === editingReservation.userId);
       if (u && !u.vehiclePlates.includes(vehiclePlate)) store.addVehiclePlate(editingReservation.userId, vehiclePlate);
-      toast({
-        variant: 'success',
-        title: 'Réservation modifiée',
-        description: 'La réservation a été mise à jour.',
-      });
+      toast({ variant: 'success', title: 'Réservation modifiée', description: 'La réservation a été mise à jour.' });
       setRefreshKey(prev => prev + 1);
       setSelectedSpace(null);
       setShowEditReservationModal(false);
       setShowConfirmReserveModal(false);
       setEditingReservation(null);
     } else {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: result.error || 'Erreur lors de la modification',
-      });
+      toast({ variant: 'error', title: 'Erreur', description: result.error || 'Erreur lors de la modification' });
     }
   };
 

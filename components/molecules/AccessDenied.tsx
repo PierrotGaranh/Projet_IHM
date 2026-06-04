@@ -18,7 +18,7 @@ export function AccessDenied({ onRetry }: AccessDeniedProps) {
       onRetry();
     } else {
       logout();
-      window.location.href = '/auth/login';
+      window.location.href = '/login';
     }
   };
 

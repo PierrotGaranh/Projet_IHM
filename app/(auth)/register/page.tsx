@@ -24,7 +24,7 @@ export default function RegisterPage() {
     if (result.success) {
       sessionStorage.removeItem('registerForm');
       toast({ variant: 'success', title: 'Inscription réussie', description: 'Bienvenue sur ParkHub !' });
-      router.push('/dashboard');
+      router.push('/home');
     } else {
       throw new Error(result.error || 'Inscription échouée');
     }
@@ -47,7 +47,7 @@ export default function RegisterPage() {
           <div className="flex-1 h-px bg-border" />
         </div>
         <p className="text-center text-sm text-muted-foreground">
-          Vous avez un compte ? <Link href="/auth/login" className="text-primary hover:text-primary/80 font-semibold">Se connecter</Link>
+          Vous avez un compte ? <Link href="/login" className="text-primary hover:text-primary/80 font-semibold">Se connecter</Link>
         </p>
       </div>
       <p className="text-center text-xs text-muted-foreground">Application de gestion de parking réservé</p>

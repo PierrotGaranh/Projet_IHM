@@ -10,7 +10,7 @@ import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { LoadingScreen } from '@/components/atoms/LoadingScreen';
 import { AccessDenied } from '@/components/molecules/AccessDenied';
 import { useState, useEffect } from 'react';
-import Loading from '../auth/login/loading';
+import Loading from '../(auth)/login/loading';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -22,12 +22,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleLogout = () => {
     setIsLoggingOut(true);
     logout();
-    router.push('/auth/login');
+    router.push('/login');
   };
 
   useEffect(() => {
     if (!isLoading && !isLoggingOut && (!user)) {
-      router.push('/auth/login');
+      router.push('/login');
     }
   }, [isLoading, user, router, isLoggingOut]);
 

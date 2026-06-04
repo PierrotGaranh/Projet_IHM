@@ -26,7 +26,7 @@ function LoginPageContent() {
         </div>
         <LoginForm />
         <div className="flex items-center gap-3"><div className="flex-1 h-px bg-border" /><span className="text-sm text-muted-foreground">ou</span><div className="flex-1 h-px bg-border" /></div>
-        <p className="text-center text-sm text-muted-foreground">Pas encore de compte ? <Link href="/auth/register" className="text-primary hover:text-primary/80 font-semibold">S'inscrire</Link></p>
+        <p className="text-center text-sm text-muted-foreground">Pas encore de compte ? <Link href="/register" className="text-primary hover:text-primary/80 font-semibold">S'inscrire</Link></p>
       </div>
       <p className="text-center text-xs text-muted-foreground">Application de gestion de parking réservé</p>
     </div>

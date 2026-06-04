@@ -13,7 +13,7 @@ export function ActiveLink({ href, className, activeClassName, inactiveClassName
   const pathname = usePathname();
   const hrefString = href.toString();
   let isActive = false;
-  if (hrefString === "/dashboard" || hrefString === "/admin") {
+  if (hrefString === "/admin") {
     isActive = pathname === hrefString;
   } else if (hrefString === "/") {
     isActive = pathname === "/";
