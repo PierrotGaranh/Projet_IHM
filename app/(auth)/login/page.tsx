@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { AppIcon } from '@/components/atoms/AppIcon'
 import { LoginForm } from '@/components/organisms/LoginForm';
 import Loading from './loading';
-import { ChevronLeft } from 'lucide-react';
 
 function LoginPageContent() {
   return (

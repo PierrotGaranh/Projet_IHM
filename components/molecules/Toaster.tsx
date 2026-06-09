@@ -10,7 +10,7 @@ export function Toaster() {
   const getIcon = (variant?: string | null) => {
     switch (variant) {
       case 'success': return <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />;
-      case 'destructive': return <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />;
+      case 'error': return <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />;
       case 'warning': return <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />;
       case 'info': return <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
       default: return null;

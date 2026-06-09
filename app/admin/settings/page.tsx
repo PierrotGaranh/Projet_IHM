@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [settings, setSettings] = useState({
     parkingName: 'ParkHub Central',
-    totalLevels: 5,
+    totalPlaces: 5,
     openingHour: '00:00',
     closingHour: '23:59',
     maintenanceDay: 'Sunday',
@@ -66,6 +66,7 @@ export default function SettingsPage() {
     try {
       const store = getStore();
       store.resetStore();
+      
       toast({ variant: 'success', title: 'Réinitialisation réussie', description: 'Toutes les données ont été réinitialisées.'});
       setShowResetModal(false);
       router.push('/login');

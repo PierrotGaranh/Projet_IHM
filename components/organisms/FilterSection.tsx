@@ -112,7 +112,7 @@ export function FilterSection({
               />
               <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 mt-1">
                 <Info className="w-3 h-3" />
-                <span>Ce filtre n’affecte que la liste des réservations ci-dessous, pas la grille des places.</span>
+                <span>Ce filtre affichera les listes des réservations à la place sélectionnez.</span>
               </div>
             </div>
           </div>

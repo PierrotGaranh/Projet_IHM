@@ -9,7 +9,7 @@ import { Select } from '@/components/atoms/Select';
 interface SettingsFormProps {
   initialSettings: {
     parkingName: string;
-    totalLevels: number;
+    totalPlaces: number;
     openingHour: string;
     closingHour: string;
     maintenanceDay: string;
@@ -89,9 +89,9 @@ export function SettingsForm({
               <p className="text-foreground py-2">{settings.parkingName}</p>
             </div>
             <div>
-              <Label>Nombre de niveaux</Label>
+              <Label>Nombre de branches</Label>
               <p className="text-foreground py-2">
-                {settings.totalLevels} niveaux
+                {settings.totalPlaces} locations
               </p>
             </div>
             <div>
@@ -153,7 +153,7 @@ export function SettingsForm({
             <Select
               id="totalLevels"
               name="totalLevels"
-              value={settings.totalLevels.toString()}
+              value={settings.totalPlaces.toString()}
               onChange={handleChange}
               options={levelOptions}
             />
