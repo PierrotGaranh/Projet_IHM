@@ -1,4 +1,4 @@
-import { User, ParkingSpace, Reservation, ActivityLog, DashboardStats, ParkingStats } from '@/lib/types';
+import { User, ParkingSpace, Reservation, ActivityLog, DashboardStats, ParkingStats, Location } from '@/lib/types';
 
 const STORAGE_KEY = 'parkhub_store_data';
 const SESSION_KEY = 'parkhub_current_user';
@@ -10,6 +10,14 @@ const hashPassword = (password: string): string => {
 const verifyPassword = (password: string, hash: string): boolean => {
   return hashPassword(password) === hash;
 };
+
+const LOCATIONS: Location[] = [
+  { id: 'loc1', name: 'Paris Bercy', address: '4 Cour Saint-Émilion, 75012 Paris', lat: 48.839, lng: 2.382 },
+  { id: 'loc2', name: 'Lyon Part-Dieu', address: '5 Place Charles Béraudier, 69003 Lyon', lat: 45.760, lng: 4.859 },
+  { id: 'loc3', name: 'Marseille Vieux-Port', address: '58 Quai du Port, 13002 Marseille', lat: 43.296, lng: 5.369 },
+  { id: 'loc4', name: 'Lille Flandres', address: 'Place des Buisses, 59000 Lille', lat: 50.637, lng: 3.071 },
+  { id: 'loc5', name: 'Toulouse Capitole', address: '15 Place du Capitole, 31000 Toulouse', lat: 43.604, lng: 1.444 },
+];
 
 function generateRealisticUsers(): User[] {
   const firstNames = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack', 'Karen', 'Leo', 'Mia', 'Nina', 'Oscar'];
@@ -55,35 +63,40 @@ function generateRealisticUsers(): User[] {
   return users;
 }
 
-function generateParkingSpaces(): ParkingSpace[] {
+function generateParkingSpaces(locations: Location[]): ParkingSpace[] {
   const spaces: ParkingSpace[] = [];
   const types: Array<'compact' | 'standard' | 'premium'> = ['compact', 'standard', 'premium'];
+  let globalNumber = 1;
 
-  for (let level = 1; level <= 5; level++) {
-    const spacesPerLevel = 15;
-    for (let i = 1; i <= spacesPerLevel; i++) {
-      let spaceType: 'compact' | 'standard' | 'premium';
-      if (i <= 3) spaceType = 'premium';
-      else if (i <= 8) spaceType = 'standard';
-      else spaceType = 'compact';
+  for (const loc of locations) {
+    for (let level = 1; level <= 5; level++) {
+      const spacesPerLevel = 10;
+      for (let i = 1; i <= spacesPerLevel; i++) {
+        let spaceType: 'compact' | 'standard' | 'premium';
+        if (i <= 2) spaceType = 'premium';
+        else if (i <= 5) spaceType = 'standard';
+        else spaceType = 'compact';
 
-      let features: string[] = [];
-      if (spaceType === 'premium') {
-        features = ['chargeur', 'surveillée', 'sécurisée'];
-        if (Math.random() > 0.7) features.push('handicap');
-      } else {
-        if (Math.random() > 0.8) features.push('handicap');
+        let features: string[] = [];
+        if (spaceType === 'premium') {
+          features = ['chargeur', 'surveillée', 'sécurisée'];
+          if (Math.random() > 0.7) features.push('handicap');
+        } else {
+          if (Math.random() > 0.8) features.push('handicap');
+        }
+
+        spaces.push({
+          id: `space-${loc.id}-${level}-${i}`,
+          locationId: loc.id,
+          level,
+          number: `${loc.id.substring(3)}${level}${String(i).padStart(2, '0')}`,
+          status: 'available',
+          type: spaceType,
+          features,
+          pricePerHour: spaceType === 'premium' ? 5 : spaceType === 'standard' ? 3 : 2,
+        });
+        globalNumber++;
       }
-
-      spaces.push({
-        id: `space-${level}-${i}`,
-        level,
-        number: `${level}${String(i).padStart(2, '0')}`,
-        status: 'available',
-        type: spaceType,
-        features,
-        pricePerHour: spaceType === 'premium' ? 5 : spaceType === 'standard' ? 3 : 2,
-      });
     }
   }
   return spaces;
@@ -156,16 +169,16 @@ function generateRealisticReservations(users: User[], spaces: ParkingSpace[]): R
   return reservations;
 }
 
-function syncSpacesWithReservations(spaces: ParkingSpace[], reservations: Reservation[]): void {
+function syncSpacesWithReservations(spaces: ParkingSpace[], reservations: Reservation[], now: Date): void {
   for (const space of spaces) {
     if (space.status !== 'maintenance') space.status = 'available';
-    delete space.reservedBy;
   }
   for (const res of reservations.filter(r => r.status === 'active')) {
     const space = spaces.find(s => s.id === res.spaceId);
     if (space && space.status !== 'maintenance') {
-      space.status = 'reserved';
-      space.reservedBy = res.userId;
+      if (res.startDate <= now && res.endDate >= now) {
+        space.status = 'occupied';
+      }
     }
   }
   const availableSpaces = spaces.filter(s => s.status === 'available');
@@ -226,12 +239,12 @@ class StoreManager {
       this.refreshSpaceStatuses();
     } else {
       this.users = generateRealisticUsers();
-      this.spaces = generateParkingSpaces();
+      this.spaces = generateParkingSpaces(LOCATIONS);
       this.reservations = generateRealisticReservations(this.users, this.spaces);
       this.activities = [];
       this.userPasswords = new Map();
 
-      syncSpacesWithReservations(this.spaces, this.reservations);
+      syncSpacesWithReservations(this.spaces, this.reservations, new Date());
       this.generateInitialActivities();
 
       for (const user of this.users) {
@@ -384,12 +397,12 @@ class StoreManager {
       localStorage.removeItem(SESSION_KEY);
     }
     this.users = generateRealisticUsers();
-    this.spaces = generateParkingSpaces();
+    this.spaces = generateParkingSpaces(LOCATIONS);
     this.reservations = generateRealisticReservations(this.users, this.spaces);
     this.activities = [];
     this.userPasswords = new Map();
 
-    syncSpacesWithReservations(this.spaces, this.reservations);
+    syncSpacesWithReservations(this.spaces, this.reservations, new Date());
     this.generateInitialActivities();
 
     for (const user of this.users) {
@@ -456,6 +469,7 @@ class StoreManager {
   getCurrentUser() { return this.currentUser; }
   getUser(id: string) { return this.users.find(u => u.id === id); }
   getAllUsers() { return this.users; }
+  getLocations() { return LOCATIONS; }
 
   updateUser(id: string, updates: Partial<User>): boolean {
     const user = this.users.find(u => u.id === id);
@@ -483,34 +497,42 @@ class StoreManager {
     return false;
   }
 
-  getSpaces() { return this.spaces; }
+  getSpaces(locationId?: string) {
+    if (locationId) return this.spaces.filter(s => s.locationId === locationId);
+    return this.spaces;
+  }
   getSpace(id: string) { return this.spaces.find(s => s.id === id); }
 
   updateSpace(id: string, updates: Partial<ParkingSpace>): boolean {
     const space = this.spaces.find(s => s.id === id);
     if (!space) return false;
     Object.assign(space, updates);
-    this.addActivity('parking', `La place ${space.number} a été mise à jour -> Statut: ${space.status}`, space.reservedBy);
+    this.addActivity('parking', `La place ${space.number} a été mise à jour -> Statut: ${space.status}`, undefined);
     this.saveToStorage();
     return true;
   }
 
-  getParkingStats(): ParkingStats {
-    const available = this.spaces.filter(s => s.status === 'available').length;
-    const occupied = this.spaces.filter(s => s.status === 'occupied').length;
-    const reserved = this.spaces.filter(s => s.status === 'reserved').length;
-    const maintenance = this.spaces.filter(s => s.status === 'maintenance').length;
-    return { availableSpaces: available, occupiedSpaces: occupied, reservedSpaces: reserved, maintenanceSpaces: maintenance, totalSpaces: this.spaces.length };
+  getParkingStats(locationId?: string): ParkingStats {
+    const spaces = locationId ? this.spaces.filter(s => s.locationId === locationId) : this.spaces;
+    const available = spaces.filter(s => s.status === 'available').length;
+    const occupied = spaces.filter(s => s.status === 'occupied').length;
+    const maintenance = spaces.filter(s => s.status === 'maintenance').length;
+    return { availableSpaces: available, occupiedSpaces: occupied, maintenanceSpaces: maintenance, totalSpaces: spaces.length };
   }
 
-  getReservations() { return this.reservations; }
+  getReservations(spaceId?: string) {
+    if (spaceId) return this.reservations.filter(r => r.spaceId === spaceId);
+    return this.reservations;
+  }
   getUserReservations(userId: string) { return this.reservations.filter(r => r.userId === userId); }
   getReservation(id: string) { return this.reservations.find(r => r.id === id); }
 
   createReservation(userId: string, spaceId: string, startDate: Date, endDate: Date, vehiclePlate: string) {
     const space = this.getSpace(spaceId);
     if (!space) return { success: false, error: 'La place n\'existe pas' };
-    if (space.status !== 'available') return { success: false, error: 'Cette place n\'est pas disponible' };
+    const now = new Date();
+    const activeReservation = this.reservations.find(r => r.spaceId === spaceId && r.status === 'active' && ((r.startDate <= endDate && r.endDate >= startDate)));
+    if (activeReservation) return { success: false, error: 'Cette place est déjà réservée sur cette période' };
     const hours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
     const amount = Math.round(hours * space.pricePerHour * 100) / 100;
     const reservation: Reservation = {
@@ -525,7 +547,9 @@ class StoreManager {
       vehiclePlate,
     };
     this.reservations.push(reservation);
-    this.updateSpace(spaceId, { status: 'reserved', reservedBy: userId });
+    if (startDate <= now && endDate >= now) {
+      this.updateSpace(spaceId, { status: 'occupied' });
+    }
     this.addActivity('reservation', `Nouvelle réservation #${reservation.id} pour la place ${space.number} (${vehiclePlate})`, userId);
     this.saveToStorage();
     this.refreshSpaceStatuses();
@@ -537,8 +561,16 @@ class StoreManager {
     if (!reservation || reservation.status !== 'active') return false;
     reservation.status = 'cancelled';
     const space = this.getSpace(reservation.spaceId);
-    if (space && space.reservedBy === reservation.userId) {
-      this.updateSpace(space.id, { status: 'available', reservedBy: undefined });
+    if (space) {
+      const now = new Date();
+      const overlapping = this.reservations.find(r => r.spaceId === space.id && r.status === 'active' && r.id !== id && ((r.startDate <= reservation.endDate && r.endDate >= reservation.startDate)));
+      if (!overlapping) {
+        if (reservation.startDate <= now && reservation.endDate >= now) {
+          this.updateSpace(space.id, { status: 'occupied' });
+        } else {
+          this.updateSpace(space.id, { status: 'available' });
+        }
+      }
     }
     this.addActivity('reservation', `La réservation #${reservation.id} a été annulée`, reservation.userId);
     this.saveToStorage();
@@ -615,11 +647,8 @@ class StoreManager {
       if (activeRes) {
         if (activeRes.startDate <= now && activeRes.endDate >= now) {
           space.status = 'occupied';
-        } else if (activeRes.startDate > now) {
-          space.status = 'reserved';
-        } else if (activeRes.endDate < now) {
+        } else {
           space.status = 'available';
-          activeRes.status = 'completed';
         }
       } else {
         space.status = 'available';

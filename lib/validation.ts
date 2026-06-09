@@ -30,8 +30,9 @@ export function validateField(field: string, value: string): string {
 
 export function validateDates(startDate: Date, endDate: Date): string {
   const now = new Date();
-  if (startDate < now) return 'L\'horaire de début doit être aujourd\'hui ou ultérieure';
+  if (startDate < now) return 'L\'horaire de début doit être aujourd\'hui ou postérieure';
   if (startDate >= endDate) return 'L\'horaire de fin doit être postérieure à l\'horaire de début';
+  if ((startDate.getTime() === endDate.getTime()) || (endDate.getTime() - startDate.getTime() <= 0.5 * 60 * 60 * 1000)) return 'L\'horaire doit avoir au moins 30 minutes de décalage';
   return '';
 }
 

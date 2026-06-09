@@ -47,7 +47,7 @@ function AnalyticsPageContent() {
       </div>
       <div className="card-base p-6 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Distribution des places</h2>
-        <DistributionStats available={stats.availableSpaces} occupied={stats.occupiedSpaces} reserved={stats.reservedSpaces} maintenance={stats.maintenanceSpaces} />
+        <DistributionStats available={stats.availableSpaces} occupied={stats.occupiedSpaces} maintenance={stats.maintenanceSpaces} />
       </div>
     </div>
   );

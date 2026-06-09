@@ -17,15 +17,23 @@ export interface AuthState {
   isLoading: boolean;
 }
 
-export type SpaceStatus = 'available' | 'occupied' | 'reserved' | 'maintenance';
+export type SpaceStatus = 'available' | 'occupied' | 'maintenance';
 export type SpaceType = 'compact' | 'standard' | 'premium';
+
+export interface Location {
+  id: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
 
 export interface ParkingSpace {
   id: string;
+  locationId: string;
   level: number;
   number: string;
   status: SpaceStatus;
-  reservedBy?: string;
   type: SpaceType;
   features: string[];
   pricePerHour: number;
@@ -63,7 +71,6 @@ export interface DashboardStats {
 export interface ParkingStats {
   availableSpaces: number;
   occupiedSpaces: number;
-  reservedSpaces: number;
   maintenanceSpaces: number;
   totalSpaces: number;
 }

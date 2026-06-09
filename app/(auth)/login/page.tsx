@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { AppIcon } from '@/components/atoms/AppIcon'
 import { LoginForm } from '@/components/organisms/LoginForm';
 import Loading from './loading';
+import { ChevronLeft } from 'lucide-react';
 
 function LoginPageContent() {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-3 mb-4">
-          <AppIcon  className="w-10 h-10"/>
+          <Link href="/"><AppIcon className="w-10 h-10"/></Link>
           <h1 className="text-2xl font-bold text-foreground">ParkHub</h1>
         </div>
         <p className="text-muted-foreground">Connexion à votre compte</p>

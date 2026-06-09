@@ -1,4 +1,3 @@
-// components/organisms/EditReservationForm.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -45,7 +44,7 @@ export function EditReservationForm({ reservation, pricePerHour, userPlates, use
     }
   }, [startDate, startTime, endDate, endTime, pricePerHour]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const start = new Date(`${startDate}T${startTime}`);
     const end = new Date(`${endDate}T${endTime}`);

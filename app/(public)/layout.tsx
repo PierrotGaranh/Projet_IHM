@@ -27,7 +27,6 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-all group">
               <AppIcon className="w-7 h-7 text-white" />
               <span className="font-bold text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent hidden sm:inline">
@@ -39,7 +38,6 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             </Link>
 
             <div className="flex items-center gap-3">
-              {/* Desktop navigation */}
               <div className="hidden sm:flex items-center gap-2">
                 {!isAuthenticated ? (
                   <>

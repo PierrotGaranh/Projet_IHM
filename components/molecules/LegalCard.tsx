@@ -6,7 +6,7 @@ interface LegalCardProps {
   icon: LucideIcon;
   title: string;
   children: ReactNode;
-  iconColor?: string; // optionnel pour personnaliser la couleur de l'icône
+  iconColor?: string;
 }
 
 export function LegalCard({ icon: Icon, title, children, iconColor = 'text-primary' }: LegalCardProps) {

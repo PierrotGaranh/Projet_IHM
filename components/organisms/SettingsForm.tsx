@@ -37,7 +37,7 @@ export function SettingsForm({
     setSettings({ ...settings, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (readonly) return;
     setIsSaving(true);

@@ -4,14 +4,13 @@ import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
-import { ParkingSpace, ParkingLevel } from '@/lib/types';
+import { ParkingSpace, ParkingLevel, Reservation } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ParkingGrid } from '@/components/organisms/ParkingGrid';
-import { FilterSection } from '@/components/molecules/FilterSection';
+import { FilterSection } from '@/components/organisms/FilterSection';
 import { ReserveSpaceForm } from '@/components/organisms/ReserveSpaceForm';
-import { ParkingSpaceDetail } from '@/components/molecules/ParkingSpaceDetail';
-import { PriceDisplay } from '@/components/organisms/PriceDisplay';
+import { ParkingSpaceDetail } from '@/components/organisms/ParkingSpaceDetail';
 import Loading from './loading';
 
 function BookingPageContent() {
@@ -25,17 +24,26 @@ function BookingPageContent() {
   const [editingReservationId, setEditingReservationId] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReservationId, setCancelReservationId] = useState<string | null>(null);
-  const formRef = useRef<HTMLDivElement>(null);
-  const smoothScrollToElement = (el: HTMLElement, offset = 80) => { const pos = el.getBoundingClientRect().top + window.scrollY; window.scrollTo({ top: pos - offset, behavior: 'smooth' }); };
-  const statusLabels: Record<string, string> = { available: 'Disponible', occupied: 'Occupée', reserved: 'Réservée', maintenance: 'Maintenance' };
-  const typeLabels: Record<string, string> = { compact: 'Compact', standard: 'Standard', premium: 'Premium' };
-  const featureLabels: Record<string, string> = { handicap: 'Handicapé', chargeur: 'Chargeur électrique', surveillée: 'Surveillée', sécurisée: 'Sécurisée' };
-  const allStatuses = ['available', 'occupied', 'reserved', 'maintenance'];
-  const allTypes = ['compact', 'standard', 'premium'];
-  const allFeatures = ['handicap', 'chargeur', 'surveillée', 'sécurisée'];
   const [filterStatus, setFilterStatus] = useState<Record<string, 'neutral' | 'selected' | 'deselected'>>({});
   const [filterType, setFilterType] = useState<Record<string, 'neutral' | 'selected' | 'deselected'>>({});
   const [filterFeature, setFilterFeature] = useState<Record<string, 'neutral' | 'selected' | 'deselected'>>({});
+  const [selectedLocation, setSelectedLocation] = useState<string>('loc1');
+  const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null }>({ startDate: null, endDate: null });
+  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
+  const [spacesMap, setSpacesMap] = useState<Record<string, ParkingSpace>>({});
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const smoothScrollToElement = (el: HTMLElement, offset = 80) => {
+    const pos = el.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: pos - offset, behavior: 'smooth' });
+  };
+
+  const statusLabels: Record<string, string> = { available: 'Disponible', occupied: 'Occupée', maintenance: 'Maintenance' };
+  const typeLabels: Record<string, string> = { compact: 'Compact', standard: 'Standard', premium: 'Premium' };
+  const featureLabels: Record<string, string> = { handicap: 'Handicapé', chargeur: 'Chargeur électrique', surveillée: 'Surveillée', sécurisée: 'Sécurisée' };
+  const allStatuses = ['available', 'occupied', 'maintenance'];
+  const allTypes = ['compact', 'standard', 'premium'];
+  const allFeatures = ['handicap', 'chargeur', 'surveillée', 'sécurisée'];
 
   useEffect(() => {
     const init: any = {};
@@ -48,23 +56,39 @@ function BookingPageContent() {
   const fetchData = () => {
     const store = getStore();
     store.refreshSpaceStatuses();
-    const spaces = store.getSpaces();
+    const spaces = store.getSpaces(selectedLocation);
     const grouped: Record<number, ParkingSpace[]> = {};
     spaces.forEach(s => { if (!grouped[s.level]) grouped[s.level] = []; grouped[s.level].push(s); });
     const levelsArr = Object.keys(grouped).map(l => ({ level: parseInt(l), spaces: grouped[parseInt(l)], occupancyRate: (grouped[parseInt(l)].filter(s => s.status !== 'available').length / grouped[parseInt(l)].length) * 100 })).sort((a, b) => a.level - b.level);
     setLevels(levelsArr);
+    const map: Record<string, ParkingSpace> = {};
+    spaces.forEach(s => { map[s.id] = s; });
+    setSpacesMap(map);
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); const int = setInterval(() => fetchData(), 60000); return () => clearInterval(int); }, []);
+  useEffect(() => { fetchData(); }, [selectedLocation]);
 
-  useEffect(() => { if (selectedSpace && formRef.current) smoothScrollToElement(formRef.current); }, [selectedSpace]);
-
-  if (loading) return <Loading />;
+  useEffect(() => {
+    if (!dateRange.startDate || !dateRange.endDate) {
+      setFilteredReservations([]);
+      return;
+    }
+    const store = getStore();
+    const allRes = store.getReservations();
+    const filtered = allRes.filter(r => {
+      const space = store.getSpace(r.spaceId);
+      if (!space || space.locationId !== selectedLocation) return false;
+      if (r.startDate >= dateRange.startDate! && r.endDate <= dateRange.endDate!) return true;
+      return false;
+    });
+    setFilteredReservations(filtered);
+  }, [dateRange, selectedLocation]);
 
   const handleSelectSpace = (space: ParkingSpace) => {
     setSelectedSpace(space);
     setEditingReservationId(null);
+    if (formRef.current) smoothScrollToElement(formRef.current);
   };
 
   const handleEditReservation = (space: ParkingSpace) => {
@@ -82,6 +106,7 @@ function BookingPageContent() {
     const reservation = store.getUserReservations(user?.id || '').find(r => r.spaceId === space.id && r.status === 'active');
     if (reservation) { setCancelReservationId(reservation.id); setShowCancelModal(true); }
   };
+
   const confirmCancel = () => {
     if (cancelReservationId) { const store = getStore(); store.cancelReservation(cancelReservationId); toast({ variant: 'success', title: 'Réservation annulée', description: 'Votre réservation a été annulée avec succès.' }); setShowCancelModal(false); fetchData(); }
   };
@@ -103,23 +128,20 @@ function BookingPageContent() {
   const userReservations = store.getUserReservations(user?.id || '').filter(r => r.status === 'active');
   const userReservedSpaceIds = new Set(userReservations.map(r => r.spaceId));
   const userPlates = user?.vehiclePlates || [];
-  const clearSelectedSpace = () => {
-    setSelectedSpace(null);
-    setEditingReservationId(null);
-  };
+
+  const clearSelectedSpace = () => setSelectedSpace(null);
 
   const handleReserveSubmit = async (data: { startDate: Date; endDate: Date; vehiclePlate: string }) => {
-    const storeLocal = getStore();
     if (editingReservationId) {
-      storeLocal.cancelReservation(editingReservationId);
-      const result = storeLocal.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
+      store.cancelReservation(editingReservationId);
+      const result = store.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
       if (result.success) {
         toast({ variant: 'success', title: 'Réservation modifiée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
         setEditingReservationId(null);
         router.push('/reservations');
       } else setError(result.error || 'Erreur lors de la modification');
     } else {
-      const result = storeLocal.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
+      const result = store.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
       if (result.success) {
         toast({ variant: 'success', title: 'Réservation confirmée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
         router.push('/reservations');
@@ -133,14 +155,26 @@ function BookingPageContent() {
     return undefined;
   })() : undefined;
 
+  const location = getStore().getLocations().find(l => l.id === selectedLocation)!;
+
+  if (loading) return <Loading />;
+
   return (
     <div className="space-y-8">
-      <div className="space-y-2"><h1 className="text-3xl font-bold text-foreground">Réserver une place</h1><p className="text-muted-foreground">Sélectionnez une place disponible et confirmez votre réservation</p></div>
-      <FilterSection title="Filtres" selectedCount={selectedCount} deselectedCount={deselectedCount} sections={[
-        { label: 'Statut', items: allStatuses.map(s => ({ value: s, label: statusLabels[s], state: filterStatus[s] })), onItemClick: (v) => setFilterStatus(prev => { const cur = prev[v]; let n: any = 'neutral'; if (cur === 'neutral') n = 'selected'; else if (cur === 'selected') n = 'deselected'; else n = 'neutral'; return { ...prev, [v]: n }; }) },
-        { label: 'Type', items: allTypes.map(t => ({ value: t, label: typeLabels[t], state: filterType[t] })), onItemClick: (v) => setFilterType(prev => { const cur = prev[v]; let n: any = 'neutral'; if (cur === 'neutral') n = 'selected'; else if (cur === 'selected') n = 'deselected'; else n = 'neutral'; return { ...prev, [v]: n }; }) },
-        { label: 'Équipements', items: allFeatures.map(f => ({ value: f, label: featureLabels[f], state: filterFeature[f] })), onItemClick: (v) => setFilterFeature(prev => { const cur = prev[v]; let n: any = 'neutral'; if (cur === 'neutral') n = 'selected'; else if (cur === 'selected') n = 'deselected'; else n = 'neutral'; return { ...prev, [v]: n }; }) }
-      ]} />
+      <div className="space-y-2"><h1 className="text-3xl font-bold">Réserver une place</h1><p className="text-muted-foreground">Sélectionnez une place disponible et confirmez votre réservation</p></div>
+      <FilterSection
+        selectedCount={selectedCount}
+        deselectedCount={deselectedCount}
+        sections={[
+          { label: 'Statut', items: allStatuses.map(s => ({ value: s, label: statusLabels[s], state: filterStatus[s] })), onItemClick: (v) => setFilterStatus(prev => ({ ...prev, [v]: prev[v] === 'neutral' ? 'selected' : prev[v] === 'selected' ? 'deselected' : 'neutral' })) },
+          { label: 'Type', items: allTypes.map(t => ({ value: t, label: typeLabels[t], state: filterType[t] })), onItemClick: (v) => setFilterType(prev => ({ ...prev, [v]: prev[v] === 'neutral' ? 'selected' : prev[v] === 'selected' ? 'deselected' : 'neutral' })) },
+          { label: 'Équipements', items: allFeatures.map(f => ({ value: f, label: featureLabels[f], state: filterFeature[f] })), onItemClick: (v) => setFilterFeature(prev => ({ ...prev, [v]: prev[v] === 'neutral' ? 'selected' : prev[v] === 'selected' ? 'deselected' : 'neutral' })) }
+        ]}
+        onLocationChange={setSelectedLocation}
+        selectedLocation={selectedLocation}
+        onDateRangeChange={setDateRange}
+        dateRange={dateRange}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <ParkingGrid
@@ -155,7 +189,23 @@ function BookingPageContent() {
         <div className="space-y-4" ref={formRef}>
           {selectedSpace ? (
             <>
-              <ParkingSpaceDetail space={selectedSpace} onClear={clearSelectedSpace} />
+              <ParkingSpaceDetail
+                space={selectedSpace}
+                location={{ address: location.address, lat: location.lat, lng: location.lng }}
+                reservations={filteredReservations.filter(r => r.spaceId === selectedSpace.id)}
+                spacesMap={spacesMap}
+                onClear={clearSelectedSpace}
+                onEditReservation={(res) => {
+                  setEditingReservationId(res.id);
+                  setSelectedSpace(store.getSpace(res.spaceId)!);
+                }}
+                onCancelReservation={(id) => {
+                  store.cancelReservation(id);
+                  fetchData();
+                  toast({ variant: 'success', title: 'Réservation annulée' });
+                }}
+                dateRange={dateRange}
+              />
               <div className="card-base p-6 space-y-4">
                 <h3 className="font-semibold text-foreground">Détails de réservation</h3>
                 <ReserveSpaceForm
@@ -170,26 +220,11 @@ function BookingPageContent() {
               </div>
             </>
           ) : (
-            <div className="card-base p-4 text-center text-muted-foreground space-y-2">
-              <p>Sélectionnez une place</p>
-              <p className="text-xs">dans la grille ci-contre</p>
-            </div>
+            <div className="card-base p-4 text-center text-muted-foreground">Sélectionnez une place dans la grille</div>
           )}
         </div>
       </div>
-      {user?.role !== 'admin' && <PriceDisplay />}
-      <ConfirmationModal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} onConfirm={confirmCancel} title="Annuler la réservation" message="Êtes-vous sûr de vouloir annuler cette réservation ?">
-        {cancelReservationId && (() => { 
-          const res = store.getReservation(cancelReservationId); 
-          const space = res ? store.getSpace(res.spaceId) : null; 
-          return (
-            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-              <div><span className="font-semibold">Place :</span> {space?.number || 'N/A'}</div>
-              <div><span className="font-semibold">Début :</span> {res?.startDate.toLocaleString('fr-FR')}</div>
-              <div><span className="font-semibold">Fin :</span> {res?.endDate.toLocaleString('fr-FR')}</div>
-            </div>
-          ); })()}
-      </ConfirmationModal>
+      <ConfirmationModal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} onConfirm={confirmCancel} title="Annuler la réservation" message="Êtes-vous sûr de vouloir annuler cette réservation ?" />
     </div>
   );
 }

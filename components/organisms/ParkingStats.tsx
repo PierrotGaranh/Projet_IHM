@@ -4,10 +4,10 @@ interface ParkingStatsProps {
   totalSpaces: number;
   availableSpaces: number;
   occupiedSpaces: number;
-  reservedSpaces: number;
+  maintenanceSpaces: number;
 }
 
-export function ParkingStats({ totalSpaces, availableSpaces, occupiedSpaces, reservedSpaces }: ParkingStatsProps) {
+export function ParkingStats({ totalSpaces, availableSpaces, occupiedSpaces, maintenanceSpaces }: ParkingStatsProps) {
   return (
     <Card className="p-6 space-y-3">
       <h3 className="font-semibold text-foreground">Statistiques</h3>
@@ -25,8 +25,8 @@ export function ParkingStats({ totalSpaces, availableSpaces, occupiedSpaces, res
           <span className="font-semibold text-destructive">{occupiedSpaces}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Réservées</span>
-          <span className="font-semibold text-primary">{reservedSpaces}</span>
+          <span className="text-muted-foreground">Maintenance</span>
+          <span className="font-semibold text-primary">{maintenanceSpaces}</span>
         </div>
       </div>
     </Card>

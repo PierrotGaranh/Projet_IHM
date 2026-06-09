@@ -30,8 +30,7 @@ export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect,
   const getStatusClasses = () => {
     if (space.status === 'available') return 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-800 dark:text-green-200';
     if (space.status === 'occupied') return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 opacity-70 cursor-not-allowed';
-    if (space.status === 'reserved') return disabled ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 opacity-70 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300';
-    if (space.status === 'maintenance') return disabled ? 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 opacity-70 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400';
+    if (space.status === 'maintenance') return 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 opacity-70 cursor-not-allowed';
     return '';
   };
 

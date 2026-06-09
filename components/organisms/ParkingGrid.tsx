@@ -26,7 +26,7 @@ export function ParkingGrid({
   onEditReservation,
   onCancelReservation,
   isAdmin = false,
-  adminSelectableStatuses = ['available', 'reserved', 'maintenance'],
+  adminSelectableStatuses = ['available', 'maintenance'],
 }: ParkingGridProps) {
   const isMobile = useIsMobile();
   const [showLegend, setShowLegend] = useState(false);
@@ -116,7 +116,6 @@ export function ParkingGrid({
                 <div className="flex flex-wrap gap-2 text-xs mt-2">
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-green-500"></div><span>Dispo</span></div>
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-500 opacity-70"></div><span>Occ</span></div>
-                  <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-blue-500"></div><span>Rés</span></div>
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-gray-400"></div><span>Maint</span></div>
                   {!isAdmin && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-yellow-400"></div><span>Ma résa</span></div>}
                   <div className="flex items-center gap-1"><div className="w-3 border-b-2 border-blue-400"></div><span>Compact</span></div>
@@ -129,7 +128,6 @@ export function ParkingGrid({
             <div className="flex flex-wrap gap-3 text-xs pt-2 border-t border-border">
               <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-green-500"></div><span>Disponible</span></div>
               <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-500 opacity-70"></div><span>Occupée</span></div>
-              <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-blue-500"></div><span>Réservée</span></div>
               <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-gray-400"></div><span>Maintenance</span></div>
               {!isAdmin && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-yellow-400"></div><span>Ma réservation</span></div>}
               <div className="flex items-center gap-1"><Minimize2 className="w-3 h-3 text-blue-600" /><span>Compact</span></div>

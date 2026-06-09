@@ -59,7 +59,7 @@ export function ProfileForm({
     setVehiclePlates(vehiclePlates.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (readonly) return;
 
