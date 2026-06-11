@@ -102,7 +102,7 @@ export default function LandingPage() {
         >
           {[
             { label: 'Utilisateurs actifs', value: '2k+', color: 'primary' },
-            { label: 'Places disponibles', value: '150+', color: 'secondary' },
+            { label: 'Places disponibles', value: '250+', color: 'secondary' },
             { label: 'Réservations/mois', value: '500+', color: 'accent' },
           ].map((stat) => (
             <Card key={stat.label} className="p-6 text-center backdrop-blur-sm bg-white/70 dark:bg-slate-800/70 border-0 shadow-lg">

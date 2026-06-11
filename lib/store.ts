@@ -70,11 +70,11 @@ function generateParkingSpaces(locations: Location[]): ParkingSpace[] {
 
   for (const loc of locations) {
     for (let level = 1; level <= 4; level++) {
-      const spacesPerLevel = 30;
+      const spacesPerLevel = 18;
       for (let i = 1; i <= spacesPerLevel; i++) {
         let spaceType: 'compact' | 'standard' | 'premium';
-        if (i <= 4) spaceType = 'premium';
-        else if (i <= 19) spaceType = 'standard';
+        if (i <= 3) spaceType = 'premium';
+        else if (i <= 11) spaceType = 'standard';
         else spaceType = 'compact';
 
         let features: string[] = [];

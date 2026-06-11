@@ -27,7 +27,7 @@ export default function AboutPage() {
             temps réel.
           </p>
           <p className="text-muted-foreground">
-            Aujourd'hui, ParkHub c'est plus de 2 000 utilisateurs actifs et 150 places de parking
+            Aujourd'hui, ParkHub c'est plus de 2 000 utilisateurs actifs et 250 places de parking
             gérées dans toute la région parisienne.
           </p>
         </div>
@@ -65,21 +65,6 @@ export default function AboutPage() {
             <p className="text-muted-foreground text-sm">Nous encourageons les mobilités douces et la réduction de l'empreinte carbone.</p>
           </Card>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-        <Card className="p-6 border-0 bg-white/80 dark:bg-slate-800/80 shadow-md">
-          <p className="text-4xl font-bold text-primary">2k+</p>
-          <p className="text-sm text-muted-foreground">Utilisateurs actifs</p>
-        </Card>
-        <Card className="p-6 border-0 bg-white/80 dark:bg-slate-800/80 shadow-md">
-          <p className="text-4xl font-bold text-secondary">150+</p>
-          <p className="text-sm text-muted-foreground">Places de parking</p>
-        </Card>
-        <Card className="p-6 border-0 bg-white/80 dark:bg-slate-800/80 shadow-md">
-          <p className="text-4xl font-bold text-accent">24/7</p>
-          <p className="text-sm text-muted-foreground">Support disponible</p>
-        </Card>
       </div>
 
       <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-8 text-center space-y-4">

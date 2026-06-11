@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
-import { useIsMobile } from '@/hooks/use-mobile'
+import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { DashboardNavbar } from '@/components/organisms/DashboardNavbar';
 import { Footer } from '@/components/organisms/Footer';
 import { ThemeToggle } from '@/components/molecules/ThemeToggle';
@@ -13,6 +14,7 @@ import { useState, useEffect } from 'react';
 import Loading from '../(auth)/login/loading';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { toast } = useToast();
   const router = useRouter();
   const isMobile = useIsMobile();
   const { user, logout, isLoading } = useAuth();
@@ -22,6 +24,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleLogout = () => {
     setIsLoggingOut(true);
     logout();
+    toast({
+      title: 'Déconnexion réussie',
+      description: 'Vous avez été déconnecté avec succès.',
+      variant: 'success',
+    })
     router.push('/login');
   };
 
@@ -36,9 +43,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if ((!user) && (!isLoggingOut && !isLoading)) return <AccessDenied />;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <DashboardNavbar isMobile={isMobile} user={user!} onLogout={() => setShowLogoutModal(true)} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">{children}</main>
       <Footer />
       <div className="fixed bottom-4 left-4 z-50">
         <ThemeToggle />

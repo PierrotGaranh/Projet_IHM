@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
+import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/atoms/Button';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
@@ -14,6 +15,7 @@ import { Menu } from 'lucide-react';
 import Loading from '../(auth)/login/loading';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { toast } = useToast();
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
   const isMobile = useIsMobile();
@@ -24,6 +26,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleLogout = () => {
     setIsLoggingOut(true);
     logout();
+    toast({
+      title: 'Déconnexion réussie',
+      description: 'Vous avez été déconnecté avec succès.',
+      variant: 'success',
+    })
     router.push('/login');
   };
 
