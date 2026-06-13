@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Card } from '@/components/atoms/Card';
-import { Badge } from '@/components/atoms/Badge';
 import { DateRangePicker } from '@/components/molecules/DateRangePicker';
 import { Select } from '@/components/atoms/Select';
 import { ChevronDown, ChevronUp, Filter, Info } from 'lucide-react';
@@ -42,6 +41,12 @@ export function FilterSection({
   const locations = getStore().getLocations();
   const locationOptions = locations.map(loc => ({ value: loc.id, label: loc.name }));
 
+  const getFilterStyle = (state: 'neutral' | 'selected' | 'deselected') => {
+    if (state === 'selected') return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300';
+    if (state === 'deselected') return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-300 line-through';
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-300';
+  };
+
   return (
     <Card className="p-4 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -76,20 +81,13 @@ export function FilterSection({
                 <p className="text-xs font-semibold text-muted-foreground">{section.label}</p>
                 <div className="flex flex-wrap gap-2">
                   {section.items.map(item => (
-                    <Badge
+                    <button
                       key={item.value}
-                      variant={
-                        item.state === 'selected' ? 'success' :
-                        item.state === 'deselected' ? 'destructive' : 'default'
-                      }
+                      onClick={() => section.onItemClick(item.value)}
+                      className={`px-2 py-1 rounded-full text-xs font-medium border transition-all ${getFilterStyle(item.state)}`}
                     >
-                      <button
-                        onClick={() => section.onItemClick(item.value)}
-                        className="text-xs cursor-pointer"
-                      >
-                        {item.label}
-                      </button>
-                    </Badge>
+                      {item.label}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -112,7 +110,7 @@ export function FilterSection({
               />
               <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 mt-1">
                 <Info className="w-3 h-3" />
-                <span>Ce filtre affichera les listes des réservations à la place sélectionnez.</span>
+                <span>Ce filtre affichera les listes des réservations à la place sélectionnée.</span>
               </div>
             </div>
           </div>

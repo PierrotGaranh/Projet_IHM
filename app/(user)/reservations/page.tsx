@@ -7,6 +7,7 @@ import { Reservation } from '@/lib/types';
 import { Mailbox } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/atoms/Button';
+import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ReservationCard } from '@/components/molecules/ReservationCard';
 import { EditReservationForm } from '@/components/organisms/EditReservationForm';
@@ -80,11 +81,11 @@ function ReservationsPageContent() {
       <div className="space-y-2"><h1 className="text-3xl font-bold text-foreground">Mes réservations</h1><p className="text-muted-foreground">Consultez l'historique de vos réservations</p></div>
       <ReservationFilterButtons filter={filter} onFilterChange={setFilter} />
       {filtered.length === 0 ? (
-        <div className="card-base p-6 flex flex-col items-center gap-4 text-center">
+        <Card className="p-6 flex flex-col items-center gap-4 text-center">
           <Mailbox className="w-12 h-12" />
           <p className="text-lg font-semibold text-foreground">Aucune réservation</p>
           <p className="text-muted-foreground">{filter === 'all' ? 'Commencez par en créer une !' : ''}</p>
-        </div>
+        </Card>
       ) : (
         <>
           <div ref={listRef} className="grid gap-4">

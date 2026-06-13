@@ -55,8 +55,8 @@ function HomeContent() {
         }}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <QuickActionCard href="/booking" icon={<span className="text-2xl">P</span>} title="Réserver une place" description="Trouvez et réservez votre place de parking" />
-        <QuickActionCard href="/reservations" icon={<CheckLine className="w-5 h-5 text-secondary" />} title="Mes réservations" description="Consultez l'historique de vos réservations" />
+        <QuickActionCard href="/booking" icon={<span className="text-2xl">P</span>} title="Réserver une place" description="Trouvez et réservez votre place de parking" invite="Réserver maintenant"/>
+        <QuickActionCard href="/reservations" icon={<CheckLine className="w-5 h-5 text-secondary" />} iconColor='bg-secondary/10 group-hover:bg-secondary/20' title="Mes réservations" description="Consultez l'historique de vos réservations" invite="Voir l'historique"/>
       </div>
       <InfoCard title="Conseil" icon={<Lightbulb className="w-5 h-5" />}>
         Les réservations doivent être effectuées au moins 30 minutes avant utilisation. Vous pouvez annuler ou prolonger vos réservations à tout moment.

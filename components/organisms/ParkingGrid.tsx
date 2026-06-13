@@ -3,6 +3,7 @@
 import { ParkingSpace, ParkingLevel } from '@/lib/types';
 import { ParkingSpaceCell } from '@/components/molecules/ParkingSpaceCell';
 import { Button } from '@/components/atoms/Button';
+import { Card } from '@/components/atoms/Card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState } from 'react';
 import { Info, X, Edit, Trash2, Minimize2, CarFront, Crown, Accessibility, Plug, Camera, ShieldCheck } from 'lucide-react';
@@ -28,7 +29,7 @@ export function ParkingGrid({
   isAdmin = false,
   adminSelectableStatuses = ['available', 'maintenance'],
 }: ParkingGridProps) {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(400);
   const [showLegend, setShowLegend] = useState(false);
   const [mobileActionSpace, setMobileActionSpace] = useState<ParkingSpace | null>(null);
 
@@ -47,15 +48,17 @@ export function ParkingGrid({
 
   const closeMobileModal = () => setMobileActionSpace(null);
 
+  const gridColsClass = isMobile ? 'grid-cols-4' : 'grid-cols-5 sm:grid-cols-6';
+
   return (
     <div className="space-y-6">
       {levels.map((level) => (
-        <div key={level.level} className="card-base p-3 sm:p-6 space-y-3">
+        <Card key={level.level} className="p-3 sm:p-6 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-base sm:text-lg font-semibold text-foreground">Niveau {level.level}</h2>
             <div className="text-xs sm:text-sm text-muted-foreground">{Math.round(level.occupancyRate)}% occupé</div>
           </div>
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
+          <div className={`grid ${gridColsClass} gap-2`}>
             {level.spaces.map((space) => {
               const isMyReservation = userReservedSpaceIds.has(space.id);
               const isSelected = selectedSpaceId === space.id;
@@ -118,9 +121,9 @@ export function ParkingGrid({
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-500 opacity-70"></div><span>Occ</span></div>
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-gray-400"></div><span>Maint</span></div>
                   {!isAdmin && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-yellow-400"></div><span>Ma résa</span></div>}
-                  <div className="flex items-center gap-1"><div className="w-3 border-b-2 border-blue-400"></div><span>Compact</span></div>
-                  <div className="flex items-center gap-1"><div className="w-3 border-b-2 border-gray-400"></div><span>Standard</span></div>
-                  <div className="flex items-center gap-1"><div className="w-3 border-b-2 border-yellow-500"></div><span>Premium</span></div>
+                  <div className="flex items-center gap-1"><Minimize2 className="w-3 h-3 text-blue-600" /><span>Compact</span></div>
+                  <div className="flex items-center gap-1"><CarFront className="w-3 h-3 text-gray-600" /><span>Standard</span></div>
+                  <div className="flex items-center gap-1"><Crown className="w-3 h-3 text-yellow-600" /><span>Premium</span></div>
                 </div>
               )}
             </div>
@@ -139,7 +142,7 @@ export function ParkingGrid({
               <div className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /><span>Sécurisée</span></div>
             </div>
           )}
-        </div>
+        </Card>
       ))}
       {mobileActionSpace && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closeMobileModal}>

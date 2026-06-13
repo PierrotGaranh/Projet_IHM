@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useRef } from 'react';
 import { getStore } from '@/lib/store';
 import { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { Card } from '@/components/atoms/Card';
 import { AddUserForm } from '@/components/organisms/AddUserForm';
 import { UserCard } from '@/components/molecules/UserCard';
 import { FiltersBar } from '@/components/organisms/FiltersBar';
@@ -50,7 +51,7 @@ function UsersManagementPageContent() {
         <h1 className="text-3xl font-bold text-foreground">Gestion des utilisateurs</h1>
         <p className="text-muted-foreground">Gérez les comptes et les permissions des utilisateurs</p>
       </div>
-      <div className="card-base p-6 space-y-4">
+      <Card className="p-6 space-y-4">
         <FiltersBar
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
@@ -62,9 +63,9 @@ function UsersManagementPageContent() {
           addButtonLabel="+ Ajouter un utilisateur"
           onAddClick={() => setShowAddModal(true)}
         />
-      </div>
+      </Card>
       {filtered.length === 0 ? (
-        <div className="card-base p-12 text-center">Aucun utilisateur trouvé</div>
+        <Card className="p-12 text-center">Aucun utilisateur trouvé</Card>
       ) : (
         <>
           <div ref={listRef} className="space-y-4">

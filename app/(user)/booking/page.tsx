@@ -6,12 +6,14 @@ import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel, Reservation } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ParkingGrid } from '@/components/organisms/ParkingGrid';
 import { FilterSection } from '@/components/organisms/FilterSection';
 import { ReserveSpaceForm } from '@/components/organisms/ReserveSpaceForm';
 import { ParkingSpaceDetail } from '@/components/organisms/ParkingSpaceDetail';
 import Loading from './loading';
+import { MousePointerClick } from 'lucide-react';
 
 function BookingPageContent() {
   const router = useRouter();
@@ -206,7 +208,7 @@ function BookingPageContent() {
                 }}
                 dateRange={dateRange}
               />
-              <div className="card-base p-6 space-y-4">
+              <Card className="p-6 space-y-4">
                 <h3 className="font-semibold text-foreground">Détails de réservation</h3>
                 <ReserveSpaceForm
                   spaceId={selectedSpace.id}
@@ -217,10 +219,19 @@ function BookingPageContent() {
                   isEditing={!!editingReservationId}
                 />
                 {error && <div className="text-sm text-destructive">{error}</div>}
-              </div>
+              </Card>
             </>
           ) : (
-            <div className="card-base p-4 text-center text-muted-foreground">Sélectionnez une place dans la grille</div>
+            <Card className="p-8 text-center text-muted-foreground border-2 border-dashed border-primary/30">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <MousePointerClick className="w-6 h-6 text-primary" />
+                </div>
+                <p className="font-medium text-foreground">Aucune place sélectionnée</p>
+                <p className="text-sm">Cliquez sur une place <span className="inline-block w-3 h-3 rounded-full bg-green-500 align-middle"></span> <strong>disponible</strong> pour commencer votre réservation</p>
+                <div className="mt-2 text-xs text-primary/70">Sélectionnez une place dans la grille</div>
+              </div>
+            </Card>
           )}
         </div>
       </div>

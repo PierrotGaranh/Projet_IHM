@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, X, ChevronLeft, ChevronRight, RefreshCw, Check } from 'lucide-react';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 
@@ -20,52 +20,81 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
   const [tempEndTime, setTempEndTime] = useState(value?.endTime || '17:00');
   const [selectionStep, setSelectionStep] = useState<'start' | 'end'>('start');
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
+  const [pickerPosition, setPickerPosition] = useState<'left' | 'right'>('left');
+  const [verticalPosition, setVerticalPosition] = useState<'top' | 'bottom'>('bottom');
   const pickerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
-  const emitChange = (start: Date | null, end: Date | null, startTime: string, endTime: string) => {
-    if (start && end) {
-      const s = new Date(start);
-      const [sh, sm] = startTime.split(':').map(Number);
-      s.setHours(sh, sm);
-      const e = new Date(end);
-      const [eh, em] = endTime.split(':').map(Number);
-      e.setHours(eh, em);
-      onChange({ startDate: s, endDate: e, startTime, endTime });
-    } else {
-      onChange({ startDate: start, endDate: end, startTime, endTime });
+  const isComplete = tempStart !== null && tempEnd !== null && tempStartTime !== '' && tempEndTime !== '';
+
+  const validateAndApply = () => {
+    if (!tempStart || !tempEnd) return false;
+    const start = new Date(tempStart);
+    const [sh, sm] = tempStartTime.split(':').map(Number);
+    start.setHours(sh, sm);
+    const end = new Date(tempEnd);
+    const [eh, em] = tempEndTime.split(':').map(Number);
+    end.setHours(eh, em);
+    if (start >= end) {
+      setApplyError('La date de fin doit être postérieure à la date de début');
+      return false;
     }
+    setApplyError(null);
+    onChange({ startDate: tempStart, endDate: tempEnd, startTime: tempStartTime, endTime: tempEndTime });
+    setIsOpen(false);
+    return true;
   };
 
-  useEffect(() => {
-    if (tempStart && tempEnd) {
-      emitChange(tempStart, tempEnd, tempStartTime, tempEndTime);
-    }
-  }, [tempStart, tempEnd, tempStartTime, tempEndTime]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const formatDisplay = () => {
-    if (!tempStart || !tempEnd) return placeholder;
-    const startStr = `${tempStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} ${tempStartTime}`;
-    const endStr = `${tempEnd.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} ${tempEndTime}`;
-    return `${startStr} → ${endStr}`;
-  };
-
-  const clearFilter = () => {
+  const resetFilter = () => {
     setTempStart(null);
     setTempEnd(null);
     setTempStartTime('09:00');
     setTempEndTime('17:00');
     setSelectionStep('start');
     setHoverDate(null);
-    emitChange(null, null, '09:00', '17:00');
+    setApplyError(null);
+    onChange({ startDate: null, endDate: null, startTime: '09:00', endTime: '17:00' });
     setIsOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node) && triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current && pickerRef.current) {
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const pickerRect = pickerRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      if (triggerRect.left + pickerRect.width > viewportWidth) {
+        setPickerPosition('right');
+      } else {
+        setPickerPosition('left');
+      }
+      
+      const spaceBelow = viewportHeight - triggerRect.bottom;
+      if (spaceBelow < pickerRect.height) {
+        setVerticalPosition('top');
+      } else {
+        setVerticalPosition('bottom');
+      }
+    }
+  }, [isOpen, tempStart, tempEnd]);
+
+  const formatDisplay = () => {
+    if (!tempStart || !tempEnd) return placeholder;
+    const startStr = `${tempStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} ${tempStartTime}`;
+    const endStr = `${tempEnd.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} ${tempEndTime}`;
+    return `${startStr} → ${endStr}`;
   };
 
   const daysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -80,6 +109,7 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
       setTempStart(clickedDate);
       setTempEnd(null);
       setSelectionStep('end');
+      setApplyError(null);
     } else {
       if (tempStart && clickedDate < tempStart) {
         setTempStart(clickedDate);
@@ -88,6 +118,7 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
         setTempEnd(clickedDate);
       }
       setSelectionStep('start');
+      setApplyError(null);
     }
   };
 
@@ -132,15 +163,17 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
   const bothDatesSelected = tempStart !== null && tempEnd !== null;
   const sameCell = bothDatesSelected && tempStart!.getTime() === tempEnd!.getTime();
 
+  const verticalClass = verticalPosition === 'bottom' ? 'mt-2' : 'bottom-full mb-2';
+
   return (
-    <div className="relative" ref={pickerRef}>
+    <div className="relative" ref={triggerRef}>
       <div
         className="flex items-center gap-2 border border-input rounded-lg px-3 py-2 cursor-pointer bg-background hover:bg-muted/50 transition"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="flex-1 text-sm text-foreground">{formatDisplay()}</span>
         {tempStart && tempEnd ? (
-          <Button type="button" variant="ghost" onClick={(e) => { e.stopPropagation(); clearFilter(); }} className="p-0 h-auto">
+          <Button type="button" variant="ghost" onClick={(e) => { e.stopPropagation(); resetFilter(); }} className="p-0 h-auto">
             <X className="w-4 h-4 text-muted-foreground" />
           </Button>
         ) : (
@@ -149,7 +182,12 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 bg-card border border-border rounded-lg shadow-lg p-4 w-[380px]">
+        <div
+          ref={pickerRef}
+          className={`absolute z-[100] ${verticalClass} bg-card border border-border rounded-lg shadow-lg p-4 w-[380px] max-w-[90vw] ${
+            pickerPosition === 'left' ? 'left-0' : 'right-0'
+          }`}
+        >
           <div className="flex items-center justify-between mb-4">
             <Button type="button" variant="ghost" onClick={prevMonth}><ChevronLeft className="w-4 h-4" /></Button>
             <span className="font-semibold">{currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</span>
@@ -186,7 +224,7 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
 
               return (
                 <div key={day} className="flex flex-col items-center">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => !isPast && handleDateClick(day)}
                     onMouseEnter={() => !isPast && handleMouseEnter(day)}
@@ -236,6 +274,19 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
                 </div>
               );
             })}
+          </div>
+
+          {applyError && <p className="text-xs text-destructive mt-2">{applyError}</p>}
+
+          <div className="mt-4 pt-2 border-t border-border flex justify-between gap-2">
+            {isComplete && (
+              <Button type="button" variant="primary" onClick={validateAndApply} className="gap-2 text-sm">
+                <Check className="w-3 h-3" /> Appliquer
+              </Button>
+            )}
+            <Button type="button" variant="secondary" onClick={resetFilter} className="gap-2 text-sm ml-auto">
+              <RefreshCw className="w-3 h-3" /> Réinitialiser
+            </Button>
           </div>
         </div>
       )}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/atoms/Button';
+import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { Tarifaction } from '@/components/molecules/Tarifaction';
 import { DangerZone } from '@/components/molecules/DangerZone';
@@ -87,7 +88,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="card-base p-8 space-y-6">
+      <Card className="p-8 space-y-6">
         <SettingsForm
           initialSettings={settings}
           onSubmit={handleSave}
@@ -114,13 +115,9 @@ export default function SettingsPage() {
         )}
 
         <Tarifaction />
-      </div>
+      </Card>
 
-      <SystemInfo
-        version="v1.0.0"
-        lastUpdated={new Date()}
-        status="online"
-      />
+      <SystemInfo />
 
       <DangerZone
         title="Zone dangereuse"
@@ -144,6 +141,7 @@ export default function SettingsPage() {
         onConfirm={handleReset}
         title="Réinitialiser toutes les données"
         message="Cette action supprimera définitivement toutes les réservations, utilisateurs et données. Êtes-vous absolument sûr ?"
+        isDangerous={true}
       />
     </div>
   );

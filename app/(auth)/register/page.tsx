@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context';
 import { useToast } from '@/hooks/use-toast';
-import { AppIcon } from '@/components/atoms/AppIcon'
+import { AppIcon } from '@/components/atoms/AppIcon';
+import { Card } from '@/components/atoms/Card';
 import { RegisterStepper } from '@/components/organisms/RegisterStepper';
 
 export default function RegisterPage() {
@@ -39,7 +40,7 @@ export default function RegisterPage() {
         </div>
         <p className="text-muted-foreground">Créer un nouveau compte</p>
       </div>
-      <div className="card-base p-6 md:p-8 space-y-6">
+      <Card className="p-6 md:p-8 space-y-6">
         <RegisterStepper onSubmit={handleSubmit} />
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-border" />
@@ -49,7 +50,7 @@ export default function RegisterPage() {
         <p className="text-center text-sm text-muted-foreground">
           Vous avez un compte ? <Link href="/login" className="text-primary hover:text-primary/80 font-semibold">Se connecter</Link>
         </p>
-      </div>
+      </Card>
       <p className="text-center text-xs text-muted-foreground">Application de gestion de parking réservé</p>
     </div>
   );

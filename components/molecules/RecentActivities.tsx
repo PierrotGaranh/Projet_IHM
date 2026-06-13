@@ -10,7 +10,7 @@ interface RecentActivitiesProps {
 export function RecentActivities({ activities, limit = 6 }: RecentActivitiesProps) {
   const displayed = activities.slice(0, limit);
   return (
-    <Card className="space-y-4">
+    <Card className="p-6 space-y-4">
       <div className="flex items-center gap-2">
         <Activity className="w-5 h-5 text-muted-foreground" />
         <h2 className="text-lg font-semibold text-foreground">Activité récente</h2>

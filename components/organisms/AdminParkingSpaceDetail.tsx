@@ -60,7 +60,7 @@ export function AdminParkingSpaceDetail({
           <div className="space-y-2">
             {space.status === 'available' && (
               <>
-                <Button onClick={onReserveForUser} className="w-full">Réserver pour un utilisateur</Button>
+                <Button variant="primary" onClick={onReserveForUser} className="w-full">Réserver pour un utilisateur</Button>
                 <Button variant="secondary" onClick={onMaintenance} className="w-full border-destructive text-destructive hover:bg-destructive/10">Mettre en maintenance</Button>
               </>
             )}
@@ -70,7 +70,7 @@ export function AdminParkingSpaceDetail({
           </div>
         </div>
 
-        <div>
+        <div className="pt-4 border-t border-border">
           <h4 className="font-medium mb-3">Réservations sur cette place</h4>
           <AvailabilityList
             reservations={reservations}

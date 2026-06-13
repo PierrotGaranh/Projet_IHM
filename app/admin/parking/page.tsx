@@ -1,19 +1,23 @@
 'use client';
 
 import { Suspense, useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel, User, Reservation } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ParkingGrid } from '@/components/organisms/ParkingGrid';
 import { FilterSection } from '@/components/organisms/FilterSection';
 import { AdminParkingSpaceDetail } from '@/components/organisms/AdminParkingSpaceDetail';
 import { AddReservationForm } from '@/components/organisms/AddReservationForm';
 import { EditReservationForm } from '@/components/organisms/EditReservationForm';
+import { X, Info } from 'lucide-react';
 import Loading from './loading';
 
 function ParkingManagementPageContent() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<ParkingSpace | null>(null);
@@ -37,6 +41,18 @@ function ParkingManagementPageContent() {
   const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
   const [spacesMap, setSpacesMap] = useState<Record<string, ParkingSpace>>({});
   const detailsRef = useRef<HTMLDivElement>(null);
+
+  const [showInfoCard, setShowInfoCard] = useState(false);
+
+  useEffect(() => {
+    const msg = searchParams.get('msg');
+    if (msg === 'new_reservation') {
+      setShowInfoCard(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('msg');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams]);
 
   const smoothScrollToElement = (el: HTMLElement, offset = 80) => {
     const pos = el.getBoundingClientRect().top + window.scrollY;
@@ -133,11 +149,6 @@ function ParkingManagementPageContent() {
   };
 
   const handleReserveForUser = () => setShowReserveModal(true);
-  const handleEditReservationForAdmin = () => {
-    const store = getStore();
-    const reservation = store.getReservations().find(r => r.spaceId === selectedSpace?.id && r.status === 'active');
-    if (reservation) { setEditingReservation(reservation); setShowEditReservationModal(true); }
-  };
 
   const prepareReserve = async (data: { userId: string; startDate: Date; endDate: Date; vehiclePlate: string }) => {
     setSelectedUserId(data.userId);
@@ -186,7 +197,7 @@ function ParkingManagementPageContent() {
       setShowConfirmReserveModal(false);
       setEditingReservation(null);
     } else {
-      toast({ variant: 'error', title: 'Erreur', description: result.error || 'Erreur lors de la modification' });
+      toast({ variant: 'error', title: 'Erreur', description: result.error || 'Une erreur est survenue à la mise à jour de la réservation.' });
     }
   };
 
@@ -197,7 +208,29 @@ function ParkingManagementPageContent() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2"><h1 className="text-3xl font-bold">Gestion du parking</h1><p className="text-muted-foreground">Gérez les statuts et configurations des places</p></div>
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">Gestion du parking</h1>
+        <p className="text-muted-foreground">Gérez les statuts et configurations des places</p>
+      </div>
+
+      {showInfoCard && (
+        <div className="sticky top-16 z-10 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-3">
+            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <p className="text-blue-800 dark:text-blue-200 text-sm">
+              Choisissez une place dans la grille pour ajouter une réservation.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowInfoCard(false)}
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition"
+            aria-label="Fermer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <FilterSection
         selectedCount={selectedCount}
         deselectedCount={deselectedCount}
@@ -244,12 +277,13 @@ function ParkingManagementPageContent() {
               dateRange={dateRange}
             />
           ) : (
-            <div className="card-base p-6 text-center text-muted-foreground">Sélectionnez une place</div>
+            <Card className="p-6 text-center text-muted-foreground">Sélectionnez une place</Card>
           )}
         </div>
       </div>
 
-      <ConfirmationModal isOpen={showStatusModal} onClose={() => setShowStatusModal(false)} onConfirm={confirmStatusChange} title="Changer le statut" message={`Êtes-vous sûr de vouloir mettre la place ${selectedSpace?.number} ${newStatus === 'maintenance' ? 'en maintenance' : 'disponible'} ?`} />
+      <ConfirmationModal isOpen={showStatusModal} onClose={() => setShowStatusModal(false)} onConfirm={confirmStatusChange} title="Changer le statut" 
+      message={`Êtes-vous sûr de vouloir mettre la place ${selectedSpace?.number} ${newStatus === 'maintenance' ? 'en maintenance' : 'disponible'} ?`} />
 
       {showReserveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -268,7 +302,11 @@ function ParkingManagementPageContent() {
               reservation={editingReservation}
               pricePerHour={getStore().getSpace(editingReservation.spaceId)?.pricePerHour || 0}
               userPlates={users.find(u => u.id === editingReservation.userId)?.vehiclePlates || []}
-              userName={users.find(u => u.id === editingReservation.userId)?.firstName}
+              userName={
+                users.find(u => u.id === editingReservation.userId)
+                  ? `${users.find(u => u.id === editingReservation.userId)?.firstName} ${users.find(u => u.id === editingReservation.userId)?.lastName}`
+                  : ""
+              }
               onSubmit={prepareEditReservation}
               onCancel={() => setShowEditReservationModal(false)}
             />
@@ -276,7 +314,8 @@ function ParkingManagementPageContent() {
         </div>
       )}
 
-      <ConfirmationModal isOpen={showConfirmReserveModal} onClose={() => setShowConfirmReserveModal(false)} onConfirm={editingReservation ? confirmEditReservation : confirmReserve} title={editingReservation ? 'Modifier la réservation' : 'Confirmer la réservation'} message={editingReservation ? `Modifier la réservation pour la place ${selectedSpace?.number} ?` : `Réserver la place ${selectedSpace?.number} ?`} />
+      <ConfirmationModal isOpen={showConfirmReserveModal} onClose={() => setShowConfirmReserveModal(false)} onConfirm={editingReservation ? confirmEditReservation : confirmReserve} title={editingReservation ? 'Modifier la réservation' : 'Confirmer la réservation'}
+      message={editingReservation ? `Modifier la réservation pour la place ${selectedSpace?.number} ?` : `Réserver la place ${selectedSpace?.number} au véhicule ${vehiclePlate} pour la période du: ${reservePayload?.start.toLocaleString('fr-FR')} - ${reservePayload?.end.toLocaleString('fr-FR')}?`} />
     </div>
   );
 }

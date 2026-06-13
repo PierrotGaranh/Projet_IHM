@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/atoms/Skeleton';
+import { Card } from '@/components/atoms/Card';
 
 export default function Loading() {
   return (
@@ -12,7 +13,7 @@ export default function Loading() {
             </div>
             <Skeleton className="h-4 w-48 mx-auto" />
           </div>
-          <div className="card-base p-8 space-y-6">
+          <Card className="p-8 space-y-6">
             <div className="p-3 rounded-lg space-y-2">
               <Skeleton className="h-4 w-32" />
               <div className="space-y-1">
@@ -37,7 +38,7 @@ export default function Loading() {
               <Skeleton className="h-px flex-1" />
             </div>
             <Skeleton className="h-4 w-40 mx-auto" />
-          </div>
+          </Card>
           <Skeleton className="h-3 w-64 mx-auto" />
         </div>
       </div>

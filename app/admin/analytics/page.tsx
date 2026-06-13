@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
+import { Card } from '@/components/atoms/Card';
 import { AnalyticsStatsGrid } from '@/components/organisms/AnalyticsStatsGrid';
 import { PeakHoursChart } from '@/components/organisms/PeakHoursChart';
 import { OccupancyTrend } from '@/components/organisms/OccupancyTrend';
@@ -31,24 +32,24 @@ function AnalyticsPageContent() {
         <p className="text-muted-foreground">Statistiques et tendances détaillées de votre parking</p>
       </div>
       <AnalyticsStatsGrid totalRevenue={stats.totalRevenue} occupancyRate={stats.occupancyRate} activeReservations={stats.activeReservations} totalUsers={stats.totalUsers} revenueChange={stats.revenueChange} newUsersThisMonth={stats.newUsersThisMonth} />
-      <div className="card-base p-6 space-y-4">
+      <Card className="p-6 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Heures de pointe</h2>
         <PeakHoursChart data={peakHours} />
-      </div>
+      </Card>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card-base p-6 space-y-4">
+        <Card className="p-6 space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Tendance d'occupation</h2>
           <OccupancyTrend data={occupancyByDay} labels={['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']} />
-        </div>
-        <div className="card-base p-6 space-y-4">
+        </Card>
+        <Card className="p-6 space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Revenu par type de place</h2>
           <RevenueByTypeChart data={revenueByType} />
-        </div>
+        </Card>
       </div>
-      <div className="card-base p-6 space-y-4">
+      <Card className="p-6 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Distribution des places</h2>
         <DistributionStats available={stats.availableSpaces} occupied={stats.occupiedSpaces} maintenance={stats.maintenanceSpaces} />
-      </div>
+      </Card>
     </div>
   );
 }

@@ -15,7 +15,7 @@ export function ExpandableCard({ title, children, defaultOpen = false }: Expanda
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <Card className="overflow-hidden border-0 bg-white/80 dark:bg-slate-800/80 shadow-md hover:shadow-lg transition-all">
+    <Card className="p-6 overflow-hidden border-0 bg-white/80 dark:bg-slate-800/80 shadow-md hover:shadow-lg transition-all">
       <button
         className="w-full text-left cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}

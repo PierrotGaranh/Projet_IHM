@@ -9,7 +9,7 @@ interface InfoCardProps {
 
 export function InfoCard({ title, children, icon }: InfoCardProps) {
   return (
-    <Card className="border-l-4 border-l-accent bg-accent/5 space-y-3">
+    <Card className="p-6 border-l-4 border-l-accent bg-accent/5 space-y-3">
       <div className="flex items-start gap-3">
         {icon && <div className="mt-1">{icon}</div>}
         <div>

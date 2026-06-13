@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/atoms/Skeleton';
+import { Card } from '@/components/atoms/Card';
 
 export default function Loading() {
   return (
@@ -7,7 +8,7 @@ export default function Loading() {
         <Skeleton className="h-10 w-72" />
         <Skeleton className="h-5 w-96" />
       </div>
-      <div className="card-base p-6 space-y-4">
+      <Card className="p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-20" />
@@ -21,10 +22,10 @@ export default function Loading() {
             <Skeleton className="h-10 w-48" />
           </div>
         </div>
-      </div>
+      </Card>
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="card-base p-6 space-y-4">
+          <Card key={i} className="p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
@@ -49,7 +50,7 @@ export default function Loading() {
                   </div>
                 ))}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

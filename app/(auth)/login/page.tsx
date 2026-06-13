@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { AppIcon } from '@/components/atoms/AppIcon'
+import { Card } from '@/components/atoms/Card';
 import { LoginForm } from '@/components/organisms/LoginForm';
 import Loading from './loading';
 
@@ -16,7 +17,7 @@ function LoginPageContent() {
         </div>
         <p className="text-muted-foreground">Connexion à votre compte</p>
       </div>
-      <div className="card-base p-8 space-y-6">
+      <Card className="p-8 space-y-6">
         <div className="text-sm space-y-2 p-3 rounded-lg bg-secondary/10 border border-secondary/20">
           <p className="font-semibold text-secondary">Comptes de démo :</p>
           <div className="text-xs text-muted-foreground space-y-1">
@@ -27,7 +28,7 @@ function LoginPageContent() {
         <LoginForm />
         <div className="flex items-center gap-3"><div className="flex-1 h-px bg-border" /><span className="text-sm text-muted-foreground">ou</span><div className="flex-1 h-px bg-border" /></div>
         <p className="text-center text-sm text-muted-foreground">Pas encore de compte ? <Link href="/register" className="text-primary hover:text-primary/80 font-semibold">S'inscrire</Link></p>
-      </div>
+      </Card>
       <p className="text-center text-xs text-muted-foreground">Application de gestion de parking réservé</p>
     </div>
   );

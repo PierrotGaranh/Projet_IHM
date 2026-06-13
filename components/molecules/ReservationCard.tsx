@@ -16,7 +16,7 @@ export function ReservationCard({ reservation, space, actions }: ReservationCard
   const statusVariant = isOngoing ? 'warning' : reservation.status === 'active' ? 'success' : reservation.status === 'completed' ? 'info' : 'destructive';
 
   return (
-    <Card className="space-y-4">
+    <Card className="p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">

@@ -28,9 +28,15 @@ export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect,
   const TypeIcon = typeIcon[space.type];
   
   const getStatusClasses = () => {
-    if (space.status === 'available') return 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-800 dark:text-green-200';
-    if (space.status === 'occupied') return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 opacity-70 cursor-not-allowed';
-    if (space.status === 'maintenance') return 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 opacity-70 cursor-not-allowed';
+    if (space.status === 'available') {
+      return 'bg-green-100 hover:bg-green-200 dark:bg-green-500/30 dark:hover:bg-green-500/50 text-green-800 dark:text-green-100';
+    }
+    if (space.status === 'occupied') {
+      return 'bg-red-100 dark:bg-red-500/30 text-red-600 dark:text-red-100 opacity-70 cursor-not-allowed';
+    }
+    if (space.status === 'maintenance') {
+      return 'bg-gray-200 dark:bg-gray-500/30 text-gray-500 dark:text-gray-200 opacity-70 cursor-not-allowed';
+    }
     return '';
   };
 
@@ -41,17 +47,19 @@ export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect,
       <Button
         onClick={onSelect}
         disabled={disabled}
-        className={`relative w-full aspect-square rounded-lg transition-all font-bold text-base ${getStatusClasses()} ${isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background' : ''} ${isMyReservation ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''} disabled:opacity-70 border-b-2 ${borderClass}`}
+        className={`relative w-full aspect-square rounded-lg transition-all font-bold text-base ${getStatusClasses()} ${isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background' : ''} ${isMyReservation ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''} disabled:opacity-70 border-b-2 ${borderClass} ${disabled ? 'cursor-not-allowed hover:no-underline' : ''}`}
         title={`Place ${space.number} - ${space.type}`}
       >
         <span className="block w-full text-center">{space.number}</span>
-        <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
-          {space.features.slice(0, 2).map((feature) => {
-            const Icon = featureIcons[feature];
-            return Icon ? <Icon key={feature} className="w-3 h-3 text-current opacity-80" /> : null;
-          })}
-          {space.features.length > 2 && <span className="text-[10px]">+{space.features.length - 2}</span>}
-        </div>
+        {!disabled && (
+          <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
+            {space.features.slice(0, 1).map((feature) => {
+              const Icon = featureIcons[feature];
+              return Icon ? <Icon key={feature} className="w-3 h-3 text-current opacity-80" /> : null;
+            })}
+            {space.features.length > 1 && <span className="text-[10px]">+{space.features.length}</span>}
+          </div>
+        )}
       </Button>
     );
   }
@@ -62,19 +70,23 @@ export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect,
         variant="ghost"
         onClick={onSelect}
         disabled={disabled}
-        className={`relative w-full aspect-square rounded-lg transition-all group ${getStatusClasses()} ${isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background' : ''} ${isMyReservation ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''} disabled:opacity-70`}
+        className={`relative w-full aspect-square rounded-lg transition-all group ${getStatusClasses()} ${isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background' : ''} ${isMyReservation ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''} disabled:opacity-70 ${disabled ? 'cursor-not-allowed hover:bg-none' : ''}`}
         title={`Place ${space.number} - ${space.type}`}
       >
         <span className="absolute inset-0 flex items-center justify-center text-xl sm:text-2xl font-bold">{space.number}</span>
-        <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
-          {space.features.map((feature) => {
-            const Icon = featureIcons[feature];
-            return Icon ? <Icon key={feature} className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-current opacity-80" /> : null;
-          })}
-        </div>
-        <div className="absolute top-1 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <TypeIcon className="w-4 h-4" />
-        </div>
+        {!disabled && (
+          <>
+            <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
+              {space.features.map((feature) => {
+                const Icon = featureIcons[feature];
+                return Icon ? <Icon key={feature} className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-current opacity-80" /> : null;
+              })}
+            </div>
+            <div className="absolute top-1 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <TypeIcon className="w-4 h-4" />
+            </div>
+          </>
+        )}
       </Button>
     </div>
   );

@@ -6,6 +6,7 @@ import { Reservation } from '@/lib/types';
 import { Mailbox } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/atoms/Button';
+import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ReservationCard } from '@/components/molecules/ReservationCard';
 import { EditReservationForm } from '@/components/organisms/EditReservationForm';
@@ -99,7 +100,7 @@ function AdminReservationsPageContent() {
         <h1 className="text-3xl font-bold text-foreground">Gestion des réservations</h1>
         <p className="text-muted-foreground">Visualisez et gérez toutes les réservations du système</p>
       </div>
-      <div className="card-base p-6 space-y-4">
+      <Card className="p-6 space-y-4">
         <FiltersBar
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
@@ -111,9 +112,9 @@ function AdminReservationsPageContent() {
           addButtonLabel="+ Ajouter une réservation"
           onAddClick={() => router.push('/admin/parking?msg=new_reservation')}
         />
-      </div>
+      </Card>
       {filtered.length === 0 ? (
-        <div className="card-base p-6 flex flex-col items-center gap-4 text-center"><Mailbox className="w-12 h-12" /><p className="text-lg font-semibold text-foreground">Aucune réservation</p></div>
+        <Card className="p-6 flex flex-col items-center gap-4 text-center"><Mailbox className="w-12 h-12" /><p className="text-lg font-semibold text-foreground">Aucune réservation</p></Card>
       ) : (
         <>
           <div ref={listRef} className="grid gap-4">

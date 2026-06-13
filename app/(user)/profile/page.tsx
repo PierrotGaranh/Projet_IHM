@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/context';
 import { Button } from '@/components/atoms/Button';
+import { Card } from '@/components/atoms/Card';
 import { ProfileForm } from '@/components/organisms/ProfileForm';
 import { InfoCard } from '@/components/molecules/InfoCard';
 import { Lock } from 'lucide-react';
@@ -45,7 +46,7 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      <div className="card-base p-8 space-y-6">
+      <Card className="p-8 space-y-6">
         <div className="flex items-center gap-6">
           <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-2xl font-bold">
             {user?.firstName?.[0]}
@@ -83,7 +84,7 @@ export default function ProfilePage() {
             </Button>
           </div>
         )}
-      </div>
+      </Card>
 
       <InfoCard title="Sécurité" icon={<Lock className="w-5 h-5" />}>
         Votre mot de passe est sécurisé et crypté. Vous pouvez le modifier en

@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/atoms/Skeleton';
+import { Card } from '@/components/atoms/Card';
 
 export default function Loading() {
   return (
@@ -11,14 +12,14 @@ export default function Loading() {
         {Array(4)
           .fill(0)
           .map((_, i) => (
-            <div key={i} className="card-base p-6 space-y-2">
+            <Card key={i} className="p-6 space-y-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-28" />
               <Skeleton className="h-3 w-32" />
-            </div>
+            </Card>
           ))}
       </div>
-      <div className="card-base p-6 space-y-4">
+      <Card className="p-6 space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="flex items-end gap-2 pt-4 overflow-x-auto pb-2">
           {Array(8)
@@ -31,9 +32,9 @@ export default function Loading() {
             ))}
         </div>
         <Skeleton className="h-3 w-64" />
-      </div>
+      </Card>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card-base p-6 space-y-4">
+        <Card className="p-6 space-y-4">
           <Skeleton className="h-6 w-48" />
           {Array(7)
             .fill(0)
@@ -46,8 +47,8 @@ export default function Loading() {
                 <Skeleton className="h-3 w-full" />
               </div>
             ))}
-        </div>
-        <div className="card-base p-6 space-y-4">
+        </Card>
+        <Card className="p-6 space-y-4">
           <Skeleton className="h-6 w-48" />
           {Array(3)
             .fill(0)
@@ -60,9 +61,9 @@ export default function Loading() {
                 <Skeleton className="h-3 w-full" />
               </div>
             ))}
-        </div>
+        </Card>
       </div>
-      <div className="card-base p-6 space-y-4">
+      <Card className="p-6 space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array(4)
@@ -77,7 +78,7 @@ export default function Loading() {
               </div>
             ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

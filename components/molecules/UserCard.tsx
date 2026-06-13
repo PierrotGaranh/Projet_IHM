@@ -8,7 +8,7 @@ interface UserCardProps {
 
 export function UserCard({ user }: UserCardProps) {
   return (
-    <Card className="space-y-4">
+    <Card className="p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold flex-shrink-0">

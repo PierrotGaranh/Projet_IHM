@@ -15,7 +15,7 @@
   --accent: #06b6d4;
   --accent-foreground: #ffffff;
   --muted: #e2e8f0;
-  --muted-foreground: #475569;
+  --muted-foreground: #334155;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;
@@ -114,23 +114,4 @@
   .label-base {
     @apply text-sm font-medium text-foreground;
   }
-}
-
-.premium-marker {
-  position: relative;
-}
-
-.premium-marker::before {
-  content: '';
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 10px 10px 0;
-  border-color: transparent #eab308 transparent transparent;
-  opacity: 0.8;
-  pointer-events: none;
-  z-index: 1;
 }
