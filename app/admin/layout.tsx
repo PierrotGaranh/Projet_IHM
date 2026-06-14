@@ -9,7 +9,7 @@ import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ThemeToggle } from '@/components/molecules/ThemeToggle';
 import { LoadingScreen } from '@/components/atoms/LoadingScreen';
 import { AccessDenied } from '@/components/molecules/AccessDenied';
-import { AdminLayoutSidebar } from '@/components/organisms/AdminLayoutSidebar';
+import { AdminLayoutSidebar } from '@/components/organisms/AdminSidebar';
 import { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import Loading from '../(auth)/login/loading';
@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { toast } = useToast();
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(1400);
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);

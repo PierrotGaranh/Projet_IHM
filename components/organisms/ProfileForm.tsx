@@ -124,7 +124,7 @@ export function ProfileForm({
 
         <div className="space-y-4">
           <h2 className="font-semibold text-foreground text-lg">
-            Informations véhicule
+            {vehiclePlates.length > 1 ? 'Plaques véhicules' : 'Plaque véhicule'}
           </h2>
           <div className="flex flex-wrap gap-2">
             {initialData.vehiclePlates.length ? (
@@ -190,7 +190,7 @@ export function ProfileForm({
 
       <div className="space-y-4">
         <h2 className="font-semibold text-foreground text-lg">
-          Informations véhicule
+          {vehiclePlates.length > 1 ? 'Plaques véhicules' : 'Plaque véhicule'}
         </h2>
         <div className="space-y-2">
           {vehiclePlates.map((plate, idx) => (

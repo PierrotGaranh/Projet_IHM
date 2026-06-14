@@ -142,6 +142,7 @@ function AdminReservationsPageContent() {
         if (reservationToCancel) handleCancel(reservationToCancel.id); setShowCancelModal(false); }} 
         title="Annuler la réservation" 
         message="Êtes-vous sûr de vouloir procéder à l'annulation de cette réservation ?"
+        isDangerous={true}
       >
         {reservationToCancel && (() => { 
             const s = store.getSpace(reservationToCancel.spaceId); 

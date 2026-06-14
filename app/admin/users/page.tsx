@@ -20,7 +20,7 @@ function UsersManagementPageContent() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 13;
   const listRef = useRef<HTMLDivElement>(null);
   const smoothScrollToElement = (el: HTMLElement, offset = 80) => { const pos = el.getBoundingClientRect().top + window.scrollY; window.scrollTo({ top: pos - offset, behavior: 'smooth' }); };
   const fetchData = () => { const store = getStore(); setUsers(store.getAllUsers()); setLoading(false); };

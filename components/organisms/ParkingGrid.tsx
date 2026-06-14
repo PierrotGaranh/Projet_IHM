@@ -29,7 +29,7 @@ export function ParkingGrid({
   isAdmin = false,
   adminSelectableStatuses = ['available', 'maintenance'],
 }: ParkingGridProps) {
-  const isMobile = useIsMobile(400);
+  const isMobile = useIsMobile(600);
   const [showLegend, setShowLegend] = useState(false);
   const [mobileActionSpace, setMobileActionSpace] = useState<ParkingSpace | null>(null);
 

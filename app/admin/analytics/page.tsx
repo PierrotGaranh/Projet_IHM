@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { Card } from '@/components/atoms/Card';
 import { AnalyticsStatsGrid } from '@/components/organisms/AnalyticsStatsGrid';
@@ -16,15 +16,20 @@ function AnalyticsPageContent() {
   const [revenueByType, setRevenueByType] = useState<Record<string, number>>({});
   const [occupancyByDay, setOccupancyByDay] = useState<number[]>([]);
   const [peakHours, setPeakHours] = useState<{ time: string; count: number }[]>([]);
+
   useEffect(() => {
+    let isMounted = true;
     const store = getStore();
     setStats({ ...store.getDashboardStats(), ...store.getParkingStats() });
     setRevenueByType(store.getRevenueBySpaceType());
     setOccupancyByDay(store.getOccupancyByDayOfWeek());
     setPeakHours(store.getPeakHours());
-    setLoading(false);
+    if (isMounted) setLoading(false);
+    return () => { isMounted = false; };
   }, []);
+
   if (loading) return <Loading />;
+
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -54,4 +59,6 @@ function AnalyticsPageContent() {
   );
 }
 
-export default function AnalyticsPage() { return <Suspense fallback={<Loading />}><AnalyticsPageContent /></Suspense>; }
+export default function AnalyticsPage() {
+  return <AnalyticsPageContent />;
+}

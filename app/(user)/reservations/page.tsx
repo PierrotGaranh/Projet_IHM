@@ -107,7 +107,7 @@ function ReservationsPageContent() {
 
       <ConfirmationModal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} onConfirm={() => { 
         if (reservationToCancel) handleCancel(reservationToCancel.id); setShowCancelModal(false); 
-      }} title="Annuler la réservation" message="Êtes-vous sûr de vouloir annuler cette réservation ?">
+      }} title="Annuler la réservation" message="Êtes-vous sûr de vouloir annuler cette réservation ?" isDangerous={true}>
 
       {reservationToCancel && (() => { 
         const s = store.getSpace(reservationToCancel.spaceId); 

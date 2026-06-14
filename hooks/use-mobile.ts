@@ -1,21 +1,16 @@
 import { useState, useEffect } from 'react';
 
-export function useIsMobile(MOBILE_BREAKPOINT = 1280) {
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < MOBILE_BREAKPOINT;
-    }
-    return false;
-  });
+export function useIsMobile(MOBILE_BREAKPOINT = 800) {
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
-    window.addEventListener('resize', handleResize);
     handleResize();
+    window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [MOBILE_BREAKPOINT]);
 
   return isMobile;
 }

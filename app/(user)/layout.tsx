@@ -16,7 +16,7 @@ import Loading from '../(auth)/login/loading';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const router = useRouter();
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(1200);
   const { user, logout, isLoading } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);

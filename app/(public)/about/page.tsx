@@ -1,9 +1,14 @@
+'use client';
+
+import { useIsMobile } from '@/hooks/use-mobile';
 import { AwardCard } from '@/components/molecules/AwardCard';
 import { History } from '@/components/organisms/History';
 import { ValuesGrid } from '@/components/organisms/ValuesGrid';
-import { Users, Heart, Shield, Zap } from 'lucide-react';
+import { Users, Heart, Shield } from 'lucide-react';
 
 export default function AboutPage() {
+  const isMobile = useIsMobile();
+
   const values = [
     {
       icon: <Users className="w-6 h-6 text-primary" />,
@@ -29,24 +34,26 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto py-16 px-4 space-y-16">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
-          À propos de <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">ParkHub</span>
+    <div className={`max-w-5xl mx-auto px-4 ${isMobile ? 'pt-6 pb-12 space-y-12' : 'py-16 space-y-16'}`}>
+      <div className="text-center space-y-2">
+        <h1 className={`font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent ${
+          isMobile ? 'text-3xl' : 'text-3xl sm:text-4xl md:text-5xl'
+        }`}>
+          À propos de ParkHub
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+        <p className={`text-muted-foreground max-w-2xl mx-auto ${isMobile ? 'text-base' : 'text-lg md:text-xl'}`}>
           Nous transformons la gestion de parking en une expérience simple, rapide et sécurisée.
         </p>
       </div>
 
       <History />
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Nos valeurs</h2>
-          <p className="text-muted-foreground">Ce qui nous guide au quotidien</p>
+          <h2 className={`font-bold mb-2 ${isMobile ? 'text-xl' : 'text-2xl md:text-3xl'}`}>Nos valeurs</h2>
+          <p className="text-muted-foreground text-sm">Ce qui nous guide au quotidien</p>
         </div>
-        <ValuesGrid values={values} />
+        <ValuesGrid values={values} isMobile={isMobile} />
       </div>
 
       <AwardCard />
