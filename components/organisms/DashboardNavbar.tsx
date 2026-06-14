@@ -3,6 +3,7 @@
 import { ActiveLink } from '@/components/molecules/ActiveLink';
 import { AppIcon } from '@/components/atoms/AppIcon';
 import { Button } from '@/components/atoms/Button';
+import { ThemeToggle } from '@/components/molecules/ThemeToggle';
 import { Menu, X, Home, Calendar, Car, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
 
@@ -58,6 +59,7 @@ export function DashboardNavbar({ isMobile, user, onLogout }: DashboardNavbarPro
           )}
 
           <div className="flex items-center gap-4">
+            <div className="mr-4"><ThemeToggle /></div>
             {!isMobile && (
               <div className="text-right">
                 <p className="text-sm font-semibold text-foreground">{user.firstName} {user.lastName}</p>

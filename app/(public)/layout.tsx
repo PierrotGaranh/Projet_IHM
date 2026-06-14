@@ -38,6 +38,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             </Link>
 
             <div className="flex items-center gap-3">
+              <div className="mr-4"><ThemeToggle /></div>
               <div className="hidden sm:flex items-center gap-2">
                 {!isAuthenticated ? (
                   <>
@@ -100,9 +101,6 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       </header>
       <main className="flex-1">{children}</main>
       <Footer />
-      <div className="fixed bottom-4 left-4 z-50">
-        <ThemeToggle />
-      </div>
     </div>
   );
 }

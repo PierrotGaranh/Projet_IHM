@@ -35,6 +35,25 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
   const addPlate = () => setFormData((prev: { vehiclePlates: string[]; }) => ({ ...prev, vehiclePlates: [...prev.vehiclePlates, ''] }));
   const removePlate = (idx: number) => setFormData((prev: { vehiclePlates: string[]; }) => ({ ...prev, vehiclePlates: prev.vehiclePlates.filter((_: string, i: number) => i !== idx) }));
 
+  const isStepValid = () => {
+    if (step === 0) {
+      const firstNameOk = formData.firstName.trim() !== '' && !validateField('firstName', formData.firstName);
+      const lastNameOk = formData.lastName.trim() !== '' && !validateField('lastName', formData.lastName);
+      return firstNameOk && lastNameOk;
+    }
+    if (step === 1) {
+      const emailOk = formData.email.trim() !== '' && !validateField('email', formData.email);
+      const phoneOk = formData.phone === '' || !validateField('phone', formData.phone);
+      const platesOk = formData.vehiclePlates.every((plate: string) => plate === '' || !validateField('plate', plate));
+      return emailOk && phoneOk && platesOk;
+    }
+    if (step === 2) {
+      const passwordOk = formData.password.trim() !== '' && !validateField('password', formData.password);
+      return passwordOk;
+    }
+    return false;
+  };
+
   const validateStep = () => {
     const errors: Record<string, string> = {};
     if (step === 0) {
@@ -46,8 +65,6 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
       formData.vehiclePlates.forEach((plate: string, idx: number) => {
         if (plate) errors[`plate_${idx}`] = validateField('plate', plate);
       });
-    } else if (step === 2) {
-      errors.password = validateField('password', formData.password);
     }
     setFieldErrors(errors);
     return Object.values(errors).every(e => !e);
@@ -56,9 +73,10 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
   const nextStep = () => { if (validateStep()) setStep(s => s + 1); };
   const prevStep = () => setStep(s => s - 1);
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (step < 2) return nextStep();
+
     const errors: Record<string, string> = {};
     errors.firstName = validateField('firstName', formData.firstName);
     errors.lastName = validateField('lastName', formData.lastName);
@@ -70,54 +88,99 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
     });
     setFieldErrors(errors);
     if (Object.values(errors).some(e => e)) return;
+
     setIsSubmitting(true);
-    await onSubmit(formData);
-    setIsSubmitting(false);
+    try {
+      await onSubmit(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  const hasBackButton = step > 0;
+  const hasNextButton = step < 2;
+  const submitButton = step === 2;
+  const buttonCount = (hasBackButton ? 1 : 0) + (hasNextButton ? 1 : 0) + (submitButton ? 1 : 0);
+  const isSingleButton = buttonCount === 1;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <Stepper currentStep={step} totalSteps={3} labels={['Identité', 'Contact & véhicules', 'Sécurité']} />
+
       {step === 0 && (
-        <div className="space-y-4 animate-in fade-in duration-300">
-          <div className="space-y-1"><Label htmlFor="lastName" required>Nom</Label><Input id="lastName" value={formData.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={fieldErrors.lastName} required autoFocus /></div>
-          <div className="space-y-1"><Label htmlFor="firstName" required>Prénom</Label><Input id="firstName" value={formData.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={fieldErrors.firstName} required /></div>
+        <div className="space-y-3 animate-in fade-in duration-300">
+          <div className="space-y-1">
+            <Label htmlFor="lastName" showRequired>Nom</Label>
+            <Input id="lastName" value={formData.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={fieldErrors.lastName} required autoFocus />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="firstName" showRequired>Prénom</Label>
+            <Input id="firstName" value={formData.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={fieldErrors.firstName} required />
+          </div>
         </div>
       )}
+
       {step === 1 && (
-        <div className="space-y-4 animate-in fade-in duration-300">
-          <div className="space-y-1"><Label htmlFor="email" required>Email</Label><Input id="email" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} error={fieldErrors.email} required /></div>
+        <div className="space-y-3 animate-in fade-in duration-300">
+          <div className="space-y-1">
+            <Label htmlFor="email" showRequired>Email</Label>
+            <Input id="email" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} error={fieldErrors.email} required />
+          </div>
           <div className="space-y-1">
             <Label htmlFor="phone">Téléphone</Label>
-            <div className="grid grid-row">
-              <Input id="phone" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} error={fieldErrors.phone} placeholder="ex: +33612345678" />
-              <span className="text-primary text-xs">Format international recommandé</span>
-            </div>
-            
+            <Input id="phone" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} error={fieldErrors.phone} placeholder="ex: +33612345678" />
           </div>
           <div className="space-y-2">
             <Label>Plaques d'immatriculation</Label>
             {formData.vehiclePlates.map((plate: string, idx: number) => (
               <div key={idx} className="flex gap-2 items-start">
                 <Input value={plate} onChange={(e) => updatePlate(idx, e.target.value)} error={fieldErrors[`plate_${idx}`]} placeholder="ex: AB123CD" className="flex-1" />
-                {idx > 0 && (<Button type="button" variant="ghost" onClick={() => removePlate(idx)} className="h-full p-1"><X className="w-4 h-4 text-red-500" /></Button>)}
+                {idx > 0 && (
+                  <Button type="button" variant="ghost" onClick={() => removePlate(idx)} className="h-full p-1">
+                    <X className="w-4 h-4 text-red-500" />
+                  </Button>
+                )}
               </div>
             ))}
-            <Button type="button" variant="secondary" onClick={addPlate}>+ Ajouter une plaque</Button>
+            <Button type="button" variant="secondary" onClick={addPlate} className="w-full sm:w-auto">+ Ajouter une plaque</Button>
           </div>
         </div>
       )}
+
       {step === 2 && (
-        <div className="space-y-4 animate-in fade-in duration-300">
-          <PasswordInput name="password" label="Mot de passe" value={formData.password} onChange={(e) => updateField('password', e.target.value)} error={fieldErrors.password} required placeholder="********" />
+        <div className="space-y-3 animate-in fade-in duration-300">
+          <PasswordInput name="password" label="Mot de passe" value={formData.password} onChange={(e) => updateField('password', e.target.value)} error={fieldErrors.password} showRequired placeholder="********" />
         </div>
       )}
-      <div className="flex justify-between gap-4 pt-2">
-        {step > 0 && <Button type="button" variant="secondary" onClick={prevStep} className="flex items-center gap-2"><ChevronLeft className="w-4 h-4" /> Retour</Button>}
-        {step < 2 ? (
-          <Button variant="primary" type="button" onClick={nextStep} className="flex items-center gap-2 ml-auto">Suivant <ChevronRight className="w-4 h-4" /></Button>
-        ) : (
-          <Button variant="primary" type="submit" isLoading={isSubmitting} loadingText="Inscription" className="flex items-center justify-center gap-2"><CheckCircle className="w-4 h-4" /> S'inscrire</Button>
+
+      <div className={`flex flex-row gap-2 ${isSingleButton ? 'justify-center' : 'justify-between'}`}>
+        {hasBackButton && (
+          <Button type="button" variant="secondary" onClick={prevStep} className={`${isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'} flex items-center justify-center gap-2`}>
+            <ChevronLeft className="w-4 h-4" /> Retour
+          </Button>
+        )}
+        {hasNextButton && (
+          <Button
+            type="button"
+            variant="primary"
+            onClick={nextStep}
+            disabled={!isStepValid()}
+            className={`${isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'} flex items-center justify-center gap-2`}
+          >
+            Suivant <ChevronRight className="w-4 h-4" />
+          </Button>
+        )}
+        {submitButton && (
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={isSubmitting}
+            loadingText="Inscription"
+            disabled={!isStepValid()}
+            className={`${isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'} flex items-center justify-center gap-2`}
+          >
+            <CheckCircle className="w-4 h-4" /> S'inscrire
+          </Button>
         )}
       </div>
     </form>

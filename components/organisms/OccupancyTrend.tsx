@@ -1,9 +1,12 @@
+import { useIsMobile } from '@/hooks/use-mobile';
+
 interface OccupancyTrendProps {
   data: number[];
   labels: string[];
 }
 
 export function OccupancyTrend({ data, labels }: OccupancyTrendProps) {
+  const isMobile = useIsMobile(600);
   return (
     <div className="space-y-4">
       {labels.map((label, idx) => (
@@ -17,7 +20,7 @@ export function OccupancyTrend({ data, labels }: OccupancyTrendProps) {
           </div>
         </div>
       ))}
-      <p className="text-xs text-muted-foreground">Basé sur les réservations actives</p>
+      {!isMobile && (<p className="text-xs text-muted-foreground">Basé sur les réservations actives</p>)}
     </div>
   );
 }

@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DashboardNavbar } from '@/components/organisms/DashboardNavbar';
 import { Footer } from '@/components/organisms/Footer';
-import { ThemeToggle } from '@/components/molecules/ThemeToggle';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { LoadingScreen } from '@/components/atoms/LoadingScreen';
 import { AccessDenied } from '@/components/molecules/AccessDenied';
@@ -47,9 +46,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <DashboardNavbar isMobile={isMobile} user={user!} onLogout={() => setShowLogoutModal(true)} />
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">{children}</main>
       <Footer />
-      <div className="fixed bottom-4 left-4 z-50">
-        <ThemeToggle />
-      </div>
       <ConfirmationModal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}

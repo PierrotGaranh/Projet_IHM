@@ -53,11 +53,11 @@ export function AddUserForm({ onSubmit, onCancel }: AddUserFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-1"><Label htmlFor="firstName" required>Prénom</Label><Input id="firstName" value={formData.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={errors.firstName} required /></div>
-      <div className="space-y-1"><Label htmlFor="lastName" required>Nom</Label><Input id="lastName" value={formData.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={errors.lastName} required /></div>
-      <div className="space-y-1"><Label htmlFor="email" required>Email</Label><Input id="email" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} error={errors.email} required /></div>
+      <div className="space-y-1"><Label htmlFor="firstName" showRequired>Prénom</Label><Input id="firstName" value={formData.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={errors.firstName} required /></div>
+      <div className="space-y-1"><Label htmlFor="lastName" showRequired>Nom</Label><Input id="lastName" value={formData.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={errors.lastName} required /></div>
+      <div className="space-y-1"><Label htmlFor="email" showRequired>Email</Label><Input id="email" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} error={errors.email} required /></div>
       <div className="space-y-1"><Label htmlFor="phone">Téléphone</Label><Input id="phone" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} error={errors.phone} /></div>
-      <PasswordInput name="password" label="Mot de passe" value={formData.password} onChange={(e) => updateField('password', e.target.value)} error={errors.password} required />
+      <PasswordInput name="password" label="Mot de passe" value={formData.password} onChange={(e) => updateField('password', e.target.value)} error={errors.password} showRequired />
       <div className="space-y-2">
         <Label>Plaques d'immatriculation</Label>
         {formData.vehiclePlates.map((plate, idx) => (

@@ -12,6 +12,7 @@ import { ParkingGrid } from '@/components/organisms/ParkingGrid';
 import { FilterSection } from '@/components/organisms/FilterSection';
 import { ReserveSpaceForm } from '@/components/organisms/ReserveSpaceForm';
 import { ParkingSpaceDetail } from '@/components/organisms/ParkingSpaceDetail';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Loading from './loading';
 import { MousePointerClick } from 'lucide-react';
 
@@ -19,6 +20,7 @@ function BookingPageContent() {
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<ParkingSpace | null>(null);
@@ -161,9 +163,14 @@ function BookingPageContent() {
 
   if (loading) return <Loading />;
 
+  const headingClass = isMobile ? 'text-2xl' : 'text-3xl';
+
   return (
-    <div className="space-y-8">
-      <div className="space-y-2"><h1 className="text-3xl font-bold">Réserver une place</h1><p className="text-muted-foreground">Sélectionnez une place disponible et confirmez votre réservation</p></div>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className={`${headingClass} font-bold`}>Réserver une place</h1>
+        <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Sélectionnez une place disponible et confirmez votre réservation</p>
+      </div>
       <FilterSection
         selectedCount={selectedCount}
         deselectedCount={deselectedCount}
@@ -177,8 +184,8 @@ function BookingPageContent() {
         onDateRangeChange={setDateRange}
         dateRange={dateRange}
       />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="lg:w-2/3">
           <ParkingGrid
             levels={filteredLevels}
             selectedSpaceId={selectedSpace?.id}
@@ -188,7 +195,7 @@ function BookingPageContent() {
             onCancelReservation={handleCancelMyReservation}
           />
         </div>
-        <div className="space-y-4" ref={formRef}>
+        <div className="lg:w-1/3 space-y-4" ref={formRef}>
           {selectedSpace ? (
             <>
               <ParkingSpaceDetail
@@ -208,7 +215,7 @@ function BookingPageContent() {
                 }}
                 dateRange={dateRange}
               />
-              <Card className="p-6 space-y-4">
+              <Card className={`${isMobile ? 'p-5' : 'p-6'} space-y-4`}>
                 <h3 className="font-semibold text-foreground">Détails de réservation</h3>
                 <ReserveSpaceForm
                   spaceId={selectedSpace.id}

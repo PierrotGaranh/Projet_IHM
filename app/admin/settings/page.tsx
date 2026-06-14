@@ -10,11 +10,13 @@ import { Tarifaction } from '@/components/molecules/Tarifaction';
 import { DangerZone } from '@/components/molecules/DangerZone';
 import { SystemInfo } from '@/components/molecules/SystemInfo';
 import { SettingsForm } from '@/components/organisms/SettingsForm';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { getStore } from '@/lib/store';
 
 export default function SettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [isEditMode, setIsEditMode] = useState(false);
   const [settings, setSettings] = useState({
     parkingName: 'ParkHub Central',
@@ -80,15 +82,13 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-2xl">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Paramètres</h1>
-        <p className="text-muted-foreground">
-          Configuration générale du système de parking
-        </p>
+    <div className="space-y-6 sm:space-y-8 max-w-2xl mx-auto">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Paramètres</h1>
+        <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Configuration générale du système de parking</p>
       </div>
 
-      <Card className="p-8 space-y-6">
+      <Card className={`${isMobile ? 'p-5' : 'p-8'} space-y-6`}>
         <SettingsForm
           initialSettings={settings}
           onSubmit={handleSave}
@@ -104,11 +104,7 @@ export default function SettingsPage() {
 
         {!isEditMode && (
           <div className="pt-6 border-t border-border">
-            <Button
-              variant="primary"
-              onClick={() => setIsEditMode(true)}
-              className="w-full"
-            >
+            <Button variant="primary" onClick={() => setIsEditMode(true)} className="w-full">
               Modifier
             </Button>
           </div>

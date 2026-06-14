@@ -5,7 +5,7 @@ import { AppIcon } from '@/components/atoms/AppIcon'
 import { Button } from '@/components/atoms/Button';
 import { LayoutDashboard, Car, Users, Calendar, BarChart3, Settings, LogOut, X } from 'lucide-react';
 
-interface AdminLayoutSidebarProps {
+interface AdminSidebarProps {
   isMobile: boolean;
   isOpen: boolean;
   onClose: () => void;
@@ -13,7 +13,7 @@ interface AdminLayoutSidebarProps {
   onLogoutClick: () => void;
 }
 
-export function AdminLayoutSidebar({ isMobile, isOpen, onClose, user, onLogoutClick }: AdminLayoutSidebarProps) {
+export function AdminSidebar({ isMobile, isOpen, onClose, user, onLogoutClick }: AdminSidebarProps) {
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/parking', label: 'Gestion parking', icon: Car },

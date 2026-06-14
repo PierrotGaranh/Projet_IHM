@@ -12,12 +12,14 @@ import { ReservationCard } from '@/components/molecules/ReservationCard';
 import { EditReservationForm } from '@/components/organisms/EditReservationForm';
 import { FiltersBar } from '@/components/organisms/FiltersBar';
 import { Pagination } from '@/components/molecules/Pagination';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from 'next/navigation';
 import Loading from './loading';
 
 function AdminReservationsPageContent() {
   const { toast } = useToast();
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
@@ -95,12 +97,12 @@ function AdminReservationsPageContent() {
   const editingUser = editingReservation ? allUsers.find(u => u.id === editingReservation.userId) : null;
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Gestion des réservations</h1>
-        <p className="text-muted-foreground">Visualisez et gérez toutes les réservations du système</p>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Gestion des réservations</h1>
+        <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Visualisez et gérez toutes les réservations du système</p>
       </div>
-      <Card className="p-6 space-y-4">
+      <Card className="p-4 sm:p-6 space-y-4">
         <FiltersBar
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}

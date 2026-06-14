@@ -13,11 +13,13 @@ import { ReservationCard } from '@/components/molecules/ReservationCard';
 import { EditReservationForm } from '@/components/organisms/EditReservationForm';
 import { ReservationFilterButtons } from '@/components/molecules/ReservationFilterButtons';
 import { Pagination } from '@/components/molecules/Pagination';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Loading from './loading';
 
 function ReservationsPageContent() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
@@ -75,10 +77,14 @@ function ReservationsPageContent() {
 
   const store = getStore();
   const userPlates = allUsers.find(u => u.id === user?.id)?.vehiclePlates || [];
+  const headingClass = isMobile ? 'text-2xl' : 'text-3xl';
   
   return (
-    <div className="space-y-8">
-      <div className="space-y-2"><h1 className="text-3xl font-bold text-foreground">Mes réservations</h1><p className="text-muted-foreground">Consultez l'historique de vos réservations</p></div>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className={`${headingClass} font-bold text-foreground`}>Mes réservations</h1>
+        <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Consultez l'historique de vos réservations</p>
+      </div>
       <ReservationFilterButtons filter={filter} onFilterChange={setFilter} />
       {filtered.length === 0 ? (
         <Card className="p-6 flex flex-col items-center gap-4 text-center">
@@ -92,8 +98,9 @@ function ReservationsPageContent() {
             {displayed.map(res => {
               const space = store.getSpace(res.spaceId);
               const isOngoing = res.status === 'active' && new Date(res.startDate) <= new Date() && new Date(res.endDate) >= new Date();
+              // Correction ici : toujours flex-row, pas de full width
               const actions = (res.status === 'active' && !isOngoing) ? (
-                <div className="flex gap-2">
+                <div className="flex flex-row gap-2">
                   <Button variant="secondary" onClick={() => handleEdit(res)}>Modifier</Button>
                   <Button variant="secondary" onClick={() => { setReservationToCancel(res); setShowCancelModal(true); }}>Annuler</Button>
                 </div>
@@ -108,21 +115,20 @@ function ReservationsPageContent() {
       <ConfirmationModal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} onConfirm={() => { 
         if (reservationToCancel) handleCancel(reservationToCancel.id); setShowCancelModal(false); 
       }} title="Annuler la réservation" message="Êtes-vous sûr de vouloir annuler cette réservation ?" isDangerous={true}>
-
-      {reservationToCancel && (() => { 
-        const s = store.getSpace(reservationToCancel.spaceId); 
-        return (
-          <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-            <div><span className="font-semibold">Place :</span> {s?.number || 'N/A'}</div>
-            <div><span className="font-semibold">Début :</span> {new Date(reservationToCancel.startDate).toLocaleString('fr-FR')}</div>
-            <div><span className="font-semibold">Fin :</span> {new Date(reservationToCancel.endDate).toLocaleString('fr-FR')}</div>
-          </div>
-        ); })()}
-
+        {reservationToCancel && (() => { 
+          const s = store.getSpace(reservationToCancel.spaceId); 
+          return (
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+              <div><span className="font-semibold">Place :</span> {s?.number || 'N/A'}</div>
+              <div><span className="font-semibold">Début :</span> {new Date(reservationToCancel.startDate).toLocaleString('fr-FR')}</div>
+              <div><span className="font-semibold">Fin :</span> {new Date(reservationToCancel.endDate).toLocaleString('fr-FR')}</div>
+            </div>
+          ); })()}
       </ConfirmationModal>
+
       {showEditModal && editingReservation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card rounded-lg p-6 max-w-md w-full space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-card rounded-lg p-5 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto space-y-4">
             <h2 className="text-xl font-bold text-foreground">Modifier la réservation</h2>
             <EditReservationForm
               reservation={editingReservation}

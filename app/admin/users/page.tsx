@@ -9,10 +9,12 @@ import { AddUserForm } from '@/components/organisms/AddUserForm';
 import { UserCard } from '@/components/molecules/UserCard';
 import { FiltersBar } from '@/components/organisms/FiltersBar';
 import { Pagination } from '@/components/molecules/Pagination';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Loading from './loading';
 
 function UsersManagementPageContent() {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [filter, setFilter] = useState<'all' | 'users' | 'admins'>('all');
@@ -46,12 +48,12 @@ function UsersManagementPageContent() {
   if (loading) return <Loading />;
   
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Gestion des utilisateurs</h1>
-        <p className="text-muted-foreground">Gérez les comptes et les permissions des utilisateurs</p>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Gestion des utilisateurs</h1>
+        <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Gérez les comptes et les permissions des utilisateurs</p>
       </div>
-      <Card className="p-6 space-y-4">
+      <Card className="p-4 sm:p-6 space-y-4">
         <FiltersBar
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
@@ -76,7 +78,7 @@ function UsersManagementPageContent() {
       )}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-card rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg max-w-md w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-foreground mb-4">Ajouter un utilisateur</h2>
             <AddUserForm
               onSubmit={async (data) => {

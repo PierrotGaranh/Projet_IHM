@@ -41,7 +41,7 @@ export function FiltersBar({
         <button
           type="button"
           onClick={onAddClick}
-          className="px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-700 cursor-pointer transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-700 cursor-pointer transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed w-full sm:w-auto"
         >
           {addButtonLabel}
         </button>

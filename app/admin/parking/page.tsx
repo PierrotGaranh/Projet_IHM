@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { getStore } from '@/lib/store';
 import { ParkingSpace, ParkingLevel, User, Reservation } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ParkingGrid } from '@/components/organisms/ParkingGrid';
@@ -17,6 +18,7 @@ import Loading from './loading';
 
 function ParkingManagementPageContent() {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [levels, setLevels] = useState<ParkingLevel[]>([]);
@@ -207,25 +209,19 @@ function ParkingManagementPageContent() {
   if (loading) return <Loading />;
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Gestion du parking</h1>
-        <p className="text-muted-foreground">Gérez les statuts et configurations des places</p>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold`}>Gestion du parking</h1>
+        <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Gérez les statuts et configurations des places</p>
       </div>
 
       {showInfoCard && (
         <div className="sticky top-16 z-10 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-center justify-between shadow-md">
           <div className="flex items-center gap-3">
             <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <p className="text-blue-800 dark:text-blue-200 text-sm">
-              Choisissez une place dans la grille pour ajouter une réservation.
-            </p>
+            <p className="text-blue-800 dark:text-blue-200 text-sm">Choisissez une place dans la grille pour ajouter une réservation.</p>
           </div>
-          <button
-            onClick={() => setShowInfoCard(false)}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition"
-            aria-label="Fermer"
-          >
+          <button onClick={() => setShowInfoCard(false)} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition">
             <X className="w-4 h-4" />
           </button>
         </div>

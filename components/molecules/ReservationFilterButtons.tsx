@@ -13,13 +13,13 @@ export function ReservationFilterButtons({ filter, onFilterChange }: Reservation
     { value: 'cancelled', label: 'Annulées' },
   ];
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-2 sm:gap-3">
       {options.map(opt => (
         <Button
           variant="secondary"
           key={opt.value}
           onClick={() => onFilterChange(opt.value)}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+          className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm font-medium transition-colors ${
             filter === opt.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/80'
           }`}
         >

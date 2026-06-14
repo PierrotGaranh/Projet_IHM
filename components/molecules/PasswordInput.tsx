@@ -7,16 +7,16 @@ import { Label } from '@/components/atoms/Label';
 interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  required?: boolean;
+  showRequired?: boolean;
 }
 
-export function PasswordInput({ label, error, required, className = '', id, ...props }: PasswordInputProps) {
+export function PasswordInput({ label, error, showRequired, className = '', id, ...props }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const inputId = id || props.name || 'password';
 
   return (
     <div className="space-y-1">
-      {label && <Label htmlFor={inputId} required={required}>{label}</Label>}
+      {label && <Label htmlFor={inputId} showRequired={showRequired}>{label}</Label>}
       <div className="relative">
         <input id={inputId} type={showPassword ? 'text' : 'password'} className={`input-base w-full pr-10 ${error ? 'border-destructive' : ''} ${className}`} {...props} />
         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground cursor-pointer" tabIndex={-1}>

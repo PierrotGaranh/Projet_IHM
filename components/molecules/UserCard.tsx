@@ -1,14 +1,16 @@
 import { User } from '@/lib/types';
 import { Card } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface UserCardProps {
   user: User;
 }
 
 export function UserCard({ user }: UserCardProps) {
+  const isMobile = useIsMobile();
   return (
-    <Card className="p-6 space-y-4">
+    <Card className={`${isMobile ? 'p-5' : 'p-6'} space-y-4`}>
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold flex-shrink-0">
@@ -19,9 +21,11 @@ export function UserCard({ user }: UserCardProps) {
             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
           </div>
         </div>
-        <Badge variant={user.role === 'admin' ? 'destructive' : 'success'}>
-          {user.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
-        </Badge>
+        <div className="flex-shrink-0 self-start">
+          <Badge variant={user.role === 'admin' ? 'destructive' : 'success'}>
+            {user.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
+          </Badge>
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm pt-4 border-t border-border">
         <div className="break-words">

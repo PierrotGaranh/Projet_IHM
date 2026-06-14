@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/atoms/Card';
 
 interface AnalyticsStatCardProps {
@@ -19,6 +20,7 @@ interface AnalyticsStatsGridProps {
 }
 
 function AnalyticsStatCard({ label, value, subValue, footnote, color = 'primary' }: AnalyticsStatCardProps) {
+  const isMobile = useIsMobile(600);
   const colorClasses = {
     primary: 'text-primary',
     secondary: 'text-secondary',
@@ -29,7 +31,7 @@ function AnalyticsStatCard({ label, value, subValue, footnote, color = 'primary'
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className={`text-3xl font-bold ${colorClasses[color]}`}>{value}</p>
       {subValue && <p className="text-xs text-secondary">{subValue}</p>}
-      {footnote && <p className="text-xs text-muted-foreground">{footnote}</p>}
+      {(!isMobile && footnote) && <p className="text-xs text-muted-foreground">{footnote}</p>}
     </Card>
   );
 }

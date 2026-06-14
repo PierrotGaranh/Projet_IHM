@@ -26,7 +26,7 @@ function DistributionStatItem({ color, label, value }: { color: string; label: s
 
 export function DistributionStats({ available, occupied, maintenance }: DistributionStatsProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-row md:grid-cols-3 gap-4">
       <DistributionStatItem color="secondary" label="Disponibles" value={available} />
       <DistributionStatItem color="destructive" label="Occupées" value={occupied} />
       <DistributionStatItem color="muted" label="Maintenance" value={maintenance} />

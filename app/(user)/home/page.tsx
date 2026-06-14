@@ -8,10 +8,12 @@ import { Car, Check, Calendar, CheckLine, Lightbulb } from 'lucide-react';
 import { HomeStatsGrid } from '@/components/organisms/HomeStatsGrid';
 import { QuickActionCard } from '@/components/molecules/QuickActionCard';
 import { InfoCard } from '@/components/molecules/InfoCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Loading from './loading';
 
 function HomeContent() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     activeReservations: 0,
@@ -35,11 +37,14 @@ function HomeContent() {
 
   if (loading) return <Loading />;
 
+  const headingClass = isMobile ? 'text-2xl' : 'text-3xl';
+  const subheadingClass = isMobile ? 'text-sm' : 'text-base';
+
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Bienvenue, {user?.firstName}!</h1>
-        <p className="text-muted-foreground">Gérez vos réservations de parking en toute simplicité</p>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className={`${headingClass} font-bold text-foreground`}>Bienvenue, {user?.firstName}!</h1>
+        <p className={`${subheadingClass} text-muted-foreground`}>Gérez vos réservations de parking en toute simplicité</p>
       </div>
       <HomeStatsGrid
         stats={{
@@ -54,7 +59,7 @@ function HomeContent() {
           calendar: <Calendar className="w-5 h-5" />,
         }}
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <QuickActionCard href="/booking" icon={<span className="text-2xl">P</span>} title="Réserver une place" description="Trouvez et réservez votre place de parking" invite="Réserver maintenant"/>
         <QuickActionCard href="/reservations" icon={<CheckLine className="w-5 h-5 text-secondary" />} iconColor='bg-secondary/10 group-hover:bg-secondary/20' title="Mes réservations" description="Consultez l'historique de vos réservations" invite="Voir l'historique"/>
       </div>

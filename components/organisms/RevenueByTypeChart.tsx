@@ -1,8 +1,11 @@
+import { useIsMobile } from '@/hooks/use-mobile';
+
 interface RevenueByTypeChartProps {
   data: Record<string, number>;
 }
 
 export function RevenueByTypeChart({ data }: RevenueByTypeChartProps) {
+  const isMobile = useIsMobile(600);
   const max = Math.max(...Object.values(data));
   return (
     <div className="space-y-3">
@@ -17,7 +20,7 @@ export function RevenueByTypeChart({ data }: RevenueByTypeChartProps) {
           </div>
         </div>
       ))}
-      <p className="text-xs text-muted-foreground">Montant généré par les réservations (hors annulations)</p>
+      {!isMobile && (<p className="text-xs text-muted-foreground">Montant généré par les réservations (hors annulations)</p>)}
     </div>
   );
 }

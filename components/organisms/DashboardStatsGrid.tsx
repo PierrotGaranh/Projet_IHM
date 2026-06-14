@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/atoms/Card';
 import { BarChart3, CheckCircle2 } from 'lucide-react';
 
@@ -19,6 +20,7 @@ interface DashboardStatsGridProps {
 }
 
 function DashboardStatCard({ title, value, unit = '', icon, description, color = 'primary' }: DashboardStatCardProps) {
+  const isMobile = useIsMobile(600);
   const bgColors: Record<string, string> = {
     primary: 'bg-primary/10 text-primary',
     secondary: 'bg-secondary/10 text-secondary',
@@ -26,13 +28,13 @@ function DashboardStatCard({ title, value, unit = '', icon, description, color =
     destructive: 'bg-destructive/10 text-destructive',
   };
   return (
-    <Card className="p-6 space-y-4 hover:shadow-md transition-shadow">
+    <Card className={`${isMobile ? 'p-5' : 'p-6 space-y-4'} hover:shadow-md transition-shadow`}>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
         <div className={`w-10 h-10 rounded-lg ${bgColors[color]} flex items-center justify-center`}>{icon}</div>
       </div>
       <p className="text-3xl font-bold text-foreground">{value}{unit && <span className="text-lg ml-1">{unit}</span>}</p>
-      {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      {(!isMobile && description) && <p className="text-xs text-muted-foreground">{description}</p>}
     </Card>
   );
 }
