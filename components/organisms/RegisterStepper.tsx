@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Label } from '@/components/atoms/Label';
@@ -15,6 +16,7 @@ interface RegisterStepperProps {
 }
 
 export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps) {
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState(initialData || { firstName: '', lastName: '', email: '', phone: '', password: '', vehiclePlates: [''] });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -92,6 +94,12 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Oops',
+        description: 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.'
+      })
     } finally {
       setIsSubmitting(false);
     }

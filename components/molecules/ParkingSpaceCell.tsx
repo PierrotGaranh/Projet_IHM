@@ -9,6 +9,7 @@ interface ParkingSpaceCellProps {
   onSelect: () => void;
   disabled?: boolean;
   isMobile?: boolean;
+  showBlueRing?: boolean;
 }
 
 const featureIcons: Record<string, React.ElementType> = {
@@ -24,7 +25,7 @@ const typeIcon = {
   premium: Crown,
 };
 
-export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect, disabled, isMobile = false }: ParkingSpaceCellProps) {
+export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect, disabled, isMobile = false, showBlueRing = false }: ParkingSpaceCellProps) {
   const TypeIcon = typeIcon[space.type];
   
   const getStatusClasses = () => {
@@ -42,12 +43,17 @@ export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect,
 
   const borderClass = space.type === 'compact' ? 'border-blue-400' : space.type === 'standard' ? 'border-gray-400' : 'border-yellow-500';
   
+  let ringClasses = '';
+  if (isSelected) ringClasses = 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background';
+  if (isMyReservation) ringClasses = 'ring-2 ring-yellow-400 dark:ring-yellow-500';
+  if (showBlueRing) ringClasses = 'ring-2 ring-blue-500 dark:ring-blue-400';
+
   if (isMobile) {
     return (
       <Button
         onClick={onSelect}
         disabled={disabled}
-        className={`relative w-full aspect-square rounded-lg transition-all font-bold text-base ${getStatusClasses()} ${isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background' : ''} ${isMyReservation ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''} disabled:opacity-70 border-b-2 ${borderClass} ${disabled ? 'cursor-not-allowed hover:no-underline' : ''}`}
+        className={`relative w-full aspect-square rounded-lg transition-all font-bold text-base ${getStatusClasses()} ${ringClasses} ${disabled ? 'cursor-not-allowed hover:no-underline' : ''}`}
         title={`Place ${space.number} - ${space.type}`}
       >
         <span className="block w-full text-center">{space.number}</span>
@@ -70,7 +76,7 @@ export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect,
         variant="ghost"
         onClick={onSelect}
         disabled={disabled}
-        className={`relative w-full aspect-square rounded-lg transition-all group ${getStatusClasses()} ${isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background' : ''} ${isMyReservation ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''} disabled:opacity-70 ${disabled ? 'cursor-not-allowed hover:bg-none' : ''}`}
+        className={`relative w-full aspect-square rounded-lg transition-all group ${getStatusClasses()} ${ringClasses} ${disabled ? 'cursor-not-allowed hover:bg-none' : ''}`}
         title={`Place ${space.number} - ${space.type}`}
       >
         <span className="absolute inset-0 flex items-center justify-center text-xl sm:text-2xl font-bold">{space.number}</span>

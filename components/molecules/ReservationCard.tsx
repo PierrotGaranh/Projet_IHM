@@ -22,7 +22,7 @@ export function ReservationCard({ reservation, space, actions }: ReservationCard
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="text-base sm:text-lg font-semibold text-foreground">Place {space?.number || 'N/A'} - Niveau {space?.level || 'N/A'}</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-foreground">Place {space?.number || 'N/A'} - Section {space?.section || 'N/A'}</h3>
             <Badge variant={statusVariant}>{statusLabel}</Badge>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground">ID: {reservation.id}</p>

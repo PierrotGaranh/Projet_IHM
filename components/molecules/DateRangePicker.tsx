@@ -276,7 +276,7 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
             })}
           </div>
 
-          {applyError && <p className="text-xs text-destructive mt-2">{applyError}</p>}
+          {applyError && <p className="text-xs text-destructive mt-1">{applyError}</p>}
 
           <div className="mt-4 pt-2 border-t border-border flex justify-between gap-2">
             {isComplete && (

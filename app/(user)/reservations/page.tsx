@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
 import { Reservation } from '@/lib/types';
@@ -19,6 +20,7 @@ import Loading from './loading';
 function ReservationsPageContent() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -91,14 +93,14 @@ function ReservationsPageContent() {
           <Mailbox className="w-12 h-12" />
           <p className="text-lg font-semibold text-foreground">Aucune réservation</p>
           <p className="text-muted-foreground">{filter === 'all' ? 'Commencez par en créer une !' : ''}</p>
+          <Button variant="primary" onClick={() => router.push('/booking')}>Réserver maintenant</Button>
         </Card>
-      ) : (
+        ) : (
         <>
           <div ref={listRef} className="grid gap-4">
             {displayed.map(res => {
               const space = store.getSpace(res.spaceId);
               const isOngoing = res.status === 'active' && new Date(res.startDate) <= new Date() && new Date(res.endDate) >= new Date();
-              // Correction ici : toujours flex-row, pas de full width
               const actions = (res.status === 'active' && !isOngoing) ? (
                 <div className="flex flex-row gap-2">
                   <Button variant="secondary" onClick={() => handleEdit(res)}>Modifier</Button>

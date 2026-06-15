@@ -5,6 +5,7 @@ import { getStore } from '@/lib/store';
 import { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/atoms/Card';
+import { Button } from '@/components/atoms/Button';
 import { AddUserForm } from '@/components/organisms/AddUserForm';
 import { UserCard } from '@/components/molecules/UserCard';
 import { FiltersBar } from '@/components/organisms/FiltersBar';
@@ -67,7 +68,10 @@ function UsersManagementPageContent() {
         />
       </Card>
       {filtered.length === 0 ? (
-        <Card className="p-12 text-center">Aucun utilisateur trouvé</Card>
+        <Card className="p-12 text-center space-y-4">
+          <p>Aucun utilisateur trouvé</p>
+          <Button variant="primary" onClick={() => setShowAddModal(true)}>Ajouter un utilisateur</Button>
+        </Card>
       ) : (
         <>
           <div ref={listRef} className="space-y-4">

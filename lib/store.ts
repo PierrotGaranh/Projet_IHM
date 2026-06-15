@@ -1,4 +1,4 @@
-import { User, ParkingSpace, Reservation, ActivityLog, DashboardStats, ParkingStats, Location } from '@/lib/types';
+import { User, ParkingSpace, Reservation, ActivityLog, DashboardStats, ParkingStats, Location, ParkingSection } from '@/lib/types';
 
 const STORAGE_KEY = 'parkhub_store_data';
 const SESSION_KEY = 'parkhub_current_user';
@@ -69,9 +69,9 @@ function generateParkingSpaces(locations: Location[]): ParkingSpace[] {
   let globalNumber = 1;
 
   for (const loc of locations) {
-    for (let level = 1; level <= 4; level++) {
-      const spacesPerLevel = 18;
-      for (let i = 1; i <= spacesPerLevel; i++) {
+    for (let section = 1; section <= 4; section++) {
+      const spacesPerSection = 18;
+      for (let i = 1; i <= spacesPerSection; i++) {
         let spaceType: 'compact' | 'standard' | 'premium';
         if (i <= 3) spaceType = 'premium';
         else if (i <= 11) spaceType = 'standard';
@@ -86,10 +86,10 @@ function generateParkingSpaces(locations: Location[]): ParkingSpace[] {
         }
 
         spaces.push({
-          id: `space-${loc.id}-${level}-${i}`,
+          id: `space-${loc.id}-${section}-${i}`,
           locationId: loc.id,
-          level,
-          number: `${loc.id.substring(3)}${level}${String(i).padStart(2, '0')}`,
+          section,
+          number: `${loc.id.substring(3)}${section}${String(i).padStart(2, '0')}`,
           status: 'available',
           type: spaceType,
           features,

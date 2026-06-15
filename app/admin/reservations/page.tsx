@@ -116,7 +116,11 @@ function AdminReservationsPageContent() {
         />
       </Card>
       {filtered.length === 0 ? (
-        <Card className="p-6 flex flex-col items-center gap-4 text-center"><Mailbox className="w-12 h-12" /><p className="text-lg font-semibold text-foreground">Aucune réservation</p></Card>
+        <Card className="p-6 flex flex-col items-center gap-4 text-center">
+          <Mailbox className="w-12 h-12" />
+          <p className="text-lg font-semibold text-foreground">Aucune réservation</p>
+          <Button variant="primary" onClick={() => router.push('/admin/parking?msg=new_reservation')}>Ajouter une réservation</Button>
+        </Card>
       ) : (
         <>
           <div ref={listRef} className="grid gap-4">

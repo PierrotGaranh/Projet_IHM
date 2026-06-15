@@ -43,7 +43,16 @@ export function LoginForm() {
         <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </div>
       {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">{error}</div>}
-      <Button variant="primary" type="submit" isLoading={isLoading} loadingText="Connexion" className="w-full">Se connecter</Button>
+      <Button
+        variant="primary"
+        type="submit"
+        isLoading={isLoading}
+        loadingText="Connexion"
+        className="w-full"
+        disabled={!email.trim() || !password.trim()}
+      >
+        Se connecter
+      </Button>
     </form>
   );
 }

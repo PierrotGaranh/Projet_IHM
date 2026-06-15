@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context';
 import { getStore } from '@/lib/store';
-import { ParkingSpace, ParkingLevel, Reservation } from '@/lib/types';
+import { ParkingSpace, ParkingSection, Reservation } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
@@ -22,7 +22,7 @@ function BookingPageContent() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
-  const [levels, setLevels] = useState<ParkingLevel[]>([]);
+  const [sections, setSections] = useState<ParkingSection[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<ParkingSpace | null>(null);
   const [error, setError] = useState('');
   const [editingReservationId, setEditingReservationId] = useState<string | null>(null);
@@ -62,9 +62,9 @@ function BookingPageContent() {
     store.refreshSpaceStatuses();
     const spaces = store.getSpaces(selectedLocation);
     const grouped: Record<number, ParkingSpace[]> = {};
-    spaces.forEach(s => { if (!grouped[s.level]) grouped[s.level] = []; grouped[s.level].push(s); });
-    const levelsArr = Object.keys(grouped).map(l => ({ level: parseInt(l), spaces: grouped[parseInt(l)], occupancyRate: (grouped[parseInt(l)].filter(s => s.status !== 'available').length / grouped[parseInt(l)].length) * 100 })).sort((a, b) => a.level - b.level);
-    setLevels(levelsArr);
+    spaces.forEach(s => { if (!grouped[s.section]) grouped[s.section] = []; grouped[s.section].push(s); });
+    const sectionsArr = Object.keys(grouped).map(section => ({ section: parseInt(section), spaces: grouped[parseInt(section)], occupancyRate: (grouped[parseInt(section)].filter(s => s.status !== 'available').length / grouped[parseInt(section)].length) * 100 })).sort((a, b) => a.section - b.section);
+    setSections(sectionsArr);
     const map: Record<string, ParkingSpace> = {};
     spaces.forEach(s => { map[s.id] = s; });
     setSpacesMap(map);
@@ -88,6 +88,26 @@ function BookingPageContent() {
     });
     setFilteredReservations(filtered);
   }, [dateRange, selectedLocation]);
+
+  const applyFilters = (space: ParkingSpace) => {
+    let ok = true;
+    for (const [val, state] of Object.entries(filterStatus)) { if (state === 'selected' && space.status !== val) ok = false; if (state === 'deselected' && space.status === val) ok = false; if (!ok) break; }
+    if (!ok) return false;
+    for (const [val, state] of Object.entries(filterType)) { if (state === 'selected' && space.type !== val) ok = false; if (state === 'deselected' && space.type === val) ok = false; if (!ok) break; }
+    if (!ok) return false;
+    for (const [val, state] of Object.entries(filterFeature)) { if (state === 'selected' && !space.features.includes(val)) ok = false; if (state === 'deselected' && space.features.includes(val)) ok = false; if (!ok) break; }
+    return ok;
+  };
+
+  const filteredSections = sections.map(s => ({ ...s, spaces: s.spaces.filter(applyFilters) })).filter(s => s.spaces.length > 0);
+  const selectedCount = Object.values(filterStatus).filter(s => s === 'selected').length + Object.values(filterType).filter(s => s === 'selected').length + Object.values(filterFeature).filter(s => s === 'selected').length;
+  const deselectedCount = Object.values(filterStatus).filter(s => s === 'deselected').length + Object.values(filterType).filter(s => s === 'deselected').length + Object.values(filterFeature).filter(s => s === 'deselected').length;
+  const store = getStore();
+  const userReservations = store.getUserReservations(user?.id || '').filter(r => r.status === 'active');
+  const userReservedSpaceIds = new Set(userReservations.map(r => r.spaceId));
+  const userPlates = user?.vehiclePlates || [];
+
+  const clearSelectedSpace = () => setSelectedSpace(null);
 
   const handleSelectSpace = (space: ParkingSpace) => {
     setSelectedSpace(space);
@@ -115,41 +135,25 @@ function BookingPageContent() {
     if (cancelReservationId) { const store = getStore(); store.cancelReservation(cancelReservationId); toast({ variant: 'success', title: 'Réservation annulée', description: 'Votre réservation a été annulée avec succès.' }); setShowCancelModal(false); fetchData(); }
   };
 
-  const applyFilters = (space: ParkingSpace) => {
-    let ok = true;
-    for (const [val, state] of Object.entries(filterStatus)) { if (state === 'selected' && space.status !== val) ok = false; if (state === 'deselected' && space.status === val) ok = false; if (!ok) break; }
-    if (!ok) return false;
-    for (const [val, state] of Object.entries(filterType)) { if (state === 'selected' && space.type !== val) ok = false; if (state === 'deselected' && space.type === val) ok = false; if (!ok) break; }
-    if (!ok) return false;
-    for (const [val, state] of Object.entries(filterFeature)) { if (state === 'selected' && !space.features.includes(val)) ok = false; if (state === 'deselected' && space.features.includes(val)) ok = false; if (!ok) break; }
-    return ok;
-  };
-
-  const filteredLevels = levels.map(l => ({ ...l, spaces: l.spaces.filter(applyFilters) })).filter(l => l.spaces.length > 0);
-  const selectedCount = Object.values(filterStatus).filter(s => s === 'selected').length + Object.values(filterType).filter(s => s === 'selected').length + Object.values(filterFeature).filter(s => s === 'selected').length;
-  const deselectedCount = Object.values(filterStatus).filter(s => s === 'deselected').length + Object.values(filterType).filter(s => s === 'deselected').length + Object.values(filterFeature).filter(s => s === 'deselected').length;
-  const store = getStore();
-  const userReservations = store.getUserReservations(user?.id || '').filter(r => r.status === 'active');
-  const userReservedSpaceIds = new Set(userReservations.map(r => r.spaceId));
-  const userPlates = user?.vehiclePlates || [];
-
-  const clearSelectedSpace = () => setSelectedSpace(null);
-
   const handleReserveSubmit = async (data: { startDate: Date; endDate: Date; vehiclePlate: string }) => {
-    if (editingReservationId) {
-      store.cancelReservation(editingReservationId);
-      const result = store.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
-      if (result.success) {
-        toast({ variant: 'success', title: 'Réservation modifiée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
-        setEditingReservationId(null);
-        router.push('/reservations');
-      } else setError(result.error || 'Erreur lors de la modification');
-    } else {
-      const result = store.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
-      if (result.success) {
-        toast({ variant: 'success', title: 'Réservation confirmée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
-        router.push('/reservations');
-      } else setError(result.error || 'Réservation échouée');
+    try {
+      if (editingReservationId) {
+        store.cancelReservation(editingReservationId);
+        const result = store.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
+        if (result.success) {
+          toast({ variant: 'success', title: 'Réservation modifiée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
+          setEditingReservationId(null);
+          router.push('/reservations');
+        } else setError(result.error || 'Erreur lors de la modification');
+      } else {
+        const result = store.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
+        if (result.success) {
+          toast({ variant: 'success', title: 'Réservation confirmée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
+          router.push('/reservations');
+        } else setError(result.error || 'Réservation échouée');
+      }
+    } catch (err) {
+      toast({ variant: 'error', title: 'Erreur', description: err instanceof Error ? err.message : 'Une erreur est survenue' });
     }
   };
 
@@ -160,6 +164,19 @@ function BookingPageContent() {
   })() : undefined;
 
   const location = getStore().getLocations().find(l => l.id === selectedLocation)!;
+
+  const showOccupancyBasedOnRange = dateRange.startDate !== null && dateRange.endDate !== null;
+  let sectionsWithOccupancy = filteredSections;
+  let spaceIdsWithReservationsInRange = new Set<string>();
+  if (showOccupancyBasedOnRange) {
+    spaceIdsWithReservationsInRange = new Set(filteredReservations.map(r => r.spaceId));
+    sectionsWithOccupancy = filteredSections.map(section => {
+      const totalSpaces = section.spaces.length;
+      const reservedSpacesCount = section.spaces.filter(space => spaceIdsWithReservationsInRange.has(space.id)).length;
+      const occupancyRate = totalSpaces === 0 ? 0 : (reservedSpacesCount / totalSpaces) * 100;
+      return { ...section, occupancyRate };
+    });
+  }
 
   if (loading) return <Loading />;
 
@@ -187,12 +204,14 @@ function BookingPageContent() {
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-2/3">
           <ParkingGrid
-            levels={filteredLevels}
+            sections={sectionsWithOccupancy}
             selectedSpaceId={selectedSpace?.id}
             onSelectSpace={handleSelectSpace}
             userReservedSpaceIds={userReservedSpaceIds}
             onEditReservation={handleEditReservation}
             onCancelReservation={handleCancelMyReservation}
+            showBlueRing={showOccupancyBasedOnRange}
+            spaceIdsWithReservationsInRange={spaceIdsWithReservationsInRange}
           />
         </div>
         <div className="lg:w-1/3 space-y-4" ref={formRef}>

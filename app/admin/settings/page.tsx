@@ -82,7 +82,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-2xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-2xl">
       <div className="space-y-1 sm:space-y-2">
         <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Paramètres</h1>
         <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Configuration générale du système de parking</p>

@@ -31,7 +31,7 @@ export interface Location {
 export interface ParkingSpace {
   id: string;
   locationId: string;
-  level: number;
+  section: number;
   number: string;
   status: SpaceStatus;
   type: SpaceType;
@@ -39,8 +39,8 @@ export interface ParkingSpace {
   pricePerHour: number;
 }
 
-export interface ParkingLevel {
-  level: number;
+export interface ParkingSection {
+  section: number;
   spaces: ParkingSpace[];
   occupancyRate: number;
 }

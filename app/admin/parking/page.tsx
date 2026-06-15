@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getStore } from '@/lib/store';
-import { ParkingSpace, ParkingLevel, User, Reservation } from '@/lib/types';
+import { ParkingSpace, ParkingSection, User, Reservation } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/atoms/Card';
@@ -21,7 +21,7 @@ function ParkingManagementPageContent() {
   const isMobile = useIsMobile();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const [levels, setLevels] = useState<ParkingLevel[]>([]);
+  const [sections, setSections] = useState<ParkingSection[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<ParkingSpace | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -43,7 +43,6 @@ function ParkingManagementPageContent() {
   const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
   const [spacesMap, setSpacesMap] = useState<Record<string, ParkingSpace>>({});
   const detailsRef = useRef<HTMLDivElement>(null);
-
   const [showInfoCard, setShowInfoCard] = useState(false);
 
   useEffect(() => {
@@ -86,9 +85,9 @@ function ParkingManagementPageContent() {
     store.refreshSpaceStatuses();
     const spaces = store.getSpaces(selectedLocation);
     const grouped: Record<number, ParkingSpace[]> = {};
-    spaces.forEach(s => { if (!grouped[s.level]) grouped[s.level] = []; grouped[s.level].push(s); });
-    const levelsArr = Object.keys(grouped).map(l => ({ level: parseInt(l), spaces: grouped[parseInt(l)], occupancyRate: (grouped[parseInt(l)].filter(s => s.status !== 'available').length / grouped[parseInt(l)].length) * 100 })).sort((a, b) => a.level - b.level);
-    setLevels(levelsArr);
+    spaces.forEach(s => { if (!grouped[s.section]) grouped[s.section] = []; grouped[s.section].push(s); });
+    const sectionsArr = Object.keys(grouped).map(section => ({ section: parseInt(section), spaces: grouped[parseInt(section)], occupancyRate: (grouped[parseInt(section)].filter(s => s.status !== 'available').length / grouped[parseInt(section)].length) * 100 })).sort((a, b) => a.section - b.section);
+    setSections(sectionsArr);
     const map: Record<string, ParkingSpace> = {};
     spaces.forEach(s => { map[s.id] = s; });
     setSpacesMap(map);
@@ -127,7 +126,7 @@ function ParkingManagementPageContent() {
     return ok;
   };
 
-  const filteredLevels = levels.map(l => ({ ...l, spaces: l.spaces.filter(applyFilters) })).filter(l => l.spaces.length > 0);
+  const filteredSections = sections.map(s => ({ ...s, spaces: s.spaces.filter(applyFilters) })).filter(s => s.spaces.length > 0);
   const selectedCount = Object.values(filterStatus).filter(s => s === 'selected').length + Object.values(filterType).filter(s => s === 'selected').length + Object.values(filterFeature).filter(s => s === 'selected').length;
   const deselectedCount = Object.values(filterStatus).filter(s => s === 'deselected').length + Object.values(filterType).filter(s => s === 'deselected').length + Object.values(filterFeature).filter(s => s === 'deselected').length;
 
@@ -206,6 +205,19 @@ function ParkingManagementPageContent() {
   const clearSelectedSpace = () => setSelectedSpace(null);
   const location = getStore().getLocations().find(l => l.id === selectedLocation)!;
 
+  const showOccupancyBasedOnRange = dateRange.startDate !== null && dateRange.endDate !== null;
+  let sectionsWithOccupancy = filteredSections;
+  let spaceIdsWithReservationsInRange = new Set<string>();
+  if (showOccupancyBasedOnRange) {
+    spaceIdsWithReservationsInRange = new Set(filteredReservations.map(r => r.spaceId));
+    sectionsWithOccupancy = filteredSections.map(section => {
+      const totalSpaces = section.spaces.length;
+      const reservedSpacesCount = section.spaces.filter(space => spaceIdsWithReservationsInRange.has(space.id)).length;
+      const occupancyRate = totalSpaces === 0 ? 0 : (reservedSpacesCount / totalSpaces) * 100;
+      return { ...section, occupancyRate };
+    });
+  }
+
   if (loading) return <Loading />;
 
   return (
@@ -243,11 +255,13 @@ function ParkingManagementPageContent() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <ParkingGrid
-            levels={filteredLevels}
+            sections={sectionsWithOccupancy}
             selectedSpaceId={selectedSpace?.id}
             onSelectSpace={setSelectedSpace}
             isAdmin
             adminSelectableStatuses={['available', 'maintenance']}
+            showBlueRing={showOccupancyBasedOnRange}
+            spaceIdsWithReservationsInRange={spaceIdsWithReservationsInRange}
           />
         </div>
         <div ref={detailsRef} className="space-y-4">

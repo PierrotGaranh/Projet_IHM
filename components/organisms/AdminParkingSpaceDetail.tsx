@@ -38,7 +38,7 @@ export function AdminParkingSpaceDetail({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <div><p className="text-muted-foreground text-sm">Niveau</p><p className="font-semibold">{space.level}</p></div>
+          <div><p className="text-muted-foreground text-sm">Section</p><p className="font-semibold">{space.section}</p></div>
           <div><p className="text-muted-foreground text-sm">Type</p><p className="font-semibold capitalize">{typeLabels[space.type]}</p></div>
           <div><p className="text-muted-foreground text-sm">Prix/heure</p><p className="font-semibold">{space.pricePerHour}€</p></div>
           {space.features.length > 0 && (

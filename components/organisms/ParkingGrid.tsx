@@ -1,6 +1,6 @@
 'use client';
 
-import { ParkingSpace, ParkingLevel } from '@/lib/types';
+import { ParkingSpace, ParkingSection } from '@/lib/types';
 import { ParkingSpaceCell } from '@/components/molecules/ParkingSpaceCell';
 import { Button } from '@/components/atoms/Button';
 import { Card } from '@/components/atoms/Card';
@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { Info, X, Edit, Trash2, Minimize2, CarFront, Crown, Accessibility, Plug, Camera, ShieldCheck } from 'lucide-react';
 
 interface ParkingGridProps {
-  levels: ParkingLevel[];
+  sections: ParkingSection[];
   selectedSpaceId?: string;
   onSelectSpace: (space: ParkingSpace) => void;
   userReservedSpaceIds?: Set<string>;
@@ -17,10 +17,12 @@ interface ParkingGridProps {
   onCancelReservation?: (space: ParkingSpace) => void;
   isAdmin?: boolean;
   adminSelectableStatuses?: string[];
+  showBlueRing?: boolean;
+  spaceIdsWithReservationsInRange?: Set<string>;
 }
 
 export function ParkingGrid({
-  levels,
+  sections,
   selectedSpaceId,
   onSelectSpace,
   userReservedSpaceIds = new Set(),
@@ -28,6 +30,8 @@ export function ParkingGrid({
   onCancelReservation,
   isAdmin = false,
   adminSelectableStatuses = ['available', 'maintenance'],
+  showBlueRing = false,
+  spaceIdsWithReservationsInRange = new Set(),
 }: ParkingGridProps) {
   const isMobile = useIsMobile(600);
   const [showLegend, setShowLegend] = useState(false);
@@ -50,18 +54,33 @@ export function ParkingGrid({
 
   const gridColsClass = isMobile ? 'grid-cols-4' : 'grid-cols-5 sm:grid-cols-6';
 
+  if (sections.length === 0) {
+    return (
+      <Card className="p-8 text-center text-muted-foreground">
+        <p>Aucune place ne correspond aux filtres sélectionnés.</p>
+        <p className="text-sm mt-2">Essayez de modifier les critères de recherche.</p>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {levels.map((level) => (
-        <Card key={level.level} className="p-3 sm:p-6 space-y-3">
+      {sections.map((section) => (
+        <Card key={section.section} className="p-3 sm:p-6 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h2 className="text-base sm:text-lg font-semibold text-foreground">Niveau {level.level}</h2>
-            <div className="text-xs sm:text-sm text-muted-foreground">{Math.round(level.occupancyRate)}% occupé</div>
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Section {section.section}</h2>
+            {showBlueRing && (
+              <div className="text-xs sm:text-sm text-muted-foreground">{Math.round(section.occupancyRate)}% occupé (période sélectionnée)</div>
+            )}
+            {!showBlueRing && (
+              <div className="text-xs sm:text-sm text-muted-foreground">{Math.round(section.occupancyRate)}% occupé</div>
+            )}
           </div>
           <div className={`grid ${gridColsClass} gap-2`}>
-            {level.spaces.map((space) => {
+            {section.spaces.map((space) => {
               const isMyReservation = userReservedSpaceIds.has(space.id);
               const isSelected = selectedSpaceId === space.id;
+              const hasReservationInRange = spaceIdsWithReservationsInRange.has(space.id);
               const disabled = !canSelect(space) && !isMyReservation;
               const handleClick = () => {
                 if (isMobile) {
@@ -80,6 +99,7 @@ export function ParkingGrid({
                   onSelect={handleClick}
                   disabled={disabled}
                   isMobile={isMobile}
+                  showBlueRing={showBlueRing && hasReservationInRange}
                 />
               );
 
@@ -121,6 +141,7 @@ export function ParkingGrid({
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-500 opacity-70"></div><span>Occ</span></div>
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-gray-400"></div><span>Maint</span></div>
                   {!isAdmin && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-yellow-400"></div><span>Ma résa</span></div>}
+                  {showBlueRing && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-blue-500"></div><span>Réservée période</span></div>}
                   <div className="flex items-center gap-1"><Minimize2 className="w-3 h-3 text-blue-600" /><span>Compact</span></div>
                   <div className="flex items-center gap-1"><CarFront className="w-3 h-3 text-gray-600" /><span>Standard</span></div>
                   <div className="flex items-center gap-1"><Crown className="w-3 h-3 text-yellow-600" /><span>Premium</span></div>
@@ -133,6 +154,7 @@ export function ParkingGrid({
               <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-500 opacity-70"></div><span>Occupée</span></div>
               <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-gray-400"></div><span>Maintenance</span></div>
               {!isAdmin && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-yellow-400"></div><span>Ma réservation</span></div>}
+              {showBlueRing && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-blue-500"></div><span>Réservée période</span></div>}
               <div className="flex items-center gap-1"><Minimize2 className="w-3 h-3 text-blue-600" /><span>Compact</span></div>
               <div className="flex items-center gap-1"><CarFront className="w-3 h-3 text-gray-600" /><span>Standard</span></div>
               <div className="flex items-center gap-1"><Crown className="w-3 h-3 text-yellow-600" /><span>Premium</span></div>

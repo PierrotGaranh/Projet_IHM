@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Label } from '@/components/atoms/Label';
+import { useToast } from '@/hooks/use-toast'; 
 import { validateField } from '@/lib/validation';
 import { useAuth } from '@/lib/context';
 
@@ -26,6 +27,7 @@ export function ProfileForm({
   readonly = false,
 }: ProfileFormProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [formData, setFormData] = useState(initialData);
   const [vehiclePlates, setVehiclePlates] = useState(
     initialData.vehiclePlates.length ? initialData.vehiclePlates : ['']
@@ -82,14 +84,22 @@ export function ProfileForm({
     if (Object.values(fieldErrors).some((e) => e)) return;
 
     setIsSubmitting(true);
-    const success = await onSubmit({
-      ...formData,
-      vehiclePlates: vehiclePlates.filter((p) => p.trim() !== ''),
-    });
-    setIsSubmitting(false);
-
-    if (success) {
-      onCancel();
+    try {
+      const success = await onSubmit({
+        ...formData,
+        vehiclePlates: vehiclePlates.filter((p) => p.trim() !== ''),
+      });
+      if (success) {
+        onCancel();
+      }
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Oops',
+        description: 'Une erreur est survenue au mise à jour du profile. Veuillez réessayez.'
+      })
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

@@ -7,21 +7,21 @@ export function validateField(field: string, value: string): string {
     case 'firstName':
     case 'lastName':
       if (!value) return 'Ce champ est requis';
-      if (!nameRegex.test(value)) return 'Lettres, espaces ou tirets (max 50)';
+      if (!nameRegex.test(value)) return 'Utilisé des lettres, espaces ou tirets (max 50)';
       return '';
     case 'email':
       if (!value) return 'Email requis';
-      if (!value.includes('@') || value.length > 100) return 'Email invalide';
+      if ((!value.includes('@') && !value.includes('.')) || value.length > 100) return 'Email invalide';
       return '';
     case 'password':
       if (!value) return 'Mot de passe requis';
-      if (value.length < 6 || value.length > 100) return '6 à 100 caractères';
+      if (value.length < 6 || value.length > 100) return 'Doit avoir 6 à 100 caractères';
       return '';
     case 'phone':
-      if (value && !phoneRegex.test(value)) return 'Téléphone invalide (10-20 chiffres, +, -, espace)';
+      if (value && !phoneRegex.test(value)) return 'Téléphone invalide';
       return '';
     case 'plate':
-      if (value && !plateRegex.test(value)) return 'Plaque invalide (lettres, chiffres, -, espace)';
+      if (value && !plateRegex.test(value)) return 'Plaque invalide (Utilisé des lettres, chiffres, - ou espace)';
       return '';
     default:
       return '';

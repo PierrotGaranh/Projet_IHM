@@ -23,7 +23,7 @@ export function PasswordInput({ label, error, showRequired, className = '', id, 
           {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
         </button>
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
   );
 }
