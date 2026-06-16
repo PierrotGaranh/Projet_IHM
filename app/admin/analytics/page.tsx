@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { Card } from '@/components/atoms/Card';
 import { AnalyticsStatsGrid } from '@/components/organisms/AnalyticsStatsGrid';
@@ -62,5 +62,5 @@ function AnalyticsPageContent() {
 }
 
 export default function AnalyticsPage() {
-  return <AnalyticsPageContent />;
+  return <Suspense fallback={<Loading />}><AnalyticsPageContent /></Suspense>;
 }

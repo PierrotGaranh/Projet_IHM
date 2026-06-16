@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { getStore } from '@/lib/store';
 import { ActivityLog } from '@/lib/types';
 import { DashboardStatsGrid } from '@/components/organisms/DashboardStatsGrid';
-import { RecentActivities } from '@/components/molecules/RecentActivities';
+import { RecentActivities } from '@/components/organisms/RecentActivities';
 import { AdminQuickActionCard } from '@/components/molecules/AdminQuickActionCard';
 import { Car, Users, Settings } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';

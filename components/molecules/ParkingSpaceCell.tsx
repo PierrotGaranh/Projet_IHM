@@ -9,7 +9,7 @@ interface ParkingSpaceCellProps {
   onSelect: () => void;
   disabled?: boolean;
   isMobile?: boolean;
-  showBlueRing?: boolean;
+  showReserved?: boolean;
 }
 
 const featureIcons: Record<string, React.ElementType> = {
@@ -25,7 +25,7 @@ const typeIcon = {
   premium: Crown,
 };
 
-export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect, disabled, isMobile = false, showBlueRing = false }: ParkingSpaceCellProps) {
+export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect, disabled, isMobile = false, showReserved = false }: ParkingSpaceCellProps) {
   const TypeIcon = typeIcon[space.type];
   
   const getStatusClasses = () => {
@@ -45,8 +45,8 @@ export function ParkingSpaceCell({ space, isSelected, isMyReservation, onSelect,
   
   let ringClasses = '';
   if (isSelected) ringClasses = 'ring-2 ring-accent ring-offset-2 dark:ring-offset-background';
-  if (isMyReservation) ringClasses = 'ring-2 ring-yellow-400 dark:ring-yellow-500';
-  if (showBlueRing) ringClasses = 'ring-2 ring-blue-500 dark:ring-blue-400';
+  if (isMyReservation && !isSelected) ringClasses = 'ring-2 ring-yellow-400 dark:ring-yellow-500';
+  if (showReserved && !isSelected && !isMyReservation) ringClasses = 'ring-2 ring-red-400 dark:ring-red-500';
 
   if (isMobile) {
     return (

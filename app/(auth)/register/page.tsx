@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context';
@@ -9,7 +10,7 @@ import { Card } from '@/components/atoms/Card';
 import { RegisterStepper } from '@/components/organisms/RegisterStepper';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
   const { register } = useAuth();
   const { toast } = useToast();
@@ -29,7 +30,7 @@ export default function RegisterPage() {
       toast({ variant: 'success', title: 'Inscription réussie', description: 'Bienvenue sur ParkHub !' });
       router.push('/home');
     } else {
-      throw new Error(result.error || 'Inscription échouée');
+      throw new Error(result.error || 'L\'inscription a échoué');
     }
   };
 
@@ -57,3 +58,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+export default function RegisterPage() { return <Suspense fallback={null}><RegisterPageContent /></Suspense>; }

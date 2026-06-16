@@ -5,7 +5,7 @@ import { Button } from '@/components/atoms/Button';
 import { Label } from '@/components/atoms/Label';
 import { VehiclePlateInput } from '@/components/molecules/VehiclePlateInput';
 import { DateRangePicker } from '@/components/molecules/DateRangePicker';
-import { validateField } from '@/lib/validation';
+import { validateForm } from '@/lib/validation';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditReservationFormProps {
@@ -17,6 +17,8 @@ interface EditReservationFormProps {
   onCancel: () => void;
 }
 
+const UPDATE_FEE = 5;
+
 export function EditReservationForm({ reservation, pricePerHour, userPlates, userName, onSubmit, onCancel }: EditReservationFormProps) {
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null; startTime: string; endTime: string }>({
@@ -27,7 +29,7 @@ export function EditReservationForm({ reservation, pricePerHour, userPlates, use
   });
   const [vehiclePlate, setVehiclePlate] = useState(reservation.vehiclePlate);
   const [estimatedPrice, setEstimatedPrice] = useState(0);
-  const [errors, setErrors] = useState<{ date?: string; plate?: string }>({});
+  const [errors, setErrors] = useState<{ dates?: string; plate?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasDateRangeChanged, setHasDateRangeChanged] = useState(false);
 
@@ -35,17 +37,6 @@ export function EditReservationForm({ reservation, pricePerHour, userPlates, use
   const originalEnd = reservation.endDate;
   const originalStartTime = reservation.startDate.toTimeString().slice(0, 5);
   const originalEndTime = reservation.endDate.toTimeString().slice(0, 5);
-
-  const validatePlate = (plate: string) => {
-    const error = validateField('plate', plate);
-    setErrors(prev => ({ ...prev, plate: error }));
-    return !error;
-  };
-
-  const handlePlateChange = (plate: string) => {
-    setVehiclePlate(plate);
-    validatePlate(plate);
-  };
 
   useEffect(() => {
     if (dateRange.startDate && dateRange.endDate) {
@@ -70,29 +61,27 @@ export function EditReservationForm({ reservation, pricePerHour, userPlates, use
     }
   }, [dateRange, pricePerHour, originalStart, originalEnd, originalStartTime, originalEndTime]);
 
-  const isFormValid = () => {
-    if (!dateRange.startDate || !dateRange.endDate) return false;
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!dateRange.startDate || !dateRange.endDate) {
+      setErrors({ dates: 'Veuillez sélectionner une plage horaire' });
+      return;
+    }
     const start = new Date(dateRange.startDate);
     const [sh, sm] = dateRange.startTime.split(':').map(Number);
     start.setHours(sh, sm);
     const end = new Date(dateRange.endDate);
     const [eh, em] = dateRange.endTime.split(':').map(Number);
     end.setHours(eh, em);
-    if (start >= end) return false;
-    if (!vehiclePlate.trim()) return false;
-    if (errors.plate) return false;
-    return true;
-  };
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!isFormValid()) return;
-    const start = new Date(dateRange.startDate!);
-    const [sh, sm] = dateRange.startTime.split(':').map(Number);
-    start.setHours(sh, sm);
-    const end = new Date(dateRange.endDate!);
-    const [eh, em] = dateRange.endTime.split(':').map(Number);
-    end.setHours(eh, em);
+    const formData = { startDate: start, endDate: end, plate: vehiclePlate };
+    const validationErrors = validateForm(formData, ['dates', 'plate']);
+    setErrors(validationErrors);
+    if (validationErrors.dates || validationErrors.plate) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await onSubmit({ startDate: start, endDate: end, vehiclePlate });
@@ -102,6 +91,8 @@ export function EditReservationForm({ reservation, pricePerHour, userPlates, use
       setIsSubmitting(false);
     }
   };
+
+  const totalPrice = estimatedPrice > 0 ? estimatedPrice + UPDATE_FEE : 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -128,24 +119,37 @@ export function EditReservationForm({ reservation, pricePerHour, userPlates, use
           })}
           value={dateRange}
         />
+        {errors.dates && <p className="text-xs text-destructive mt-1">{errors.dates}</p>}
       </div>
       <VehiclePlateInput
         value={vehiclePlate}
-        onChange={handlePlateChange}
+        onChange={setVehiclePlate}
         options={userPlates}
         label="Plaque du véhicule"
         error={errors.plate}
       />
+
       {hasDateRangeChanged && estimatedPrice > 0 && (
-        <p className="text-sm text-primary font-semibold">Nouveau prix estimé : {estimatedPrice} €</p>
+        <div className="pt-2 border-t border-border space-y-1">
+          <p className="text-sm text-muted-foreground">
+            Nouveau prix (hors frais) : {estimatedPrice.toFixed(2)} €
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Frais de modification : {UPDATE_FEE.toFixed(2)} €
+          </p>
+          <p className="text-lg font-bold text-primary">
+            Total à payer : {totalPrice.toFixed(2)} €
+          </p>
+        </div>
       )}
+
       <div className="flex gap-3 pt-4">
         <Button
           variant="primary"
           type="submit"
           isLoading={isSubmitting}
           loadingText="Mise à jour"
-          disabled={!isFormValid()}
+          disabled={isSubmitting}
           className="flex-1"
         >
           Mettre à jour

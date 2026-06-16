@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { ExpandableCard } from '@/components/molecules/ExpandableCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -11,7 +12,7 @@ const faqs = [
   { q: "Comment contacter le support ?", a: "Envoyez un email à support@parkhub.com ou utilisez notre formulaire de contact." },
 ];
 
-export default function FAQPage() {
+function FAQPageContent() {
   const isMobile = useIsMobile();
 
   return (
@@ -44,3 +45,5 @@ export default function FAQPage() {
     </div>
   );
 }
+
+export default function FAQPage() { return <Suspense fallback={null}><FAQPageContent /></Suspense>; }

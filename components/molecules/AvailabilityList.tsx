@@ -39,7 +39,7 @@ export function AvailabilityList({ reservations, spacesMap, onEdit, onCancel, li
   const formatDate = (date: Date) => date.toLocaleDateString('fr-FR');
   const formatTime = (date: Date) => date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
-  const canEditCancel = (reservation: Reservation) => {
+  const showPrivate = (reservation: Reservation) => {
     if (!onEdit || !onCancel) return false;
     if (reservation.status !== 'active') return false;
     if (!user) return false;
@@ -66,9 +66,9 @@ export function AvailabilityList({ reservations, spacesMap, onEdit, onCancel, li
                     <div className="text-xs font-mono">{formatTime(res.endDate)}</div>
                   </div>
                 </div>
-                <p className="text-xs mt-1">Véhicule: {res.vehiclePlate}</p>
+                {showPrivate(res) && (<p className="text-xs mt-1">Véhicule: {res.vehiclePlate}</p>)}
               </div>
-              {canEditCancel(res) && (
+              {showPrivate(res) && (
                 <div className="flex gap-2">
                   <Button variant="secondary" onClick={() => onEdit!(res)}><Edit className="w-3 h-3" /></Button>
                   <Button variant="secondary" onClick={() => onCancel!(res.id)}><Trash className="w-3 h-3" /></Button>

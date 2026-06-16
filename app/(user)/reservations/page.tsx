@@ -12,7 +12,7 @@ import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ReservationCard } from '@/components/molecules/ReservationCard';
 import { EditReservationForm } from '@/components/organisms/EditReservationForm';
-import { ReservationFilterButtons } from '@/components/molecules/ReservationFilterButtons';
+import { FilterButtons } from '@/components/molecules/FilterButtons';
 import { Pagination } from '@/components/molecules/Pagination';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Loading from './loading';
@@ -55,17 +55,23 @@ function ReservationsPageContent() {
   const handleEditSubmit = async (data: { startDate: Date; endDate: Date; vehiclePlate: string }) => {
     if (!editingReservation) return;
     const store = getStore();
-    store.cancelReservation(editingReservation.id);
-    const result = store.createReservation(user!.id, editingReservation.spaceId, data.startDate, data.endDate, data.vehiclePlate);
+    const result = store.updateReservation(
+      editingReservation.id,
+      data.startDate,
+      data.endDate,
+      data.vehiclePlate
+    );
     if (result.success) {
       const currentUser = allUsers.find(u => u.id === user!.id);
-      if (currentUser && !currentUser.vehiclePlates.includes(data.vehiclePlate)) store.addVehiclePlate(user!.id, data.vehiclePlate);
+      if (currentUser && !currentUser.vehiclePlates.includes(data.vehiclePlate)) {
+        store.addVehiclePlate(user!.id, data.vehiclePlate);
+      }
       toast({ variant: 'success', title: 'Réservation modifiée', description: 'Votre réservation a été mise à jour.' });
       setRefreshKey(prev => prev + 1);
       setShowEditModal(false);
       setEditingReservation(null);
     } else {
-      throw new Error(result.error || 'Erreur lors de la modification');
+      throw new Error(result.error || 'Une erreur est survenue lors de la modification de la réservation');
     }
   };
 
@@ -87,7 +93,16 @@ function ReservationsPageContent() {
         <h1 className={`${headingClass} font-bold text-foreground`}>Mes réservations</h1>
         <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Consultez l'historique de vos réservations</p>
       </div>
-      <ReservationFilterButtons filter={filter} onFilterChange={setFilter} />
+      <FilterButtons
+        options={[
+          { value: 'all', label: 'Toutes' },
+          { value: 'active', label: 'Actives' },
+          { value: 'completed', label: 'Complétées' },
+          { value: 'cancelled', label: 'Annulées' },
+        ]}
+        value={filter}
+        onChange={(val) => setFilter(val as any)}
+      />
       {filtered.length === 0 ? (
         <Card className="p-6 flex flex-col items-center gap-4 text-center">
           <Mailbox className="w-12 h-12" />

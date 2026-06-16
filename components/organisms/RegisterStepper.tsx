@@ -75,7 +75,7 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
   const nextStep = () => { if (validateStep()) setStep(s => s + 1); };
   const prevStep = () => setStep(s => s - 1);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (step < 2) return nextStep();
 

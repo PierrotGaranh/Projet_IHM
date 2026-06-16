@@ -1,4 +1,4 @@
-import { User, ParkingSpace, Reservation, ActivityLog, DashboardStats, ParkingStats, Location, ParkingSection } from '@/lib/types';
+import { User, ParkingSpace, Reservation, ActivityLog, DashboardStats, ParkingStats, Location } from '@/lib/types';
 
 const STORAGE_KEY = 'parkhub_store_data';
 const SESSION_KEY = 'parkhub_current_user';
@@ -265,16 +265,18 @@ class StoreManager {
     for (const res of reservationsToLog) {
       const space = this.getSpace(res.spaceId);
       if (!space) continue;
+      const user = this.getUser(res.userId);
+      const userName = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur non reconnu';
       let message = '';
       let type: ActivityLog['type'] = 'reservation';
       let timestamp = res.createdAt;
       
       if (res.status === 'active') {
-        message = `Nouvelle réservation #${res.id} pour la place ${space.number}`;
+        message = `${userName} a réservé la place ${space.number} (${res.vehiclePlate})`;
       } else if (res.status === 'cancelled') {
-        message = `La réservation #${res.id} a été annulée`;
+        message = `${userName} a annulé sa réservation (id: ${res.id})`;
       } else if (res.status === 'completed') {
-        message = `La réservation #${res.id} pour la place ${space.number} est terminée`;
+        message = `La réservation ${res.id} pour la place ${space.number} est terminée`;
         type = 'system';
       } else {
         continue;
@@ -296,7 +298,7 @@ class StoreManager {
       this.activities.push({
         id: `act-init-${Date.now()}-${Math.random()}`,
         type: 'parking',
-        message: `La place ${space.number} a été mise à jour -> Statut: maintenance`,
+        message: `La place ${space.number} est maintenant en maintenance`,
         timestamp: randomDate,
         userId: undefined,
       });
@@ -307,7 +309,7 @@ class StoreManager {
       this.activities.push({
         id: `act-init-${Date.now()}-${Math.random()}`,
         type: 'user',
-        message: `Nouvel utilisateur enregistré: ${user.firstName} ${user.lastName}`,
+        message: `Nouvel utilisateur enregistré : ${user.firstName} ${user.lastName}`,
         timestamp: user.createdAt,
         userId: user.id,
       });
@@ -424,10 +426,10 @@ class StoreManager {
 
   login(email: string, password: string): { success: boolean; user?: User; error?: string } {
     const user = this.users.find(u => u.email === email);
-    if (!user) return { success: false, error: 'Utilisateur introuvable' };
+    if (!user) return { success: false, error: 'Aucun utilisateur correspond à cet email' };
     const storedHash = this.userPasswords.get(email);
     if (!storedHash || !verifyPassword(password, storedHash)) {
-      return { success: false, error: 'Mot de passe invalide' };
+      return { success: false, error: 'Le mot de passe fourni est incorrect' };
     }
     this.currentUser = user;
     this.saveCurrentUserToStorage();
@@ -453,7 +455,7 @@ class StoreManager {
     this.userPasswords.set(email, hashPassword(password));
     this.currentUser = newUser;
     this.saveCurrentUserToStorage();
-    this.addActivity('user', `Nouvel utilisateur enregistré: ${firstName} ${lastName}`, newUser.id);
+    this.addActivity('user', `Nouvel utilisateur enregistré : ${firstName} ${lastName}`, newUser.id);
     this.saveToStorage();
     return { success: true, user: newUser };
   }
@@ -490,7 +492,7 @@ class StoreManager {
     if (!user.vehiclePlates.includes(plate) && plate.trim() !== '') {
       user.vehiclePlates.push(plate.trim());
       if (this.currentUser?.id === userId) this.currentUser = user;
-      this.addActivity('user', `${user.firstName} ${user.lastName} a ajouté une plaque: ${plate}`, userId);
+      this.addActivity('user', `${user.firstName} ${user.lastName} a ajouté une nouvelle plaque à son compte: ${plate}`, userId);
       this.saveToStorage();
       return true;
     }
@@ -507,7 +509,9 @@ class StoreManager {
     const space = this.spaces.find(s => s.id === id);
     if (!space) return false;
     Object.assign(space, updates);
-    this.addActivity('parking', `La place ${space.number} a été mise à jour -> Statut: ${space.status}`, undefined);
+    const user = this.currentUser;
+    const userName = user ? `${user.firstName} ${user.lastName}` : 'Système';
+    this.addActivity('parking', `${userName} a mis la place ${space.number} en ${space.status}`, user?.id);
     this.saveToStorage();
     return true;
   }
@@ -529,11 +533,16 @@ class StoreManager {
 
   createReservation(userId: string, spaceId: string, startDate: Date, endDate: Date, vehiclePlate: string) {
     const space = this.getSpace(spaceId);
-    if (!space) return { success: false, error: 'La place n\'existe pas' };
+    if (!space) return { success: false, error: 'La place mentionnée n\'existe pas' };
     const now = new Date();
-    const activeReservation = this.reservations.find(r => r.spaceId === spaceId && r.status === 'active' && ((r.startDate <= endDate && r.endDate >= startDate)));
+    const activeReservation = this.reservations.find(r =>
+      r.spaceId === spaceId &&
+      r.status === 'active' &&
+      ((r.startDate <= endDate && r.endDate >= startDate))
+    );
     if (activeReservation) return { success: false, error: 'Cette place est déjà réservée sur cette période' };
     const hours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+    if (hours <= 0) return { success: false, error: 'La durée de la réservation doit être positive' };
     const amount = Math.round(hours * space.pricePerHour * 100) / 100;
     const reservation: Reservation = {
       id: `res-${Date.now()}`,
@@ -547,10 +556,11 @@ class StoreManager {
       vehiclePlate,
     };
     this.reservations.push(reservation);
-    if (startDate <= now && endDate >= now) {
-      this.updateSpace(spaceId, { status: 'occupied' });
-    }
-    this.addActivity('reservation', `Nouvelle réservation #${reservation.id} pour la place ${space.number} (${vehiclePlate})`, userId);
+
+    const user = this.getUser(userId);
+    const userName = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur non reconnu';
+    this.addActivity('reservation', `${userName} a réservé la place ${space.number} (Véhicule: ${vehiclePlate})`, userId);
+
     this.saveToStorage();
     this.refreshSpaceStatuses();
     return { success: true, reservation };
@@ -560,22 +570,62 @@ class StoreManager {
     const reservation = this.reservations.find(r => r.id === id);
     if (!reservation || reservation.status !== 'active') return false;
     reservation.status = 'cancelled';
-    const space = this.getSpace(reservation.spaceId);
-    if (space) {
-      const now = new Date();
-      const overlapping = this.reservations.find(r => r.spaceId === space.id && r.status === 'active' && r.id !== id && ((r.startDate <= reservation.endDate && r.endDate >= reservation.startDate)));
-      if (!overlapping) {
-        if (reservation.startDate <= now && reservation.endDate >= now) {
-          this.updateSpace(space.id, { status: 'occupied' });
-        } else {
-          this.updateSpace(space.id, { status: 'available' });
-        }
-      }
-    }
-    this.addActivity('reservation', `La réservation #${reservation.id} a été annulée`, reservation.userId);
+
+    const user = this.getUser(reservation.userId);
+    const userName = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur non reconnu';
+    this.addActivity('reservation', `${userName} a annulé sa réservation (id: ${reservation.id})`, reservation.userId);
+
     this.saveToStorage();
     this.refreshSpaceStatuses();
     return true;
+  }
+
+  updateReservation(reservationId: string, newStartDate: Date, newEndDate: Date, newVehiclePlate?: string): { success: boolean; error?: string } {
+    const oldRes = this.getReservation(reservationId);
+    if (!oldRes) return { success: false, error: 'La réservation mentionnée est introuvable' };
+    if (oldRes.status !== 'active') return { success: false, error: 'Cette réservation n\'est plus active' };
+
+    const user = this.getUser(oldRes.userId);
+    const userName = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur non reconnu';
+
+    const space = this.getSpace(oldRes.spaceId);
+    if (!space) return { success: false, error: 'La place associée à cette réservation est introuvable' };
+
+    const now = new Date();
+    const hours = (newEndDate.getTime() - newStartDate.getTime()) / (1000 * 60 * 60);
+    if (hours <= 0) return { success: false, error: 'La durée donnée doit être positive' };
+
+    const overlapping = this.reservations.find(r =>
+      r.spaceId === oldRes.spaceId &&
+      r.status === 'active' &&
+      r.id !== reservationId &&
+      ((r.startDate <= newEndDate && r.endDate >= newStartDate))
+    );
+    if (overlapping) return { success: false, error: 'La place est déjà réservée sur la période' };
+
+    const plate = newVehiclePlate || oldRes.vehiclePlate;
+    const amount = Math.round(hours * space.pricePerHour * 100) / 100;
+
+    oldRes.status = 'cancelled';
+
+    const newRes: Reservation = {
+      id: `res-${Date.now()}`,
+      userId: oldRes.userId,
+      spaceId: oldRes.spaceId,
+      startDate: newStartDate,
+      endDate: newEndDate,
+      status: 'active',
+      createdAt: new Date(),
+      amount,
+      vehiclePlate: plate,
+    };
+    this.reservations.push(newRes);
+
+    this.addActivity('reservation', `${userName} a modifié sa réservation (id: ${reservationId})`, oldRes.userId);
+
+    this.saveToStorage();
+    this.refreshSpaceStatuses();
+    return { success: true };
   }
 
   getDashboardStats(): DashboardStats {

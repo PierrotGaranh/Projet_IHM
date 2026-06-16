@@ -23,6 +23,9 @@ export function validateField(field: string, value: string): string {
     case 'plate':
       if (value && !plateRegex.test(value)) return 'Plaque invalide (Utilisé des lettres, chiffres, - ou espace)';
       return '';
+    case 'user':
+      if (!value) return 'Veuillez sélectionner un utilisateur';
+      return '';
     default:
       return '';
   }
@@ -39,7 +42,7 @@ export function validateDates(startDate: Date, endDate: Date): string {
 export function validateForm(data: Record<string, any>, fields: string[]): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const field of fields) {
-    if (field === 'dates' && data.startDate && data.endDate) {
+    if (field === 'dates') {
       const dateError = validateDates(data.startDate, data.endDate);
       if (dateError) errors.dates = dateError;
     } else {

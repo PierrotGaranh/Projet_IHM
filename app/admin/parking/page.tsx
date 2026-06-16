@@ -9,7 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ParkingGrid } from '@/components/organisms/ParkingGrid';
-import { FilterSection } from '@/components/organisms/FilterSection';
+import { FilterSection } from '@/components/organisms/ParkingFilterSection';
 import { AdminParkingSpaceDetail } from '@/components/organisms/AdminParkingSpaceDetail';
 import { AddReservationForm } from '@/components/organisms/AddReservationForm';
 import { EditReservationForm } from '@/components/organisms/EditReservationForm';
@@ -260,7 +260,7 @@ function ParkingManagementPageContent() {
             onSelectSpace={setSelectedSpace}
             isAdmin
             adminSelectableStatuses={['available', 'maintenance']}
-            showBlueRing={showOccupancyBasedOnRange}
+            showReserved={showOccupancyBasedOnRange}
             spaceIdsWithReservationsInRange={spaceIdsWithReservationsInRange}
           />
         </div>

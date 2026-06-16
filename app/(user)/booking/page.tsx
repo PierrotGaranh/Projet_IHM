@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ParkingGrid } from '@/components/organisms/ParkingGrid';
-import { FilterSection } from '@/components/organisms/FilterSection';
+import { FilterSection } from '@/components/organisms/ParkingFilterSection';
 import { ReserveSpaceForm } from '@/components/organisms/ReserveSpaceForm';
 import { ParkingSpaceDetail } from '@/components/organisms/ParkingSpaceDetail';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -35,6 +35,8 @@ function BookingPageContent() {
   const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null }>({ startDate: null, endDate: null });
   const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
   const [spacesMap, setSpacesMap] = useState<Record<string, ParkingSpace>>({});
+  const [showForm, setShowForm] = useState(false);
+  const formContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
   const smoothScrollToElement = (el: HTMLElement, offset = 80) => {
@@ -89,6 +91,12 @@ function BookingPageContent() {
     setFilteredReservations(filtered);
   }, [dateRange, selectedLocation]);
 
+  useEffect(() => {
+    if (showForm && formContainerRef.current) {
+      smoothScrollToElement(formContainerRef.current);
+    }
+  }, [showForm]);
+
   const applyFilters = (space: ParkingSpace) => {
     let ok = true;
     for (const [val, state] of Object.entries(filterStatus)) { if (state === 'selected' && space.status !== val) ok = false; if (state === 'deselected' && space.status === val) ok = false; if (!ok) break; }
@@ -107,12 +115,20 @@ function BookingPageContent() {
   const userReservedSpaceIds = new Set(userReservations.map(r => r.spaceId));
   const userPlates = user?.vehiclePlates || [];
 
-  const clearSelectedSpace = () => setSelectedSpace(null);
+  const clearSelectedSpace = () => {
+    setSelectedSpace(null);
+    setShowForm(false);
+  };
 
   const handleSelectSpace = (space: ParkingSpace) => {
     setSelectedSpace(space);
     setEditingReservationId(null);
+    setShowForm(false);
     if (formRef.current) smoothScrollToElement(formRef.current);
+  };
+
+  const handleTakeReservation = () => {
+    setShowForm(true);
   };
 
   const handleEditReservation = (space: ParkingSpace) => {
@@ -121,6 +137,7 @@ function BookingPageContent() {
     if (reservation) {
       setSelectedSpace(space);
       setEditingReservationId(reservation.id);
+      setShowForm(true);
       if (formRef.current) smoothScrollToElement(formRef.current);
     }
   };
@@ -178,6 +195,8 @@ function BookingPageContent() {
     });
   }
 
+  const canReserve = selectedSpace && selectedSpace.status === 'available' && !userReservedSpaceIds.has(selectedSpace.id);
+
   if (loading) return <Loading />;
 
   const headingClass = isMobile ? 'text-2xl' : 'text-3xl';
@@ -210,7 +229,7 @@ function BookingPageContent() {
             userReservedSpaceIds={userReservedSpaceIds}
             onEditReservation={handleEditReservation}
             onCancelReservation={handleCancelMyReservation}
-            showBlueRing={showOccupancyBasedOnRange}
+            showReserved={showOccupancyBasedOnRange}
             spaceIdsWithReservationsInRange={spaceIdsWithReservationsInRange}
           />
         </div>
@@ -226,6 +245,7 @@ function BookingPageContent() {
                 onEditReservation={(res) => {
                   setEditingReservationId(res.id);
                   setSelectedSpace(store.getSpace(res.spaceId)!);
+                  setShowForm(true);
                 }}
                 onCancelReservation={(id) => {
                   store.cancelReservation(id);
@@ -233,19 +253,25 @@ function BookingPageContent() {
                   toast({ variant: 'success', title: 'Réservation annulée' });
                 }}
                 dateRange={dateRange}
+                showTakeReservationButton={!showForm && !!canReserve}
+                onTakeReservation={handleTakeReservation}
               />
-              <Card className={`${isMobile ? 'p-5' : 'p-6'} space-y-4`}>
-                <h3 className="font-semibold text-foreground">Détails de réservation</h3>
-                <ReserveSpaceForm
-                  spaceId={selectedSpace.id}
-                  pricePerHour={selectedSpace.pricePerHour}
-                  userPlates={userPlates}
-                  onSubmit={handleReserveSubmit}
-                  initialData={initialData}
-                  isEditing={!!editingReservationId}
-                />
-                {error && <div className="text-sm text-destructive">{error}</div>}
-              </Card>
+              {selectedSpace && showForm && (
+                <div ref={formContainerRef} className="block">
+                  <Card className={`${isMobile ? 'p-5' : 'p-6'} space-y-4`}>
+                    <ReserveSpaceForm
+                      spaceId={selectedSpace.id}
+                      pricePerHour={selectedSpace.pricePerHour}
+                      userPlates={userPlates}
+                      onSubmit={handleReserveSubmit}
+                      initialData={initialData}
+                      isEditing={!!editingReservationId}
+                      onClose={() => setShowForm(false)}
+                    />
+                    {error && <div className="text-sm text-destructive">{error}</div>}
+                  </Card>
+                </div>
+              )}
             </>
           ) : (
             <Card className="p-8 text-center text-muted-foreground border-2 border-dashed border-primary/30">

@@ -17,7 +17,7 @@ interface ParkingGridProps {
   onCancelReservation?: (space: ParkingSpace) => void;
   isAdmin?: boolean;
   adminSelectableStatuses?: string[];
-  showBlueRing?: boolean;
+  showReserved?: boolean;
   spaceIdsWithReservationsInRange?: Set<string>;
 }
 
@@ -30,7 +30,7 @@ export function ParkingGrid({
   onCancelReservation,
   isAdmin = false,
   adminSelectableStatuses = ['available', 'maintenance'],
-  showBlueRing = false,
+  showReserved = false,
   spaceIdsWithReservationsInRange = new Set(),
 }: ParkingGridProps) {
   const isMobile = useIsMobile(600);
@@ -69,10 +69,10 @@ export function ParkingGrid({
         <Card key={section.section} className="p-3 sm:p-6 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-base sm:text-lg font-semibold text-foreground">Section {section.section}</h2>
-            {showBlueRing && (
-              <div className="text-xs sm:text-sm text-muted-foreground">{Math.round(section.occupancyRate)}% occupé (période sélectionnée)</div>
+            {showReserved && (
+              <div className="text-xs sm:text-sm text-muted-foreground">{Math.round(section.occupancyRate)}% occupé (Sur la période sélectionnée)</div>
             )}
-            {!showBlueRing && (
+            {!showReserved && (
               <div className="text-xs sm:text-sm text-muted-foreground">{Math.round(section.occupancyRate)}% occupé</div>
             )}
           </div>
@@ -99,7 +99,7 @@ export function ParkingGrid({
                   onSelect={handleClick}
                   disabled={disabled}
                   isMobile={isMobile}
-                  showBlueRing={showBlueRing && hasReservationInRange}
+                  showReserved={showReserved && hasReservationInRange}
                 />
               );
 
@@ -141,7 +141,7 @@ export function ParkingGrid({
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-500 opacity-70"></div><span>Occ</span></div>
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-gray-400"></div><span>Maint</span></div>
                   {!isAdmin && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-yellow-400"></div><span>Ma résa</span></div>}
-                  {showBlueRing && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-blue-500"></div><span>Réservée période</span></div>}
+                  {showReserved && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-red-400"></div><span>Réservée sur la période</span></div>}
                   <div className="flex items-center gap-1"><Minimize2 className="w-3 h-3 text-blue-600" /><span>Compact</span></div>
                   <div className="flex items-center gap-1"><CarFront className="w-3 h-3 text-gray-600" /><span>Standard</span></div>
                   <div className="flex items-center gap-1"><Crown className="w-3 h-3 text-yellow-600" /><span>Premium</span></div>
@@ -154,7 +154,7 @@ export function ParkingGrid({
               <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-500 opacity-70"></div><span>Occupée</span></div>
               <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-gray-400"></div><span>Maintenance</span></div>
               {!isAdmin && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-yellow-400"></div><span>Ma réservation</span></div>}
-              {showBlueRing && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-blue-500"></div><span>Réservée période</span></div>}
+              {showReserved && <div className="flex items-center gap-1"><div className="w-3 h-3 rounded ring-2 ring-red-400"></div><span>Réservée sur la période</span></div>}
               <div className="flex items-center gap-1"><Minimize2 className="w-3 h-3 text-blue-600" /><span>Compact</span></div>
               <div className="flex items-center gap-1"><CarFront className="w-3 h-3 text-gray-600" /><span>Standard</span></div>
               <div className="flex items-center gap-1"><Crown className="w-3 h-3 text-yellow-600" /><span>Premium</span></div>

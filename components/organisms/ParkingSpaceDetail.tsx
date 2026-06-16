@@ -14,9 +14,22 @@ interface ParkingSpaceDetailProps {
   onEditReservation?: (reservation: Reservation) => void;
   onCancelReservation?: (id: string) => void;
   dateRange?: { startDate: Date | null; endDate: Date | null };
+  showTakeReservationButton?: boolean;
+  onTakeReservation?: () => void;
 }
 
-export function ParkingSpaceDetail({ space, location, reservations, spacesMap, onClear, onEditReservation, onCancelReservation, dateRange }: ParkingSpaceDetailProps) {
+export function ParkingSpaceDetail({
+  space,
+  location,
+  reservations,
+  spacesMap,
+  onClear,
+  onEditReservation,
+  onCancelReservation,
+  dateRange,
+  showTakeReservationButton,
+  onTakeReservation,
+}: ParkingSpaceDetailProps) {
   const typeLabels: Record<string, string> = { compact: 'Compact', standard: 'Standard', premium: 'Premium' };
   const featureLabels: Record<string, string> = { handicap: 'Handicapé', chargeur: 'Chargeur électrique', surveillée: 'Surveillée', sécurisée: 'Sécurisée' };
 
@@ -47,6 +60,14 @@ export function ParkingSpaceDetail({ space, location, reservations, spacesMap, o
 
         <LocationMap lat={location.lat} lng={location.lng} address={location.address} />
       </div>
+
+      {showTakeReservationButton && onTakeReservation && (
+        <div className="pt-4 border-t border-border">
+          <Button variant="primary" onClick={onTakeReservation} className="w-full">
+            Prendre réservation
+          </Button>
+        </div>
+      )}
 
       <div className="pt-4 border-t border-border">
         <h4 className="font-medium mb-3">Réservations sur cette place</h4>

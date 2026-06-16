@@ -1,10 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
 import { ContactGrid } from '@/components/organisms/ContactGrid';
 import { Mail, MessageCircle, Phone, MapPin, Clock } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export default function ContactPage() {
+function ContactPageContent() {
   const isMobile = useIsMobile();
 
   const emails = [
@@ -57,3 +58,5 @@ export default function ContactPage() {
     </div>
   );
 }
+
+export default function ContactPage() { return <Suspense fallback={null}><ContactPageContent /></Suspense>; }

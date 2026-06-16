@@ -19,7 +19,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
   const isMobile = useIsMobile(1400);
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -30,13 +31,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       title: 'Déconnexion réussie',
       description: 'Vous avez été déconnecté avec succès.',
       variant: 'success',
-    })
+    });
     router.push('/login');
   };
 
-  useEffect(() => {
-    setSidebarOpen(!isMobile);
-  }, [isMobile]);
+  const isSidebarVisible = !isMobile || sidebarOpen;
 
   useEffect(() => {
     if (!isLoading && !isLoggingOut && (!user || user.role !== 'admin')) {
@@ -48,16 +47,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (isLoading) return <LoadingScreen />;
   if ((!user || user.role !== 'admin') && (!isLoggingOut && !isLoading)) return <AccessDenied />;
 
+  const marginLeft = !isMobile ? (sidebarExpanded ? 'ml-64' : 'ml-16') : '';
+
   return (
     <div className="min-h-screen bg-background">
       <AdminSidebar
         isMobile={isMobile}
-        isOpen={sidebarOpen}
+        isOpen={isSidebarVisible}
         onClose={() => setSidebarOpen(false)}
         user={user}
         onLogoutClick={() => setShowLogoutModal(true)}
+        collapsed={!isMobile}
+        onExpandChange={setSidebarExpanded}
       />
-      <div className={`transition-all duration-300 ${sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 ${marginLeft}`}>
         <header className="sticky top-0 z-30 h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6">
           {isMobile && (
             <Button variant="ghost" onClick={() => setSidebarOpen(true)} className="p-2 text-muted-foreground hover:text-foreground">
@@ -70,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <p className="text-sm text-muted-foreground hidden sm:block">Admin Panel</p>
           </div>
         </header>
-        <main className="p-4 sm:p-6">{children}</main>
+        <main className="p-4 sm:p-6 max-w-7xl mx-auto">{children}</main>
       </div>
       <ConfirmationModal
         isOpen={showLogoutModal}

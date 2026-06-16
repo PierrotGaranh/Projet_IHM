@@ -93,7 +93,7 @@ function UsersManagementPageContent() {
                   setRefreshKey(prev => prev + 1);
                   setShowAddModal(false);
                 } else {
-                  throw new Error(result.error || 'Erreur lors de la création');
+                  throw new Error(result.error || 'Une erreur est survenue à l\'ajout d\'un utilisateur');
                 }
               }}
               onCancel={() => setShowAddModal(false)}

@@ -1,12 +1,13 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AwardCard } from '@/components/molecules/AwardCard';
 import { History } from '@/components/organisms/History';
 import { ValuesGrid } from '@/components/organisms/ValuesGrid';
 import { Users, Heart, Shield } from 'lucide-react';
 
-export default function AboutPage() {
+function AboutPageContent() {
   const isMobile = useIsMobile();
 
   const values = [
@@ -60,3 +61,5 @@ export default function AboutPage() {
     </div>
   );
 }
+
+export default function AboutPage() { return <Suspense fallback={null}><AboutPageContent /></Suspense>; }

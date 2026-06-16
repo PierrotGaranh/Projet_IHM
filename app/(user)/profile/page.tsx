@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuth } from '@/lib/context';
 import { Button } from '@/components/atoms/Button';
 import { Card } from '@/components/atoms/Card';
@@ -10,7 +10,7 @@ import { Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -94,3 +94,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+export default function ProfilePage() { return <Suspense fallback={null}><ProfilePageContent /></Suspense>; }

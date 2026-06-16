@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/atoms/Button';
@@ -13,7 +13,7 @@ import { SettingsForm } from '@/components/organisms/SettingsForm';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getStore } from '@/lib/store';
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const router = useRouter();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -142,3 +142,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+export default function SettingsPage() { return <Suspense fallback={null}><SettingsPageContent /></Suspense>; }

@@ -232,6 +232,7 @@ export function ProfileForm({
       <div className="flex gap-3 pt-6 border-t border-border">
         <Button
           type="submit"
+          variant="primary"
           isLoading={isSubmitting}
           loadingText="Enregistrement"
           className="flex-1"

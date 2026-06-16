@@ -1,10 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
 import { LegalCard } from '@/components/molecules/LegalCard';
 import { Building, User, Globe, Copyright } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export default function LegalPage() {
+function LegalPageContent() {
   const isMobile = useIsMobile();
 
   return (
@@ -47,3 +48,5 @@ export default function LegalPage() {
     </div>
   );
 }
+
+export default function LegalPage() { return <Suspense fallback={null}><LegalPageContent /></Suspense>; }

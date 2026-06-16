@@ -1,10 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
 import { LegalCard } from '@/components/molecules/LegalCard';
 import { FileCheck, User, Calendar, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export default function TermsPage() {
+function TermsPageContent() {
   const isMobile = useIsMobile();
 
   return (
@@ -49,3 +50,5 @@ export default function TermsPage() {
     </div>
   );
 }
+
+export default function TermsPage() { return <Suspense fallback={null}><TermsPageContent /></Suspense>; }

@@ -1,10 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
 import { LegalCard } from '@/components/molecules/LegalCard';
 import { Database, Eye, Share2, UserCheck, Cookie } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export default function PrivacyPage() {
+function PrivacyPageContent() {
   const isMobile = useIsMobile();
 
   return (
@@ -49,3 +50,5 @@ export default function PrivacyPage() {
     </div>
   );
 }
+
+export default function PrivacyPage() { return <Suspense fallback={null}><PrivacyPageContent /></Suspense>; }

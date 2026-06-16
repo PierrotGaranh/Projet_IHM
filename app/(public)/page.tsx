@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { Car, Calendar, BarChart3, ShieldCheck, Clock, Users } from 'lucide-react';
 import { HeroSection } from '@/components/organisms/HeroSection';
 import { FeaturesSection } from '@/components/organisms/FeaturesSection';
@@ -22,7 +23,7 @@ const stats = [
   { label: 'Réservations/mois', value: '500+', color: 'accent' },
 ];
 
-export default function LandingPage() {
+function LandingPageContent() {
   const { isAuthenticated, user } = useAuth();
   const isMobile = useIsMobile();
   const dashboardLink = user?.role === 'admin' ? '/admin' : '/home';
@@ -45,3 +46,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+export default function LandingPage() { return <Suspense fallback={null}><LandingPageContent /></Suspense>; }

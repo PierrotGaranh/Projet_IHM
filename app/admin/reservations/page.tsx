@@ -52,26 +52,35 @@ function AdminReservationsPageContent() {
     setCancellingId(null); 
     toast({ variant: 'success', title: 'Réservation annulée', description: 'La réservation a été annulée avec succès.' }); 
   };
+  
   const handleEdit = (reservation: Reservation) => {
     setEditingReservation(reservation);
     setShowEditModal(true);
   };
+
   const handleEditSubmit = async (data: { startDate: Date; endDate: Date; vehiclePlate: string }) => {
     if (!editingReservation) return;
     const store = getStore();
-    store.cancelReservation(editingReservation.id);
-    const result = store.createReservation(editingReservation.userId, editingReservation.spaceId, data.startDate, data.endDate, data.vehiclePlate);
+    const result = store.updateReservation(
+      editingReservation.id,
+      data.startDate,
+      data.endDate,
+      data.vehiclePlate
+    );
     if (result.success) {
       const u = allUsers.find(u => u.id === editingReservation.userId);
-      if (u && !u.vehiclePlates.includes(data.vehiclePlate)) store.addVehiclePlate(editingReservation.userId, data.vehiclePlate);
+      if (u && !u.vehiclePlates.includes(data.vehiclePlate)) {
+        store.addVehiclePlate(editingReservation.userId, data.vehiclePlate);
+      }
       toast({ variant: 'success', title: 'Réservation modifiée', description: 'La réservation a été mise à jour.' });
       setRefreshKey(prev => prev + 1);
       setShowEditModal(false);
       setEditingReservation(null);
     } else {
-      throw new Error(result.error || 'Erreur lors de la modification');
+      throw new Error(result.error || 'Une erreur est survenue lors de la modification de la réservation');
     }
   };
+  
   const filtered = reservations.filter(r => filter === 'all' ? true : r.status === filter).filter(r => {
     if (!searchTerm) return true;
     const store = getStore();
@@ -84,7 +93,7 @@ function AdminReservationsPageContent() {
   const displayed = filtered.slice(startIdx, startIdx + itemsPerPage);
   const goToPage = (p: number) => { if (p >= 1 && p <= totalPages) setCurrentPage(p); };
 
-  if (loading) return <Loading />;
+    if (loading) return <Loading />;
 
   const store = getStore();
   const filterOptions = [
