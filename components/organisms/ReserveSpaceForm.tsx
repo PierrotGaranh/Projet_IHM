@@ -9,6 +9,8 @@ import { validateForm } from '@/lib/validation';
 import { useToast } from '@/hooks/use-toast';
 import { X } from 'lucide-react';
 
+const STORAGE_KEY = 'reserveSpaceForm';
+
 interface ReserveSpaceFormProps {
   spaceId: string;
   pricePerHour: number;
@@ -19,8 +21,6 @@ interface ReserveSpaceFormProps {
   onClose?: () => void;
 }
 
-const UPDATE_FEE = 1;
-
 export function ReserveSpaceForm({
   pricePerHour,
   userPlates,
@@ -30,7 +30,12 @@ export function ReserveSpaceForm({
   onClose,
 }: ReserveSpaceFormProps) {
   const { toast } = useToast();
-  const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null; startTime: string; endTime: string }>({
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+    startTime: string;
+    endTime: string;
+  }>({
     startDate: null,
     endDate: null,
     startTime: '09:00',
@@ -48,12 +53,42 @@ export function ReserveSpaceForm({
       setDateRange({
         startDate: initialData.startDate,
         endDate: initialData.endDate,
-        startTime: initialData.startDate.toTimeString().slice(0,5),
-        endTime: initialData.endDate.toTimeString().slice(0,5),
+        startTime: initialData.startDate.toTimeString().slice(0, 5),
+        endTime: initialData.endDate.toTimeString().slice(0, 5),
       });
       setVehiclePlate(initialData.vehiclePlate);
+    } else {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.dateRange) {
+            setDateRange({
+              startDate: parsed.dateRange.startDate ? new Date(parsed.dateRange.startDate) : null,
+              endDate: parsed.dateRange.endDate ? new Date(parsed.dateRange.endDate) : null,
+              startTime: parsed.dateRange.startTime || '09:00',
+              endTime: parsed.dateRange.endTime || '17:00',
+            });
+          }
+          setVehiclePlate(parsed.vehiclePlate || '');
+        } catch {}
+      }
     }
   }, [initialData]);
+
+  useEffect(() => {
+    if (initialData) return;
+    const dataToSave = {
+      dateRange: {
+        startDate: dateRange.startDate?.toISOString() || null,
+        endDate: dateRange.endDate?.toISOString() || null,
+        startTime: dateRange.startTime,
+        endTime: dateRange.endTime,
+      },
+      vehiclePlate,
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [dateRange, vehiclePlate, initialData]);
 
   useEffect(() => {
     if (dateRange.startDate && dateRange.endDate) {
@@ -73,7 +108,8 @@ export function ReserveSpaceForm({
     e.preventDefault();
     if (!dateRange.startDate || !dateRange.endDate) {
       setErrors({ dates: 'Veuillez sélectionner une plage horaire' });
-      if (datePickerRef.current) datePickerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (datePickerRef.current)
+        datePickerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     const start = new Date(dateRange.startDate);
@@ -98,14 +134,19 @@ export function ReserveSpaceForm({
     setIsSubmitting(true);
     try {
       await onSubmit({ startDate: start, endDate: end, vehiclePlate });
+      if (!initialData) sessionStorage.removeItem(STORAGE_KEY);
     } catch (err) {
-      toast({ variant: 'error', title: 'Erreur', description: err instanceof Error ? err.message : 'Une erreur est survenue' });
+      toast({
+        variant: 'error',
+        title: 'La réservation a échoué.',
+        description: 'Une erreur est survenue lors de la réservation. Veuillez réessayer.',
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const totalPrice = estimatedPrice > 0 ? estimatedPrice + (isEditing ? UPDATE_FEE : 0) : 0;
+  const totalPrice = estimatedPrice > 0 ? estimatedPrice : 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -121,12 +162,14 @@ export function ReserveSpaceForm({
       <div ref={datePickerRef}>
         <Label>Période de réservation</Label>
         <DateRangePicker
-          onChange={(range) => setDateRange({
-            startDate: range.startDate,
-            endDate: range.endDate,
-            startTime: range.startTime,
-            endTime: range.endTime,
-          })}
+          onChange={(range) =>
+            setDateRange({
+              startDate: range.startDate,
+              endDate: range.endDate,
+              startTime: range.startTime,
+              endTime: range.endTime,
+            })
+          }
           value={dateRange}
           placeholder="Sélectionner les dates et heures"
         />
@@ -146,20 +189,13 @@ export function ReserveSpaceForm({
       {totalPrice > 0 && (
         <div className="space-y-4 pt-2 border-t border-border">
           <p className="text-xl text-primary font-bold">
-            {isEditing ? 'Nouveau prix (hors frais) :' : 'Prix estimé :'} {estimatedPrice.toFixed(2)} €
+            Prix estimé : {estimatedPrice.toFixed(2)} €
           </p>
-          {isEditing && (
-            <p className="text-sm text-muted-foreground">
-              Frais de modification : {UPDATE_FEE.toFixed(2)} €
-              <br />
-              <span className="font-semibold text-primary">Total à payer : {totalPrice.toFixed(2)} €</span>
-            </p>
-          )}
         </div>
       )}
 
       <Button type="submit" variant="primary" isLoading={isSubmitting} className="w-full">
-        {isEditing ? 'Modifier la réservation' : 'Confirmer la réservation'}
+        Confirmer la réservation
       </Button>
     </form>
   );

@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ParkingGrid } from '@/components/organisms/ParkingGrid';
-import { FilterSection } from '@/components/organisms/ParkingFilterSection';
+import { ParkingFilterSection } from '@/components/organisms/ParkingFilterSection';
 import { ReserveSpaceForm } from '@/components/organisms/ReserveSpaceForm';
 import { ParkingSpaceDetail } from '@/components/organisms/ParkingSpaceDetail';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -158,19 +158,19 @@ function BookingPageContent() {
         store.cancelReservation(editingReservationId);
         const result = store.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
         if (result.success) {
-          toast({ variant: 'success', title: 'Réservation modifiée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
+          toast({ variant: 'success', title: 'Réservation modifiée', description: `La place ${selectedSpace!.number} est réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
           setEditingReservationId(null);
           router.push('/reservations');
-        } else setError(result.error || 'Erreur lors de la modification');
+        } else setError(result.error || 'La modification de la réservation a échoué.');
       } else {
         const result = store.createReservation(user?.id || '', selectedSpace!.id, data.startDate, data.endDate, data.vehiclePlate);
         if (result.success) {
-          toast({ variant: 'success', title: 'Réservation confirmée', description: `Place ${selectedSpace!.number} réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
+          toast({ variant: 'success', title: 'Réservation confirmée', description: `La place ${selectedSpace!.number} est réservée du ${data.startDate.toLocaleDateString('fr-FR')} au ${data.endDate.toLocaleDateString('fr-FR')}` });
           router.push('/reservations');
-        } else setError(result.error || 'Réservation échouée');
+        } else setError(result.error || 'La réservation a échoué');
       }
     } catch (err) {
-      toast({ variant: 'error', title: 'Erreur', description: err instanceof Error ? err.message : 'Une erreur est survenue' });
+      toast({ variant: 'error', title: 'Oops', description: 'Une erreur est survenue au traitement. Veuillez réessayer.' });
     }
   };
 
@@ -207,7 +207,7 @@ function BookingPageContent() {
         <h1 className={`${headingClass} font-bold`}>Réserver une place</h1>
         <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>Sélectionnez une place disponible et confirmez votre réservation</p>
       </div>
-      <FilterSection
+      <ParkingFilterSection
         selectedCount={selectedCount}
         deselectedCount={deselectedCount}
         sections={[

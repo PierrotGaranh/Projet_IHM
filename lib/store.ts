@@ -151,6 +151,10 @@ function generateRealisticReservations(users: User[], spaces: ParkingSpace[]): R
       const hours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
       const amount = Math.round(hours * space.pricePerHour * 100) / 100;
 
+      const maxCreated = startDate < now ? startDate : now;
+      const minCreated = new Date(maxCreated.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const createdAt = new Date(minCreated.getTime() + Math.random() * (maxCreated.getTime() - minCreated.getTime()));
+
       const reservation: Reservation = {
         id: `res-${user.id}-${i}`,
         userId: user.id,
@@ -158,7 +162,7 @@ function generateRealisticReservations(users: User[], spaces: ParkingSpace[]): R
         startDate,
         endDate,
         status,
-        createdAt: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
+        createdAt,
         amount,
         vehiclePlate: selectedPlate,
       };
@@ -180,12 +184,6 @@ function syncSpacesWithReservations(spaces: ParkingSpace[], reservations: Reserv
         space.status = 'occupied';
       }
     }
-  }
-  const availableSpaces = spaces.filter(s => s.status === 'available');
-  const numOccupied = Math.floor(availableSpaces.length * 0.2);
-  for (let i = 0; i < numOccupied; i++) {
-    const idx = Math.floor(Math.random() * availableSpaces.length);
-    availableSpaces[idx].status = 'occupied';
   }
   const maintenanceCount = Math.floor(spaces.length * 0.03);
   for (let i = 0; i < maintenanceCount; i++) {
@@ -261,51 +259,7 @@ class StoreManager {
   }
 
   private generateInitialActivities() {
-    const reservationsToLog = this.reservations.slice(0, 8);
-    for (const res of reservationsToLog) {
-      const space = this.getSpace(res.spaceId);
-      if (!space) continue;
-      const user = this.getUser(res.userId);
-      const userName = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur non reconnu';
-      let message = '';
-      let type: ActivityLog['type'] = 'reservation';
-      let timestamp = res.createdAt;
-      
-      if (res.status === 'active') {
-        message = `${userName} a réservé la place ${space.number} (${res.vehiclePlate})`;
-      } else if (res.status === 'cancelled') {
-        message = `${userName} a annulé sa réservation (id: ${res.id})`;
-      } else if (res.status === 'completed') {
-        message = `La réservation ${res.id} pour la place ${space.number} est terminée`;
-        type = 'system';
-      } else {
-        continue;
-      }
-      
-      this.activities.push({
-        id: `act-init-${Date.now()}-${Math.random()}`,
-        type,
-        message,
-        timestamp,
-        userId: res.userId,
-      });
-    }
-
-    const maintenanceSpaces = this.spaces.filter(s => s.status === 'maintenance');
-    for (const space of maintenanceSpaces) {
-      const randomDate = new Date();
-      randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 30));
-      this.activities.push({
-        id: `act-init-${Date.now()}-${Math.random()}`,
-        type: 'parking',
-        message: `La place ${space.number} est maintenant en maintenance`,
-        timestamp: randomDate,
-        userId: undefined,
-      });
-    }
-
-    const usersToLog = this.users.filter(u => u.role === 'user').slice(0, 5);
-    for (const user of usersToLog) {
+    for (const user of this.users) {
       this.activities.push({
         id: `act-init-${Date.now()}-${Math.random()}`,
         type: 'user',
@@ -315,16 +269,30 @@ class StoreManager {
       });
     }
 
-    const someUsers = this.users.filter(u => u.role === 'user').slice(0, 3);
-    for (const user of someUsers) {
-      const randomDate = new Date(user.createdAt);
-      randomDate.setDate(randomDate.getDate() + Math.floor(Math.random() * 10));
+    for (const res of this.reservations) {
+      const space = this.getSpace(res.spaceId);
+      if (!space) continue;
+      const user = this.getUser(res.userId);
+      const userName = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur non reconnu';
+      
+      let message = '';
+      let type: ActivityLog['type'] = 'reservation';
+      message = `${userName} a réservé la place ${space.number} pour la période du ${res.startDate.toLocaleString('fr-FR')} -> ${res.endDate.toLocaleString('fr-FR')} (Véhicule: ${res.vehiclePlate})`;
+      if (res.status === 'completed') {
+        this.activities.push({
+          id: `act-init-${Date.now()}-${Math.random()}`,
+          type: 'system',
+          message: `La réservation de ${userName} pour la place ${space.number} est désormais complétée (Période: ${res.startDate.toLocaleString('fr-FR')} -> ${res.endDate.toLocaleString('fr-FR')})`,
+          timestamp: res.endDate,
+          userId: res.userId,
+        });
+      }
       this.activities.push({
         id: `act-init-${Date.now()}-${Math.random()}`,
-        type: 'user',
-        message: `${user.firstName} ${user.lastName} a mis à jour son profil`,
-        timestamp: randomDate,
-        userId: user.id,
+        type,
+        message,
+        timestamp: res.createdAt,
+        userId: res.userId,
       });
     }
 
@@ -580,7 +548,7 @@ class StoreManager {
     return true;
   }
 
-  updateReservation(reservationId: string, newStartDate: Date, newEndDate: Date, newVehiclePlate?: string): { success: boolean; error?: string } {
+  updateReservation(reservationId: string, newStartDate: Date, newEndDate: Date, newVehiclePlate?: string, amount?: number): { success: boolean; error?: string } {
     const oldRes = this.getReservation(reservationId);
     if (!oldRes) return { success: false, error: 'La réservation mentionnée est introuvable' };
     if (oldRes.status !== 'active') return { success: false, error: 'Cette réservation n\'est plus active' };
@@ -604,7 +572,7 @@ class StoreManager {
     if (overlapping) return { success: false, error: 'La place est déjà réservée sur la période' };
 
     const plate = newVehiclePlate || oldRes.vehiclePlate;
-    const amount = Math.round(hours * space.pricePerHour * 100) / 100;
+    const finalAmount = amount !== undefined ? amount : Math.round(hours * space.pricePerHour * 100) / 100;
 
     oldRes.status = 'cancelled';
 
@@ -616,7 +584,7 @@ class StoreManager {
       endDate: newEndDate,
       status: 'active',
       createdAt: new Date(),
-      amount,
+      amount: finalAmount,
       vehiclePlate: plate,
     };
     this.reservations.push(newRes);

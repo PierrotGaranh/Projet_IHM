@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Label } from '@/components/atoms/Label';
 import { Select } from '@/components/atoms/Select';
+
+const STORAGE_KEY = 'settingsForm';
 
 interface SettingsFormProps {
   initialSettings: {
@@ -30,6 +32,22 @@ export function SettingsForm({
   const [settings, setSettings] = useState(initialSettings);
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    if (readonly) return;
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSettings((prev) => ({ ...prev, ...parsed }));
+      } catch {}
+    }
+  }, [readonly]);
+
+  useEffect(() => {
+    if (readonly) return;
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  }, [settings, readonly]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -41,8 +59,12 @@ export function SettingsForm({
     e.preventDefault();
     if (readonly) return;
     setIsSaving(true);
-    await onSubmit(settings);
-    setIsSaving(false);
+    try {
+      await onSubmit(settings);
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch (error) {} finally {
+      setIsSaving(false);
+    }
   };
 
   const levelOptions = Array.from({ length: 6 }, (_, i) => ({
@@ -122,8 +144,8 @@ export function SettingsForm({
           <div>
             <Label>Jour de maintenance</Label>
             <p className="text-foreground py-2">
-              {dayOptions.find((d) => d.value === settings.maintenanceDay)
-                ?.label || settings.maintenanceDay}
+              {dayOptions.find((d) => d.value === settings.maintenanceDay)?.label ||
+                settings.maintenanceDay}
             </p>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/atoms/Card';
 import { ConfirmationModal } from '@/components/molecules/ConfirmationModal';
 import { ParkingGrid } from '@/components/organisms/ParkingGrid';
-import { FilterSection } from '@/components/organisms/ParkingFilterSection';
+import { ParkingFilterSection } from '@/components/organisms/ParkingFilterSection';
 import { AdminParkingSpaceDetail } from '@/components/organisms/AdminParkingSpaceDetail';
 import { AddReservationForm } from '@/components/organisms/AddReservationForm';
 import { EditReservationForm } from '@/components/organisms/EditReservationForm';
@@ -176,29 +176,42 @@ function ParkingManagementPageContent() {
     }
   };
 
-  const prepareEditReservation = async (data: { startDate: Date; endDate: Date; vehiclePlate: string }) => {
+  const prepareEditReservation = async (data: { startDate: Date; endDate: Date; vehiclePlate: string; amount: number }) => {
     setVehiclePlate(data.vehiclePlate);
-    setReservePayload({ start: data.startDate, end: data.endDate });
+    setReservePayload({ start: data.startDate, end: data.endDate, amount: data.amount });
     setShowConfirmReserveModal(true);
   };
 
   const confirmEditReservation = () => {
-    if (!editingReservation || !selectedSpace || !reservePayload) return;
-    const { start, end } = reservePayload;
-    const store = getStore();
-    store.cancelReservation(editingReservation.id);
-    const result = store.createReservation(editingReservation.userId, selectedSpace.id, start, end, vehiclePlate);
-    if (result.success) {
+    try {
+      if (!editingReservation || !selectedSpace || !reservePayload) return;
+      const store = getStore();
+      const { start, end } = reservePayload;
+      const result = store.updateReservation(
+        editingReservation.id,
+        start,
+        end,
+        vehiclePlate,
+        reservePayload.amount
+      );
+      if (!result.success) {
+        throw new Error(result.error || 'Une erreur est survenue lors de la modification de la réservation');
+      }
       const u = users.find(u => u.id === editingReservation.userId);
       if (u && !u.vehiclePlates.includes(vehiclePlate)) store.addVehiclePlate(editingReservation.userId, vehiclePlate);
-      toast({ variant: 'success', title: 'Réservation modifiée', description: 'La réservation a été mise à jour.' });
+      toast({ variant: 'success', title: 'Réservation modifiée', description: 'Votre réservation a été mise à jour.' });
+    } catch (error) {
+      toast({
+        variant: 'error',
+        title: 'Oops',
+        description: 'Une erreur est survenue lors de la modification de la réservation. Veuillez réessayer.',
+      });
+    } finally {
       setRefreshKey(prev => prev + 1);
       setSelectedSpace(null);
       setShowEditReservationModal(false);
       setShowConfirmReserveModal(false);
       setEditingReservation(null);
-    } else {
-      toast({ variant: 'error', title: 'Erreur', description: result.error || 'Une erreur est survenue à la mise à jour de la réservation.' });
     }
   };
 
@@ -233,13 +246,13 @@ function ParkingManagementPageContent() {
             <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <p className="text-blue-800 dark:text-blue-200 text-sm">Choisissez une place dans la grille pour ajouter une réservation.</p>
           </div>
-          <button onClick={() => setShowInfoCard(false)} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition">
+          <button onClick={() => setShowInfoCard(false)} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      <FilterSection
+      <ParkingFilterSection
         selectedCount={selectedCount}
         deselectedCount={deselectedCount}
         sections={[

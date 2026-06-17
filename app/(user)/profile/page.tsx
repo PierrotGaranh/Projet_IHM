@@ -23,7 +23,7 @@ function ProfilePageContent() {
       setIsEditing(false);
       return true;
     } else {
-      toast({ variant: 'error', title: 'Erreur', description: 'Erreur lors de la mise à jour du profil' });
+      toast({ variant: 'error', title: 'Oops', description: 'Une erreur est survenue lors de la mise à jour du profil. Veuillez réessayer.' });
       return false;
     }
   };

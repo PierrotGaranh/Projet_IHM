@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Label } from '@/components/atoms/Label';
-import { useToast } from '@/hooks/use-toast'; 
+import { useToast } from '@/hooks/use-toast';
 import { validateField } from '@/lib/validation';
 import { useAuth } from '@/lib/context';
+
+const STORAGE_KEY = 'profileForm';
 
 interface ProfileFormProps {
   initialData: {
@@ -34,6 +36,26 @@ export function ProfileForm({
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (readonly) return;
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData((prev) => ({ ...prev, ...parsed }));
+        if (parsed.vehiclePlates) {
+          setVehiclePlates(parsed.vehiclePlates.length ? parsed.vehiclePlates : ['']);
+        }
+      } catch {}
+    }
+  }, [readonly]);
+
+  useEffect(() => {
+    if (readonly) return;
+    const dataToSave = { ...formData, vehiclePlates };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [formData, vehiclePlates, readonly]);
 
   const handleChange = (field: string, value: string) => {
     if (readonly) return;
@@ -90,14 +112,16 @@ export function ProfileForm({
         vehiclePlates: vehiclePlates.filter((p) => p.trim() !== ''),
       });
       if (success) {
+        sessionStorage.removeItem(STORAGE_KEY);
         onCancel();
       }
     } catch (err) {
       toast({
         variant: 'error',
         title: 'Oops',
-        description: 'Une erreur est survenue au mise à jour du profile. Veuillez réessayez.'
-      })
+        description:
+          'Une erreur est survenue au mise à jour du profile. Veuillez réessayez.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -139,10 +163,7 @@ export function ProfileForm({
           <div className="flex flex-wrap gap-2">
             {initialData.vehiclePlates.length ? (
               initialData.vehiclePlates.map((plate, idx) => (
-                <span
-                  key={idx}
-                  className="bg-muted px-2 py-1 rounded text-sm"
-                >
+                <span key={idx} className="bg-muted px-2 py-1 rounded text-sm">
                   {plate}
                 </span>
               ))
@@ -184,7 +205,7 @@ export function ProfileForm({
           </div>
           <div className="space-y-1">
             <Label>Email</Label>
-            <Input value={user?.email} disabled className="bg-muted"/> 
+            <Input value={user?.email} disabled className="bg-muted" />
           </div>
           <div className="space-y-1">
             <Label htmlFor="phone">Téléphone</Label>

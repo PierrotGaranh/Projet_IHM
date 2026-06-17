@@ -10,9 +10,15 @@ interface DateRangePickerProps {
   onChange: (range: { startDate: Date | null; endDate: Date | null; startTime: string; endTime: string }) => void;
   value?: { startDate: Date | null; endDate: Date | null; startTime: string; endTime: string };
   placeholder?: string;
+  allowPastDates?: boolean;
 }
 
-export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner une plage' }: DateRangePickerProps) {
+export function DateRangePicker({ 
+  onChange, 
+  value, 
+  placeholder = 'Sélectionner une plage',
+  allowPastDates = false
+}: DateRangePickerProps) {
   const [tempStart, setTempStart] = useState<Date | null>(value?.startDate || null);
   const [tempEnd, setTempEnd] = useState<Date | null>(value?.endDate || null);
   const [tempStartTime, setTempStartTime] = useState(value?.startTime || '09:00');
@@ -170,7 +176,9 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
 
   const handleDateClick = (day: number) => {
     const clickedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    if (clickedDate < new Date(new Date().setHours(0, 0, 0, 0))) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (!allowPastDates && clickedDate < today) return;
     if (selectionStep === 'start') {
       setTempStart(clickedDate);
       setTempEnd(null);
@@ -230,7 +238,9 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
   const handleMouseEnter = (day: number) => {
     if (selectionStep === 'end' && tempStart && !tempEnd) {
       const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-      if (date >= new Date(new Date().setHours(0, 0, 0, 0))) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (allowPastDates || date >= today) {
         setHoverDate(date);
       }
     }
@@ -280,7 +290,9 @@ export function DateRangePicker({ onChange, value, placeholder = 'Sélectionner 
             {Array.from({ length: daysInMonth(currentMonth) }).map((_, i) => {
               const day = i + 1;
               const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-              const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const isPast = !allowPastDates && date < today;
               const { isStart, isEnd, inRange, hoverInRange } = getDayStatus(day);
 
               let cellClassName = 'w-8 h-8 rounded-full text-sm flex items-center justify-center transition-all ';

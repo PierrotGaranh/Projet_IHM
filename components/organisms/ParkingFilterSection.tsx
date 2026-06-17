@@ -14,7 +14,7 @@ interface FilterItem {
   state: 'neutral' | 'selected' | 'deselected';
 }
 
-interface FilterSectionProps {
+interface ParkingFilterSectionProps {
   selectedCount: number;
   deselectedCount: number;
   sections: {
@@ -28,7 +28,7 @@ interface FilterSectionProps {
   dateRange: { startDate: Date | null; endDate: Date | null };
 }
 
-export function FilterSection({
+export function ParkingFilterSection({
   selectedCount,
   deselectedCount,
   sections,
@@ -36,7 +36,7 @@ export function FilterSection({
   selectedLocation,
   onDateRangeChange,
   dateRange,
-}: FilterSectionProps) {
+}: ParkingFilterSectionProps) {
   const [showFilters, setShowFilters] = useState(false);
   const locations = getStore().getLocations();
   const locationOptions = locations.map(loc => ({ value: loc.id, label: loc.name }));
@@ -84,7 +84,7 @@ export function FilterSection({
                     <button
                       key={item.value}
                       onClick={() => section.onItemClick(item.value)}
-                      className={`px-2 py-1 rounded-full text-xs font-medium border transition-all ${getFilterStyle(item.state)}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium border transition-all ${getFilterStyle(item.state)} cursor-pointer`}
                     >
                       {item.label}
                     </button>
@@ -109,7 +109,7 @@ export function FilterSection({
                 }}
               />
               <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 mt-1">
-                <Info className="w-3 h-3" />
+                <Info className="w-5 h-5" />
                 <span>Ce filtre affichera les listes des réservations de la place sélectionnée et le taux d'occupation de chaque section.</span>
               </div>
             </div>

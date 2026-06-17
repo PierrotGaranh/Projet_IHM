@@ -11,20 +11,25 @@ interface LogFilterSectionProps {
   onFilterChange: (filters: {
     search?: string;
     userId?: string;
-    dateRange?: { startDate: Date | null; endDate: Date | null };
+    dateRange?: { startDate: Date; endDate: Date };
   }) => void;
   users: { id: string; firstName: string; lastName: string; email: string }[];
   initialFilters?: {
     search?: string;
     userId?: string;
-    dateRange?: { startDate: Date | null; endDate: Date | null };
+    dateRange?: { startDate: Date; endDate: Date };
   };
 }
 
 export function LogFilterSection({ onFilterChange, users, initialFilters = {} }: LogFilterSectionProps) {
   const [search, setSearch] = useState(initialFilters.search || '');
   const [userId, setUserId] = useState(initialFilters.userId || '');
-  const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null; startTime: string; endTime: string }>({
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+    startTime: string;
+    endTime: string;
+  }>({
     startDate: initialFilters.dateRange?.startDate || null,
     endDate: initialFilters.dateRange?.endDate || null,
     startTime: '09:00',
@@ -38,11 +43,21 @@ export function LogFilterSection({ onFilterChange, users, initialFilters = {} }:
 
   useEffect(() => {
     const filters: any = {};
-    if (search) filters.search = search;
+    if (search.trim()) filters.search = search.trim();
     if (userId) filters.userId = userId;
-    if (dateRange.startDate || dateRange.endDate) {
-      filters.dateRange = { startDate: dateRange.startDate, endDate: dateRange.endDate };
+
+    if (dateRange.startDate && dateRange.endDate) {
+      const start = new Date(dateRange.startDate);
+      const [sh, sm] = dateRange.startTime.split(':').map(Number);
+      start.setHours(sh, sm);
+
+      const end = new Date(dateRange.endDate);
+      const [eh, em] = dateRange.endTime.split(':').map(Number);
+      end.setHours(eh, em);
+
+      filters.dateRange = { startDate: start, endDate: end };
     }
+
     onFilterChangeRef.current(filters);
   }, [search, userId, dateRange]);
 
@@ -70,14 +85,17 @@ export function LogFilterSection({ onFilterChange, users, initialFilters = {} }:
           <div className="space-y-1">
             <Label className="text-xs font-medium text-muted-foreground">Période</Label>
             <DateRangePicker
-              onChange={(range) => setDateRange({
-                startDate: range.startDate,
-                endDate: range.endDate,
-                startTime: range.startTime,
-                endTime: range.endTime,
-              })}
+              onChange={(range) =>
+                setDateRange({
+                  startDate: range.startDate,
+                  endDate: range.endDate,
+                  startTime: range.startTime || '09:00',
+                  endTime: range.endTime || '17:00',
+                })
+              }
               value={dateRange}
               placeholder="Sélectionner une période"
+              allowPastDates={true}
             />
           </div>
         </div>

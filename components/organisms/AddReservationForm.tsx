@@ -9,6 +9,8 @@ import { UserSearchSelect } from '@/components/molecules/UserSearchSelect';
 import { validateField } from '@/lib/validation';
 import { useToast } from '@/hooks/use-toast';
 
+const STORAGE_KEY = 'addReservationForm';
+
 interface AddReservationFormProps {
   users: { id: string; firstName: string; lastName: string; email: string; vehiclePlates: string[] }[];
   onSubmit: (data: { userId: string; startDate: Date; endDate: Date; vehiclePlate: string }) => Promise<void>;
@@ -19,7 +21,12 @@ export function AddReservationForm({ users, onSubmit, onCancel }: AddReservation
   const { toast } = useToast();
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedUser, setSelectedUser] = useState<typeof users[0] | null>(null);
-  const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null; startTime: string; endTime: string }>({
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+    startTime: string;
+    endTime: string;
+  }>({
     startDate: null,
     endDate: null,
     startTime: '09:00',
@@ -31,12 +38,47 @@ export function AddReservationForm({ users, onSubmit, onCancel }: AddReservation
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSelectedUserId(parsed.selectedUserId || '');
+        if (parsed.dateRange) {
+          setDateRange({
+            startDate: parsed.dateRange.startDate ? new Date(parsed.dateRange.startDate) : null,
+            endDate: parsed.dateRange.endDate ? new Date(parsed.dateRange.endDate) : null,
+            startTime: parsed.dateRange.startTime || '09:00',
+            endTime: parsed.dateRange.endTime || '17:00',
+          });
+        }
+        setVehiclePlate(parsed.vehiclePlate || '');
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    const dataToSave = {
+      selectedUserId,
+      dateRange: {
+        startDate: dateRange.startDate?.toISOString() || null,
+        endDate: dateRange.endDate?.toISOString() || null,
+        startTime: dateRange.startTime,
+        endTime: dateRange.endTime,
+      },
+      vehiclePlate,
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [selectedUserId, dateRange, vehiclePlate]);
+
+  useEffect(() => {
     if (selectedUserId) {
-      const user = users.find(u => u.id === selectedUserId);
+      const user = users.find((u) => u.id === selectedUserId);
       if (user) {
         setSelectedUser(user);
         setVehiclePlateOptions(user.vehiclePlates);
-        setVehiclePlate('');
+        if (!vehiclePlate && user.vehiclePlates.length > 0) {
+          setVehiclePlate(user.vehiclePlates[0]);
+        }
       }
     } else {
       setSelectedUser(null);
@@ -46,7 +88,7 @@ export function AddReservationForm({ users, onSubmit, onCancel }: AddReservation
 
   const validatePlate = (plate: string) => {
     const error = validateField('plate', plate);
-    setErrors(prev => ({ ...prev, plate: error }));
+    setErrors((prev) => ({ ...prev, plate: error }));
     return !error;
   };
 
@@ -82,8 +124,13 @@ export function AddReservationForm({ users, onSubmit, onCancel }: AddReservation
     setIsSubmitting(true);
     try {
       await onSubmit({ userId: selectedUserId, startDate: start, endDate: end, vehiclePlate });
+      sessionStorage.removeItem(STORAGE_KEY);
     } catch (err) {
-      toast({ variant: 'error', title: 'Erreur', description: err instanceof Error ? err.message : 'Échec de la création' });
+      toast({
+        variant: 'error',
+        title: 'L\'ajout de réservation a échoué.',
+        description: 'Une erreur est survenue. Veuillez réessayer.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -96,7 +143,7 @@ export function AddReservationForm({ users, onSubmit, onCancel }: AddReservation
         value={selectedUserId}
         onChange={(id) => {
           setSelectedUserId(id);
-          setErrors(prev => ({ ...prev, user: undefined }));
+          setErrors((prev) => ({ ...prev, user: undefined }));
         }}
         label="Utilisateur"
         placeholder="Rechercher par nom, prénom ou email..."
@@ -114,12 +161,14 @@ export function AddReservationForm({ users, onSubmit, onCancel }: AddReservation
       <div>
         <Label>Période de réservation</Label>
         <DateRangePicker
-          onChange={(range) => setDateRange({
-            startDate: range.startDate,
-            endDate: range.endDate,
-            startTime: range.startTime,
-            endTime: range.endTime,
-          })}
+          onChange={(range) =>
+            setDateRange({
+              startDate: range.startDate,
+              endDate: range.endDate,
+              startTime: range.startTime,
+              endTime: range.endTime,
+            })
+          }
           value={dateRange}
         />
         {errors.date && <p className="text-xs text-destructive mt-1">{errors.date}</p>}
@@ -136,7 +185,9 @@ export function AddReservationForm({ users, onSubmit, onCancel }: AddReservation
         >
           Ajouter
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Annuler</Button>
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
+          Annuler
+        </Button>
       </div>
     </form>
   );

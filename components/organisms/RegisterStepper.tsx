@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
@@ -10,6 +10,8 @@ import { Stepper } from '@/components/molecules/Stepper';
 import { validateField } from '@/lib/validation';
 import { ChevronLeft, ChevronRight, CheckCircle, X } from 'lucide-react';
 
+const STORAGE_KEY = 'registerStepper';
+
 interface RegisterStepperProps {
   onSubmit: (data: any) => Promise<void>;
   initialData?: any;
@@ -18,24 +20,59 @@ interface RegisterStepperProps {
 export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState(initialData || { firstName: '', lastName: '', email: '', phone: '', password: '', vehiclePlates: [''] });
+  const [formData, setFormData] = useState(
+    initialData || {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      password: '',
+      vehiclePlates: [''],
+    }
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData((prev: any) => ({ ...prev, ...parsed }));
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    const { password, ...dataToSave } = formData;
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [formData]);
+
   const updateField = (field: string, value: string) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
-    setFieldErrors(prev => ({ ...prev, [field]: '' }));
+    setFieldErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const updatePlate = (idx: number, value: string) => {
     const newPlates = [...formData.vehiclePlates];
     newPlates[idx] = value;
-    setFormData((prev: { vehiclePlates: string[]; }) => ({ ...prev, vehiclePlates: newPlates }));
-    setFieldErrors(prev => ({ ...prev, [`plate_${idx}`]: '' }));
+    setFormData((prev: { vehiclePlates: string[] }) => ({
+      ...prev,
+      vehiclePlates: newPlates,
+    }));
+    setFieldErrors((prev) => ({ ...prev, [`plate_${idx}`]: '' }));
   };
 
-  const addPlate = () => setFormData((prev: { vehiclePlates: string[]; }) => ({ ...prev, vehiclePlates: [...prev.vehiclePlates, ''] }));
-  const removePlate = (idx: number) => setFormData((prev: { vehiclePlates: string[]; }) => ({ ...prev, vehiclePlates: prev.vehiclePlates.filter((_: string, i: number) => i !== idx) }));
+  const addPlate = () =>
+    setFormData((prev: { vehiclePlates: string[] }) => ({
+      ...prev,
+      vehiclePlates: [...prev.vehiclePlates, ''],
+    }));
+  const removePlate = (idx: number) =>
+    setFormData((prev: { vehiclePlates: string[] }) => ({
+      ...prev,
+      vehiclePlates: prev.vehiclePlates.filter((_: string, i: number) => i !== idx),
+    }));
 
   const isStepValid = () => {
     if (step === 0) {
@@ -46,7 +83,9 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
     if (step === 1) {
       const emailOk = formData.email.trim() !== '' && !validateField('email', formData.email);
       const phoneOk = formData.phone === '' || !validateField('phone', formData.phone);
-      const platesOk = formData.vehiclePlates.every((plate: string) => plate === '' || !validateField('plate', plate));
+      const platesOk = formData.vehiclePlates.every(
+        (plate: string) => plate === '' || !validateField('plate', plate)
+      );
       return emailOk && phoneOk && platesOk;
     }
     if (step === 2) {
@@ -69,11 +108,13 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
       });
     }
     setFieldErrors(errors);
-    return Object.values(errors).every(e => !e);
+    return Object.values(errors).every((e) => !e);
   };
 
-  const nextStep = () => { if (validateStep()) setStep(s => s + 1); };
-  const prevStep = () => setStep(s => s - 1);
+  const nextStep = () => {
+    if (validateStep()) setStep((s) => s + 1);
+  };
+  const prevStep = () => setStep((s) => s - 1);
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,17 +130,19 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
       if (plate) errors[`plate_${idx}`] = validateField('plate', plate);
     });
     setFieldErrors(errors);
-    if (Object.values(errors).some(e => e)) return;
+    if (Object.values(errors).some((e) => e)) return;
 
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
+      sessionStorage.removeItem(STORAGE_KEY);
     } catch (err) {
       toast({
         variant: 'error',
         title: 'Oops',
-        description: 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.'
-      })
+        description:
+          "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -113,17 +156,38 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <Stepper currentStep={step} totalSteps={3} labels={['Identité', 'Contact & véhicules', 'Sécurité']} />
+      <Stepper
+        currentStep={step}
+        totalSteps={3}
+        labels={['Identité', 'Contact & véhicules', 'Sécurité']}
+      />
 
       {step === 0 && (
         <div className="space-y-3 animate-in fade-in duration-300">
           <div className="space-y-1">
-            <Label htmlFor="lastName" showRequired>Nom</Label>
-            <Input id="lastName" value={formData.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={fieldErrors.lastName} required autoFocus />
+            <Label htmlFor="lastName" showRequired>
+              Nom
+            </Label>
+            <Input
+              id="lastName"
+              value={formData.lastName}
+              onChange={(e) => updateField('lastName', e.target.value)}
+              error={fieldErrors.lastName}
+              required
+              autoFocus
+            />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="firstName" showRequired>Prénom</Label>
-            <Input id="firstName" value={formData.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={fieldErrors.firstName} required />
+            <Label htmlFor="firstName" showRequired>
+              Prénom
+            </Label>
+            <Input
+              id="firstName"
+              value={formData.firstName}
+              onChange={(e) => updateField('firstName', e.target.value)}
+              error={fieldErrors.firstName}
+              required
+            />
           </div>
         </div>
       )}
@@ -131,39 +195,89 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
       {step === 1 && (
         <div className="space-y-3 animate-in fade-in duration-300">
           <div className="space-y-1">
-            <Label htmlFor="email" showRequired>Email</Label>
-            <Input id="email" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} error={fieldErrors.email} required />
+            <Label htmlFor="email" showRequired>
+              Email
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => updateField('email', e.target.value)}
+              error={fieldErrors.email}
+              required
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="phone">Téléphone</Label>
-            <Input id="phone" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} error={fieldErrors.phone} placeholder="ex: +33612345678" />
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => updateField('phone', e.target.value)}
+              error={fieldErrors.phone}
+              placeholder="ex: +33612345678"
+            />
           </div>
           <div className="space-y-2">
             <Label>Plaques d'immatriculation</Label>
             {formData.vehiclePlates.map((plate: string, idx: number) => (
               <div key={idx} className="flex gap-2 items-start">
-                <Input value={plate} onChange={(e) => updatePlate(idx, e.target.value)} error={fieldErrors[`plate_${idx}`]} placeholder="ex: AB123CD" className="flex-1" />
+                <Input
+                  value={plate}
+                  onChange={(e) => updatePlate(idx, e.target.value)}
+                  error={fieldErrors[`plate_${idx}`]}
+                  placeholder="ex: AB123CD"
+                  className="flex-1"
+                />
                 {idx > 0 && (
-                  <Button type="button" variant="ghost" onClick={() => removePlate(idx)} className="h-full p-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => removePlate(idx)}
+                    className="h-full p-1"
+                  >
                     <X className="w-4 h-4 text-red-500" />
                   </Button>
                 )}
               </div>
             ))}
-            <Button type="button" variant="secondary" onClick={addPlate} className="w-full sm:w-auto">+ Ajouter une plaque</Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={addPlate}
+              className="w-full sm:w-auto"
+            >
+              + Ajouter une plaque
+            </Button>
           </div>
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-3 animate-in fade-in duration-300">
-          <PasswordInput name="password" label="Mot de passe" value={formData.password} onChange={(e) => updateField('password', e.target.value)} error={fieldErrors.password} showRequired placeholder="********" />
+          <PasswordInput
+            name="password"
+            label="Mot de passe"
+            value={formData.password}
+            onChange={(e) => updateField('password', e.target.value)}
+            error={fieldErrors.password}
+            showRequired
+            placeholder="********"
+          />
         </div>
       )}
 
-      <div className={`flex flex-row gap-2 ${isSingleButton ? 'justify-center' : 'justify-between'}`}>
+      <div
+        className={`flex flex-row gap-2 ${isSingleButton ? 'justify-center' : 'justify-between'}`}
+      >
         {hasBackButton && (
-          <Button type="button" variant="secondary" onClick={prevStep} className={`${isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'} flex items-center justify-center gap-2`}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={prevStep}
+            className={`${
+              isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'
+            } flex items-center justify-center gap-2`}
+          >
             <ChevronLeft className="w-4 h-4" /> Retour
           </Button>
         )}
@@ -173,7 +287,9 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
             variant="primary"
             onClick={nextStep}
             disabled={!isStepValid()}
-            className={`${isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'} flex items-center justify-center gap-2`}
+            className={`${
+              isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'
+            } flex items-center justify-center gap-2`}
           >
             Suivant <ChevronRight className="w-4 h-4" />
           </Button>
@@ -185,7 +301,9 @@ export function RegisterStepper({ onSubmit, initialData }: RegisterStepperProps)
             isLoading={isSubmitting}
             loadingText="Inscription"
             disabled={!isStepValid()}
-            className={`${isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'} flex items-center justify-center gap-2`}
+            className={`${
+              isSingleButton ? 'w-auto' : 'flex-1 sm:flex-initial'
+            } flex items-center justify-center gap-2`}
           >
             <CheckCircle className="w-4 h-4" /> S'inscrire
           </Button>

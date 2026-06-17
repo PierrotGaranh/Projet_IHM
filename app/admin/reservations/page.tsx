@@ -36,8 +36,10 @@ function AdminReservationsPageContent() {
   const listRef = useRef<HTMLDivElement>(null);
   const smoothScrollToElement = (el: HTMLElement, offset = 80) => { const pos = el.getBoundingClientRect().top + window.scrollY; window.scrollTo({ top: pos - offset, behavior: 'smooth' }); };
   const fetchData = () => { 
-    const store = getStore(); 
-    setReservations(store.getReservations()); 
+  const store = getStore(); 
+    const allReservations = store.getReservations();
+    allReservations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setReservations(allReservations); 
     setAllUsers(store.getAllUsers()); 
     setLoading(false); 
   };
@@ -58,26 +60,35 @@ function AdminReservationsPageContent() {
     setShowEditModal(true);
   };
 
-  const handleEditSubmit = async (data: { startDate: Date; endDate: Date; vehiclePlate: string }) => {
-    if (!editingReservation) return;
-    const store = getStore();
-    const result = store.updateReservation(
-      editingReservation.id,
-      data.startDate,
-      data.endDate,
-      data.vehiclePlate
-    );
-    if (result.success) {
+  const handleEditSubmit = async (data: { startDate: Date; endDate: Date; vehiclePlate: string; amount: number }) => {
+    try {
+      if (!editingReservation) return;
+      const store = getStore();
+      const result = store.updateReservation(
+        editingReservation.id,
+        data.startDate,
+        data.endDate,
+        data.vehiclePlate,
+        data.amount
+      );
+      if (!result.success) {
+        throw new Error(result.error || 'Une erreur est survenue lors de la modification de la réservation');
+      }
       const u = allUsers.find(u => u.id === editingReservation.userId);
       if (u && !u.vehiclePlates.includes(data.vehiclePlate)) {
         store.addVehiclePlate(editingReservation.userId, data.vehiclePlate);
       }
       toast({ variant: 'success', title: 'Réservation modifiée', description: 'La réservation a été mise à jour.' });
+    } catch (error) {
+      toast({
+        variant: 'error',
+        title: 'Oops',
+        description: 'Une erreur est survenue lors de la modificationde la réservation. Veuillez réessayer.',
+      });
+    } finally {
       setRefreshKey(prev => prev + 1);
       setShowEditModal(false);
       setEditingReservation(null);
-    } else {
-      throw new Error(result.error || 'Une erreur est survenue lors de la modification de la réservation');
     }
   };
   
